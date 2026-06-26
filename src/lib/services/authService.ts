@@ -1,7 +1,7 @@
 import { auth, db } from "../firebase";
-import { 
-  signInWithEmailAndPassword, 
-  signOut as firebaseSignOut, 
+import {
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
   createUserWithEmailAndPassword
@@ -13,7 +13,7 @@ export interface UserProfile {
   email: string;
   username: string;
   role: "admin" | "staff";
-  branch: "kurla" | "thane" | "nalasapora" | "karad";
+  branch: string;
 }
 
 // Convert a username to a standardized email for Firebase Auth
@@ -29,11 +29,8 @@ export async function seedDefaultUsers() {
     if (snapshot.empty) {
       console.log("Seeding default users...");
       const defaultUsers = [
-        { username: "admin", password: "Password123", role: "admin", branch: "kurla" },
-        { username: "kurla_staff", password: "Password123", role: "staff", branch: "kurla" },
-        { username: "karad_staff", password: "Password123", role: "staff", branch: "karad" },
-        { username: "thane_staff", password: "Password123", role: "staff", branch: "thane" },
-        { username: "nalasapora_staff", password: "Password123", role: "staff", branch: "nalasapora" }
+        { username: "admin", password: "Password123", role: "admin" },
+        { username: "staff", password: "Password123", role: "staff" }
       ];
 
       for (const user of defaultUsers) {
@@ -46,12 +43,12 @@ export async function seedDefaultUsers() {
             email,
             username: user.username,
             role: user.role,
-            branch: user.branch,
+            branch: "main",
+            instituteName: "Shelar Training Institute",
             createdAt: new Date()
           });
           console.log(`Created user: ${user.username}`);
         } catch (authError: any) {
-          // If already exists in auth, try to create firestore profile
           if (authError.code === "auth/email-already-in-use") {
             console.log(`User ${user.username} already exists in Firebase Auth.`);
           } else {
@@ -65,29 +62,37 @@ export async function seedDefaultUsers() {
   }
 }
 
+// Update user profile in Firestore
+export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<boolean> {
+  try {
+    await setDoc(doc(db, "users", uid), data, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+}
+
 // Login a user and retrieve their Firestore profile
 export async function loginUser(username: string, password: string): Promise<UserProfile> {
   const email = username.includes("@") ? username : usernameToEmail(username);
-  
-  // Sign in with Firebase Auth
+
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   const uid = userCredential.user.uid;
-  
-  // Fetch user profile from Firestore
+
   const userDoc = await getDoc(doc(db, "users", uid));
   if (!userDoc.exists()) {
-    // If the doc doesn't exist, create a default profile for backward compatibility
     const defaultProfile: UserProfile = {
       uid,
       email,
       username: username.split("@")[0],
-      role: "admin", // fallback to admin
-      branch: "kurla"
+      role: "admin",
+      branch: "main"
     };
     await setDoc(doc(db, "users", uid), defaultProfile);
     return defaultProfile;
   }
-  
+
   return userDoc.data() as UserProfile;
 }
 
@@ -104,13 +109,12 @@ export function subscribeToAuth(callback: (user: FirebaseUser | null, profile: U
       if (userDoc.exists()) {
         callback(user, userDoc.data() as UserProfile);
       } else {
-        // Fallback profile
         callback(user, {
           uid: user.uid,
           email: user.email || "",
           username: (user.email || "").split("@")[0],
           role: "admin",
-          branch: "kurla"
+          branch: "main"
         });
       }
     } else {

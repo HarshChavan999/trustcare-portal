@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { UserProfile } from "../lib/services/authService";
-import { 
-  checkAadharNumberInquiry, 
-  submitInquiryData, 
-  InquiryData 
+import {
+  checkAadharNumberInquiry,
+  submitInquiryData,
+  InquiryData
 } from "../lib/services/inquiryService";
+import { getAllCourses, Course } from "../lib/services/courseService";
 
 interface InquiryViewProps {
   userProfile: UserProfile | null;
@@ -41,6 +42,17 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
   const [showPopup, setShowPopup] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [courseList, setCourseList] = useState<Course[]>([]);
+
+  // Fetch courses dynamically
+  useEffect(() => {
+    getAllCourses().then((courses) => {
+      setCourseList(courses.filter(c => c.active !== false));
+    }).catch(() => {
+      setCourseList([]);
+    });
+  }, []);
 
   // Update branch and inquiry taken by when userProfile changes
   useEffect(() => {
@@ -125,15 +137,30 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
     }
   };
 
-  const handleTakeAdmission = () => {
+  const handleTakeAdmission = async () => {
     if (!formData.firstName || !formData.lastName || !formData.interestedCourse) {
       setErrorMsg("Please fill out basic student details (First Name, Last Name, and Course) first.");
       return;
     }
+
+    // First, save/submit the inquiry to Firestore
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const res = await submitInquiryData({
+      ...formData,
+      loggedInUserId: userProfile?.username || "Guest"
+    });
+
+    if (!res.success) {
+      setErrorMsg("Failed to save inquiry before admission: " + res.message);
+      return;
+    }
+
     // Set combined full name before sending
     const fullName = [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
     const address = [formData.addressLine1, formData.addressLine2, formData.addressLine3, `Pincode: ${formData.pincode}`].filter(Boolean).join(", ");
-    
+
     onTakeAdmission({
       ...formData,
       fullName,
@@ -175,7 +202,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
         {/* Personal Details Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Personal Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Aadhar Number */}
             <div className="space-y-1">
@@ -313,7 +340,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
         {/* Contact Info Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Contact Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label htmlFor="phoneNo" className="block text-xs font-semibold text-slate-400">Phone*</label>
@@ -373,7 +400,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
         {/* Address Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Address Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label htmlFor="addressLine1" className="block text-xs font-semibold text-slate-400">Address Line 1*</label>
@@ -428,7 +455,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
         {/* Course & Metadata Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Course Selection & Details</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label htmlFor="interestedCourse" className="block text-xs font-semibold text-slate-400">Select Course*</label>
@@ -441,14 +468,15 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 required
               >
                 <option value="">Select Course</option>
-                <option value="anm_nursing">ANM Nursing Diploma Course</option>
-                <option value="gnm_nursing">GNM Nursing Diploma Course</option>
-                <option value="dmlt">DMLT Diploma Course</option>
-                <option value="ot_technician">OT Technician Diploma Course</option>
-                <option value="electrician">Electrician Diploma Course</option>
-                <option value="ac_refrigerator">AC & Refrigerator Diploma Course</option>
-                <option value="basic_parlour">Basic Parlour Course</option>
-                <option value="general_nursing">General Nursing and Midwifery Assistant</option>
+                {courseList.length === 0 ? (
+                  <option value="" disabled>No courses available for this branch</option>
+                ) : (
+                  courseList.map((course) => (
+                    <option key={course.id} value={course.courseId}>
+                      {course.courseName} ({course.duration} - ₹{course.fees.toLocaleString()})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
             <div className="space-y-1">
@@ -528,7 +556,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                   <p className="text-[10px] text-slate-500">Record found in branch: <span className="capitalize text-teal-400">{aadharFound.branch}</span></p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setShowPopup(false)}
                 className="w-8 h-8 rounded-full bg-slate-900 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors flex items-center justify-center"
               >
@@ -558,6 +586,16 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 <div className="col-span-2">
                   <span className="text-slate-500 block">Interested Course</span>
                   <span className="text-slate-200 font-semibold capitalize">{aadharFound.interestedCourse.replace("_", " ")}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-slate-500 block">Admission Status</span>
+                  <span className={`inline-flex mt-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${aadharFound.admissionStatus === "Admitted"
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                    }`}>
+                    <i className={`fas ${aadharFound.admissionStatus === "Admitted" ? "fa-check-circle" : "fa-clock"} mr-1.5`}></i>
+                    {aadharFound.admissionStatus || "Not Admitted"}
+                  </span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-slate-500 block">Address</span>

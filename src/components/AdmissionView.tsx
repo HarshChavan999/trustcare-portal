@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { UserProfile } from "../lib/services/authService";
 import { InquiryData } from "../lib/services/inquiryService";
-import { 
-  getNextReceiptNumber, 
-  saveAdmissionData, 
-  AdmissionData 
+import {
+  getNextReceiptNumber,
+  saveAdmissionData,
+  AdmissionData
 } from "../lib/services/admissionService";
+import { getCourse, getAllCourses, Course } from "../lib/services/courseService";
 import { db } from "../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -15,53 +16,6 @@ interface AdmissionViewProps {
   onGoBack: () => void;
   onAdmissionComplete: (enrollmentId: string, studentName: string, courseName: string, totalFees: number, branch: string, receiptNo: string) => void;
 }
-
-// Course configurations per branch location
-const getCourseConfig = (branch: string, course: string) => {
-  const branchLower = (branch || "kurla").toLowerCase();
-  
-  const kurlaData: any = {
-    anm_nursing: { duration: "1 Year", fees: 65000, admission_fee: 5000 },
-    gnm_nursing: { duration: "3 Years", fees: 100000, admission_fee: 5000 },
-    dmlt: { duration: "1 Year", fees: 70000, admission_fee: 5000 },
-    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
-    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
-  };
-
-  const karadData: any = {
-    anm_nursing: { duration: "1 Year", fees: 36000, admission_fee: 3000 },
-    gnm_nursing: { duration: "3 Years", fees: 95000, admission_fee: 5000 },
-    dmlt: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
-    ot_technician: { duration: "1 Year", fees: 36000, admission_fee: 3000 },
-    electrician: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
-    ac_refrigerator: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
-    basic_parlour: { duration: "2 Months", fees: 5000, admission_fee: 1000 }
-  };
-
-  const nalasaporaData: any = {
-    anm_nursing: { duration: "1 Year", fees: 55000, admission_fee: 5000 },
-    gnm_nursing: { duration: "3 Years", fees: 90000, admission_fee: 5000 },
-    dmlt: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
-    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
-    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
-  };
-
-  const thaneData: any = {
-    anm_nursing: { duration: "1 Year", fees: 8500, admission_fee: 5000 },
-    gnm_nursing: { duration: "3 Years", fees: 100000, admission_fee: 5000 },
-    dmlt: { duration: "1 Year", fees: 700, admission_fee: 5000 },
-    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
-    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
-  };
-
-  let courseInfo = null;
-  if (branchLower === "karad") courseInfo = karadData[course];
-  else if (branchLower === "nalasapora") courseInfo = nalasaporaData[course];
-  else if (branchLower === "thane") courseInfo = thaneData[course];
-  else courseInfo = kurlaData[course]; // default to kurla
-
-  return courseInfo || { duration: "1 Year", fees: 30000, admission_fee: 5000 };
-};
 
 export default function AdmissionView({
   userProfile,
@@ -73,7 +27,7 @@ export default function AdmissionView({
   const [submitting, setSubmitting] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState("");
   const [enrollmentId, setEnrollmentId] = useState("");
-  
+
   // Photo state
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -87,18 +41,46 @@ export default function AdmissionView({
 
   const branch = inquiryData?.branch || userProfile?.branch || "kurla";
   const course = inquiryData?.interestedCourse || "";
-  const config = getCourseConfig(branch, course);
+  const [config, setConfig] = useState({ duration: "1 Year", fees: 30000, admission_fee: 5000 });
+
+  // Fetch course configuration dynamically from Firestore
+  useEffect(() => {
+    async function loadCourseConfig() {
+      if (!course) return;
+      try {
+        const courseData = await getCourse(course);
+        if (courseData && courseData.active !== false) {
+          setConfig({
+            duration: courseData.duration,
+            fees: courseData.fees,
+            admission_fee: courseData.admissionFee || 0
+          });
+        } else {
+          // Fallback: try searching all courses
+          const allCourses = await getAllCourses();
+          const found = allCourses.find(c => c.courseId === course && c.active !== false);
+          if (found) {
+            setConfig({
+              duration: found.duration,
+              fees: found.fees,
+              admission_fee: found.admissionFee || 0
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load course config from Firestore, using defaults:", err);
+      }
+    }
+    loadCourseConfig();
+  }, [course]);
 
   // Fetch next receipt number and enrollment ID on mount
   useEffect(() => {
     async function initIds() {
       setLoading(true);
       try {
-        // Receipt Number
         const nextReceipt = await getNextReceiptNumber();
         setReceiptNumber(nextReceipt);
-
-        // Enrollment ID (ST001, ST002...)
         const admissionsSnapshot = await getDocs(collection(db, "admissions"));
         let maxNum = 0;
         admissionsSnapshot.forEach((docSnap) => {
@@ -194,8 +176,8 @@ export default function AdmissionView({
         <i className="fas fa-exclamation-triangle text-rose-500 text-3xl mb-4"></i>
         <h3 className="text-lg font-bold text-slate-200">No Inquiry Selected</h3>
         <p className="text-sm text-slate-500 mt-2">Please search or submit an inquiry first, then click "Take Admission".</p>
-        <button 
-          onClick={onGoBack} 
+        <button
+          onClick={onGoBack}
           className="mt-6 px-5 py-2.5 bg-slate-900 text-slate-300 hover:bg-slate-800 rounded-xl transition-all font-semibold text-xs border border-slate-800"
         >
           Go back to New Inquiry

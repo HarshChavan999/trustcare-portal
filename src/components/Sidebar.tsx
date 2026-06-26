@@ -32,6 +32,11 @@ export default function Sidebar({
     { id: "exam-receipt", label: "Exam Receipt", icon: "fa-receipt" }
   ];
 
+  const adminItems = [
+    { id: "course-management", label: "Course Management", icon: "fa-graduation-cap" },
+    { id: "profile-settings", label: "Profile Settings", icon: "fa-cog" }
+  ];
+
   const analyticsItems = [
     { id: "fee-structure", label: "Fees Structure", icon: "fa-university" },
     { id: "admission-analytics", label: "Admission Structure", icon: "fa-chart-line" },
@@ -71,9 +76,6 @@ export default function Sidebar({
             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 capitalize">
               {userProfile?.role || "staff"}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 capitalize">
-              {userProfile?.branch || "kurla"}
-            </span>
           </div>
         </div>
       </div>
@@ -106,11 +108,10 @@ export default function Sidebar({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${
-                activeTab === item.id
-                  ? "bg-gradient-to-r from-teal-500/10 to-indigo-500/5 text-teal-400 border border-teal-500/20"
-                  : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 border border-transparent"
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${activeTab === item.id
+                ? "bg-gradient-to-r from-teal-500/10 to-indigo-500/5 text-teal-400 border border-teal-500/20"
+                : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 border border-transparent"
+                }`}
             >
               <div className="flex items-center justify-center w-5 h-5">
                 <i className={`fas ${item.icon} text-sm`}></i>
@@ -120,6 +121,28 @@ export default function Sidebar({
           ))}
         </div>
 
+        {/* Admin Section */}
+        {userProfile?.role === "admin" && (
+          <div className="space-y-1">
+            <p className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin</p>
+            {adminItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${activeTab === item.id
+                  ? "bg-gradient-to-r from-teal-500/10 to-indigo-500/5 text-teal-400 border border-teal-500/20"
+                  : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 border border-transparent"
+                  }`}
+              >
+                <div className="flex items-center justify-center w-5 h-5">
+                  <i className={`fas ${item.icon} text-sm`}></i>
+                </div>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Analytics Section */}
         {userProfile?.role === "admin" && (
           <div className="space-y-1">
@@ -128,11 +151,10 @@ export default function Sidebar({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${
-                  activeTab === item.id
-                    ? "bg-gradient-to-r from-teal-500/10 to-indigo-500/5 text-teal-400 border border-teal-500/20"
-                    : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 border border-transparent"
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${activeTab === item.id
+                  ? "bg-gradient-to-r from-teal-500/10 to-indigo-500/5 text-teal-400 border border-teal-500/20"
+                  : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 border border-transparent"
+                  }`}
               >
                 <div className="flex items-center justify-center w-5 h-5">
                   <i className={`fas ${item.icon} text-sm`}></i>

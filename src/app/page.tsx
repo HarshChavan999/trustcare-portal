@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  seedDefaultUsers, 
-  loginUser, 
-  logoutUser, 
-  subscribeToAuth, 
-  UserProfile 
+import {
+  seedDefaultUsers,
+  loginUser,
+  logoutUser,
+  subscribeToAuth,
+  UserProfile
 } from "../lib/services/authService";
 import { InquiryData } from "../lib/services/inquiryService";
 
@@ -17,19 +17,21 @@ import AdmissionView from "../components/AdmissionView";
 import PaymentView from "../components/PaymentView";
 import ExamReceiptView from "../components/ExamReceiptView";
 import AnalyticsView from "../components/AnalyticsView";
+import CourseManagementView from "../components/CourseManagementView";
+import ProfileSettings from "../components/ProfileSettings";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  
+
   // Dashboard routing states
   const [activeTab, setActiveTab] = useState("inquiry");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // Flow/Context states
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryData | null>(null);
-  
+
   const [paymentContext, setPaymentContext] = useState<{
     enrollmentId: string | null;
     studentName: string | null;
@@ -55,13 +57,13 @@ export default function Home() {
     async function init() {
       // Seed users in background
       await seedDefaultUsers();
-      
+
       // Subscribe to Firebase auth updates
       const unsubscribe = subscribeToAuth((user, profile) => {
         setUserProfile(profile);
         setAuthLoading(false);
       });
-      
+
       return () => unsubscribe();
     }
     init();
@@ -191,6 +193,11 @@ export default function Home() {
     { id: "exam-receipt", label: "Exam Receipt", icon: "fa-receipt" }
   ];
 
+  const adminItems = [
+    { id: "course-management", label: "Course Management", icon: "fa-graduation-cap" },
+    { id: "profile-settings", label: "Profile Settings", icon: "fa-cog" }
+  ];
+
   const analyticsItems = [
     { id: "fee-structure", label: "Fees Structure", icon: "fa-university" },
     { id: "admission-analytics", label: "Admission Structure", icon: "fa-chart-line" },
@@ -212,7 +219,7 @@ export default function Home() {
   if (userProfile) {
     return (
       <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
-        
+
         {/* Sidebar Container */}
         <Sidebar
           userProfile={userProfile}
@@ -224,7 +231,7 @@ export default function Home() {
 
         {/* Dashboard Main Workspace */}
         <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
-          
+
           {/* Mobile responsive navigation header */}
           <header className="md:hidden flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-900 sticky top-0 z-20 backdrop-blur-md">
             <div className="flex items-center gap-2">
@@ -235,7 +242,7 @@ export default function Home() {
               </div>
               <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent">TrustCare</span>
             </div>
-            
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-slate-400 hover:text-white p-2 rounded-lg border border-slate-900 bg-slate-900/30"
@@ -252,11 +259,10 @@ export default function Home() {
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${
-                    activeTab === item.id 
-                      ? "bg-teal-500/10 text-teal-400 border border-teal-500/20" 
-                      : "text-slate-400 hover:bg-slate-900/50"
-                  }`}
+                  className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
+                    ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                    : "text-slate-400 hover:bg-slate-900/50"
+                    }`}
                 >
                   <i className={`fas ${item.icon} text-sm`}></i>
                   <span>{item.label}</span>
@@ -265,16 +271,29 @@ export default function Home() {
 
               {userProfile.role === "admin" && (
                 <>
-                  <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
+                  <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin</div>
+                  {adminItems.map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
+                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                        : "text-slate-400 hover:bg-slate-900/50"
+                        }`}
+                    >
+                      <i className={`fas ${item.icon} text-sm`}></i>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
                   {analyticsItems.map(item => (
                     <button
                       key={item.id}
                       onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${
-                        activeTab === item.id 
-                          ? "bg-teal-500/10 text-teal-400 border border-teal-500/20" 
-                          : "text-slate-400 hover:bg-slate-900/50"
-                      }`}
+                      className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
+                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                        : "text-slate-400 hover:bg-slate-900/50"
+                        }`}
                     >
                       <i className={`fas ${item.icon} text-sm`}></i>
                       <span>{item.label}</span>
@@ -282,7 +301,7 @@ export default function Home() {
                   ))}
                 </>
               )}
-              
+
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-2.5 border-t border-slate-900/60 mt-2 pt-3"
@@ -331,6 +350,21 @@ export default function Home() {
               />
             )}
 
+            {/* Admin Course Management */}
+            {activeTab === "course-management" && userProfile.role === "admin" && (
+              <CourseManagementView
+                userProfile={userProfile}
+              />
+            )}
+
+            {/* Profile Settings */}
+            {activeTab === "profile-settings" && userProfile.role === "admin" && (
+              <ProfileSettings
+                userProfile={userProfile}
+                onProfileUpdated={(updated) => setUserProfile(updated)}
+              />
+            )}
+
             {/* Admin Analytics Tab routers */}
             {["fee-structure", "admission-analytics", "inquiry-analytics", "due-fees"].includes(activeTab) && (
               <AnalyticsView
@@ -350,7 +384,7 @@ export default function Home() {
   // PUBLIC LANDING PAGE (Logged Out)
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
-      
+
       {/* Glow Backdrops */}
       <div className="absolute top-0 left-1/4 -z-10 h-[500px] w-[500px] rounded-full bg-teal-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 -z-10 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
@@ -564,7 +598,7 @@ export default function Home() {
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-slate-950 border border-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden animate-slide-up">
-            
+
             {/* Background blobs for modal */}
             <div className="absolute top-0 right-0 -z-10 h-24 w-24 bg-teal-500/10 blur-xl rounded-full" />
             <div className="absolute bottom-0 left-0 -z-10 h-24 w-24 bg-indigo-500/10 blur-xl rounded-full" />
