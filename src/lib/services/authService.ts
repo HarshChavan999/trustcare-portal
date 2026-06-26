@@ -4,7 +4,9 @@ import {
   signOut as firebaseSignOut, 
   onAuthStateChanged,
   User as FirebaseUser,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
 
@@ -117,4 +119,29 @@ export function subscribeToAuth(callback: (user: FirebaseUser | null, profile: U
       callback(null, null);
     }
   });
+}
+
+// Login with Google Provider and retrieve/create Firestore profile
+export async function loginWithGoogle(): Promise<UserProfile> {
+  const provider = new GoogleAuthProvider();
+  const userCredential = await signInWithPopup(auth, provider);
+  const user = userCredential.user;
+  
+  const userDoc = await getDoc(doc(db, "users", user.uid));
+  if (!userDoc.exists()) {
+    const profile: UserProfile = {
+      uid: user.uid,
+      email: user.email || "",
+      username: (user.displayName || user.email || "").split("@")[0].replace(/\s+/g, "_").toLowerCase(),
+      role: "staff", // Default role for Google login
+      branch: "kurla" // Default branch for Google login
+    };
+    await setDoc(doc(db, "users", user.uid), {
+      ...profile,
+      createdAt: new Date()
+    });
+    return profile;
+  }
+  
+  return userDoc.data() as UserProfile;
 }
