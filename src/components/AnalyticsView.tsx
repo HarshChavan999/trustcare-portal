@@ -3,6 +3,32 @@ import { UserProfile } from "../lib/services/authService";
 import { getFeeStructureData } from "../lib/services/paymentService";
 import { getAdmissionAnalytics, AdmissionData } from "../lib/services/admissionService";
 import { getInquiryAnalytics, InquiryData } from "../lib/services/inquiryService";
+import { 
+  GraduationCap, 
+  Clock, 
+  TrendingUp, 
+  BarChart3, 
+  List, 
+  IndianRupee, 
+  CheckCircle2, 
+  UserCheck, 
+  Calendar, 
+  CalendarDays, 
+  CalendarRange, 
+  Copy, 
+  FileSpreadsheet, 
+  Plus, 
+  CircleDollarSign, 
+  Info, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  ArrowUpDown
+} from "lucide-react";
 
 interface AnalyticsViewProps {
   userProfile: UserProfile | null;
@@ -170,7 +196,6 @@ export default function AnalyticsView({
       // Time Period
       if (timePeriodFilter) {
         const now = new Date();
-        const startDay = new Date(now.setHours(0,0,0,0));
         
         filtered = filtered.filter(a => {
           if (!a.date) return false;
@@ -285,9 +310,9 @@ export default function AnalyticsView({
       });
       return {
         cards: [
-          { label: "Total Records", value: totalRecords.toLocaleString(), icon: "fa-list", color: "text-blue-400 bg-blue-500/10" },
-          { label: "Total Fees Collected", value: "₹" + totalFeesCollected.toLocaleString(), icon: "fa-rupee-sign", color: "text-emerald-400 bg-emerald-500/10" },
-          { label: "Due Total Fees", value: "₹" + totalDue.toLocaleString(), icon: "fa-clock", color: "text-rose-400 bg-rose-500/10" }
+          { label: "Total Records", value: totalRecords.toLocaleString(), icon: List, color: "text-blue-400 bg-blue-500/10 border-blue-500/10" },
+          { label: "Total Fees Collected", value: "₹" + totalFeesCollected.toLocaleString(), icon: IndianRupee, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/10" },
+          { label: "Due Total Fees", value: "₹" + totalDue.toLocaleString(), icon: Clock, color: "text-rose-450 bg-rose-500/10 border-rose-500/10" }
         ]
       };
     }
@@ -303,10 +328,10 @@ export default function AnalyticsView({
       const fullyPaidCount = feeStructures.filter(f => (f.totalAmountDue || 0) === 0).length;
       return {
         cards: [
-          { label: "Total Fees Setup", value: "₹" + totalFees.toLocaleString(), icon: "fa-university", color: "text-blue-400 bg-blue-500/10" },
-          { label: "Total Paid", value: "₹" + totalPaid.toLocaleString(), icon: "fa-check-circle", color: "text-emerald-400 bg-emerald-500/10" },
-          { label: "Total Outstanding Due", value: "₹" + totalDue.toLocaleString(), icon: "fa-exclamation-circle", color: "text-rose-400 bg-rose-500/10" },
-          { label: "Fully Paid Students", value: fullyPaidCount.toString(), icon: "fa-user-check", color: "text-indigo-400 bg-indigo-500/10" }
+          { label: "Total Fees Setup", value: "₹" + totalFees.toLocaleString(), icon: GraduationCap, color: "text-blue-400 bg-blue-500/10 border-blue-500/10" },
+          { label: "Total Paid", value: "₹" + totalPaid.toLocaleString(), icon: CheckCircle2, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/10" },
+          { label: "Total Outstanding Due", value: "₹" + totalDue.toLocaleString(), icon: AlertCircle, color: "text-rose-450 bg-rose-500/10 border-rose-500/10" },
+          { label: "Fully Paid Students", value: fullyPaidCount.toString(), icon: UserCheck, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/10" }
         ]
       };
     }
@@ -338,9 +363,9 @@ export default function AnalyticsView({
       
       return {
         cards: [
-          { label: "Admissions This Month", labelInq: "Inquiries This Month", value: monthCount.toString(), icon: "fa-calendar-alt", color: "text-blue-400 bg-blue-500/10" },
-          { label: "Admissions This Week", labelInq: "Inquiries This Week", value: weekCount.toString(), icon: "fa-calendar-week", color: "text-emerald-400 bg-emerald-500/10" },
-          { label: "Admissions Today", labelInq: "Inquiries Today", value: todayCount.toString(), icon: "fa-calendar-day", color: "text-indigo-400 bg-indigo-500/10" }
+          { label: "Admissions This Month", labelInq: "Inquiries This Month", value: monthCount.toString(), icon: Calendar, color: "text-blue-400 bg-blue-500/10 border-blue-500/10" },
+          { label: "Admissions This Week", labelInq: "Inquiries This Week", value: weekCount.toString(), icon: CalendarDays, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/10" },
+          { label: "Admissions Today", labelInq: "Inquiries Today", value: todayCount.toString(), icon: CalendarRange, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/10" }
         ]
       };
     }
@@ -456,8 +481,14 @@ export default function AnalyticsView({
     setCurrentPage(1);
   };
 
+  const ActiveHeaderIcon = 
+    activeTab === "fee-structure" ? GraduationCap :
+    activeTab === "due-fees" ? Clock :
+    activeTab === "admission-analytics" ? TrendingUp :
+    BarChart3;
+
   return (
-    <div className="relative w-full bg-slate-950/60 border border-slate-900 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4">
+    <div className="relative w-full bg-slate-900/40 border border-slate-900/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4 glass-panel gpu-accelerated">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 -z-10 h-32 w-32 bg-teal-500/10 blur-2xl rounded-full" />
       <div className="absolute bottom-0 left-0 -z-10 h-32 w-32 bg-indigo-500/10 blur-2xl rounded-full" />
@@ -465,19 +496,14 @@ export default function AnalyticsView({
       {/* Header */}
       <div className="border-b border-slate-900 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent flex items-center gap-3">
-            <i className={`fas ${
-              activeTab === "fee-structure" ? "fa-university" :
-              activeTab === "due-fees" ? "fa-clock" :
-              activeTab === "admission-analytics" ? "fa-chart-line" :
-              "fa-chart-bar"
-            } text-teal-400`}></i>
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+            <ActiveHeaderIcon className="h-7 w-7 text-teal-400" />
             {activeTab === "fee-structure" && "FEES STRUCTURE MASTER"}
             {activeTab === "due-fees" && "OUTSTANDING DUE FEES"}
             {activeTab === "admission-analytics" && "ADMISSION ANALYTICS"}
             {activeTab === "inquiry-analytics" && "INQUIRY ANALYTICS"}
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">
             {activeTab === "fee-structure" && "Track and manage student enrollment and fee balance collections"}
             {activeTab === "due-fees" && "List students with remaining balances on accounts"}
             {activeTab === "admission-analytics" && "Inspect admissions logs, trace branch allocations, and trigger course payments"}
@@ -486,7 +512,7 @@ export default function AnalyticsView({
         </div>
         <button
           onClick={handleResetFilters}
-          className="px-4 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 transition-colors text-xs font-semibold"
+          className="px-4 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-350 hover:text-slate-100 rounded-xl border border-slate-805 transition-colors text-xs font-semibold cursor-pointer hover-lift"
         >
           Reset Filters
         </button>
@@ -494,19 +520,22 @@ export default function AnalyticsView({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-        {summaries.cards.map((c, i) => (
-          <div key={i} className="bg-slate-900/30 border border-slate-900 rounded-2xl p-4 flex items-center gap-4 hover:border-slate-800 transition-colors">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${c.color}`}>
-              <i className={`fas ${c.icon} text-lg`}></i>
+        {summaries.cards.map((c, i) => {
+          const CardIcon = c.icon;
+          return (
+            <div key={i} className="bg-slate-900/30 border border-slate-900 rounded-2xl p-4 flex items-center gap-4 hover-lift border-slate-900">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${c.color}`}>
+                <CardIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
+                  {activeTab === "inquiry-analytics" && (c as any).labelInq ? (c as any).labelInq : c.label}
+                </p>
+                <h3 className="text-xl font-black text-slate-200 mt-0.5">{c.value}</h3>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                {activeTab === "inquiry-analytics" && (c as any).labelInq ? (c as any).labelInq : c.label}
-              </p>
-              <h3 className="text-xl font-black text-slate-200 mt-0.5">{c.value}</h3>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Filter Options */}
@@ -524,7 +553,7 @@ export default function AnalyticsView({
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Type keyword..."
-              className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
+              className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
             />
           </div>
 
@@ -534,7 +563,7 @@ export default function AnalyticsView({
             <select
               value={branchFilter}
               onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+              className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-350 focus:outline-none transition-colors cursor-pointer"
             >
               <option value="">All Branches</option>
               {uniqueBranches.map(b => (
@@ -549,11 +578,11 @@ export default function AnalyticsView({
             <select
               value={courseFilter}
               onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+              className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-350 focus:outline-none transition-colors cursor-pointer"
             >
               <option value="">All Courses</option>
               {uniqueCourses.map(c => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{(c || "").replace(/_/g, " ").toUpperCase()}</option>
               ))}
             </select>
           </div>
@@ -565,7 +594,7 @@ export default function AnalyticsView({
               <select
                 value={paymentModeFilter}
                 onChange={(e) => { setPaymentModeFilter(e.target.value); setCurrentPage(1); }}
-                className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-355 focus:outline-none transition-colors cursor-pointer"
               >
                 <option value="">All Payment Modes</option>
                 <option value="Cash">Cash</option>
@@ -583,7 +612,7 @@ export default function AnalyticsView({
               <select
                 value={timePeriodFilter}
                 onChange={(e) => { setTimePeriodFilter(e.target.value); setCurrentPage(1); }}
-                className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-355 focus:outline-none transition-colors cursor-pointer"
               >
                 <option value="">All Time</option>
                 <option value="today">Today</option>
@@ -602,7 +631,7 @@ export default function AnalyticsView({
                   type="date"
                   value={dateFrom}
                   onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+                  className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-350 focus:outline-none transition-colors"
                 />
               </div>
               <div className="space-y-1.5">
@@ -611,7 +640,7 @@ export default function AnalyticsView({
                   type="date"
                   value={dateTo}
                   onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none transition-colors"
+                  className="w-full bg-slate-950/80 border border-slate-900 focus:border-teal-500/50 rounded-xl px-3 py-2 text-xs text-slate-350 focus:outline-none transition-colors"
                 />
               </div>
             </>
@@ -627,28 +656,28 @@ export default function AnalyticsView({
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-            className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none"
+            className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none cursor-pointer font-semibold"
           >
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <span>entries per page</span>
+          <span className="font-semibold">entries per page</span>
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={handleCopyClipboard}
-            className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer hover-lift shadow-md"
           >
-            <i className="fas fa-copy"></i> Copy Data
+            <Copy className="h-3.5 w-3.5" /> Copy Data
           </button>
           <button
             onClick={handleExportCSV}
-            className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer hover-lift shadow-md"
           >
-            <i className="fas fa-file-csv"></i> Export CSV
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Export CSV
           </button>
         </div>
       </div>
@@ -657,47 +686,47 @@ export default function AnalyticsView({
       <div className="overflow-x-auto border border-slate-900 bg-slate-950/40 rounded-2xl">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <i className="fas fa-circle-notch fa-spin text-teal-400 text-3xl"></i>
-            <span className="text-xs text-slate-500">Loading records from Firestore...</span>
+            <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Loading records from Firestore...</span>
           </div>
         ) : processedData.length === 0 ? (
-          <div className="py-16 text-center text-slate-600 font-medium text-xs">
-            <i className="fas fa-info-circle text-lg mb-2 block"></i>
+          <div className="py-16 text-center text-slate-600 font-semibold text-xs flex flex-col items-center justify-center gap-2">
+            <Info className="h-5 w-5 text-slate-650" />
             No records match the active criteria.
           </div>
         ) : (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-900 bg-slate-900/10 text-slate-400 uppercase tracking-wider text-[10px] font-bold">
+              <tr className="border-b border-slate-900 bg-slate-900/10 text-slate-450 uppercase tracking-wider text-[10px] font-bold">
                 
                 {/* 1. FEE STRUCTURE COLUMNS */}
                 {activeTab === "fee-structure" && (
                   <>
-                    <th onClick={() => handleSort("timestamp")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Timestamp</th>
-                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Enrollment ID</th>
-                    <th onClick={() => handleSort("name")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Name</th>
-                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Course Name</th>
-                    <th onClick={() => handleSort("paymentMode")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Mode</th>
-                    <th onClick={() => handleSort("admissionFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Adm. Fee</th>
-                    <th onClick={() => handleSort("admissionFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Adm. Due</th>
-                    <th onClick={() => handleSort("courseFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Course Fee</th>
-                    <th onClick={() => handleSort("courseFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Course Due</th>
-                    <th onClick={() => handleSort("examFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Exam Fee</th>
-                    <th onClick={() => handleSort("examFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Exam Due</th>
-                    <th onClick={() => handleSort("totalAmountDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Total Due</th>
-                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Branch</th>
-                    <th onClick={() => handleSort("userName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">User</th>
+                    <th onClick={() => handleSort("timestamp")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Timestamp <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Enrollment ID <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("name")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Name <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Course <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("paymentMode")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Mode <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("admissionFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Adm. Fee</th>
+                    <th onClick={() => handleSort("admissionFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Adm. Due</th>
+                    <th onClick={() => handleSort("courseFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Course Fee</th>
+                    <th onClick={() => handleSort("courseFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Course Due</th>
+                    <th onClick={() => handleSort("examFee")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Exam Fee</th>
+                    <th onClick={() => handleSort("examFeeDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Exam Due</th>
+                    <th onClick={() => handleSort("totalAmountDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Total Due</th>
+                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Branch <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("userName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">User <ArrowUpDown className="h-3 w-3" /></span></th>
                   </>
                 )}
 
                 {/* 2. DUE FEES COLUMNS */}
                 {activeTab === "due-fees" && (
                   <>
-                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Enrollment ID</th>
-                    <th onClick={() => handleSort("name")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Student Name</th>
-                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Course</th>
-                    <th onClick={() => handleSort("totalAmountDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Amount Due</th>
-                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Branch</th>
+                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Enrollment ID <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("name")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Student Name <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Course <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("totalAmountDue")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Amount Due</th>
+                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Branch <ArrowUpDown className="h-3 w-3" /></span></th>
                   </>
                 )}
 
@@ -705,14 +734,14 @@ export default function AnalyticsView({
                 {activeTab === "admission-analytics" && (
                   <>
                     <th className="px-4 py-3">Action</th>
-                    <th onClick={() => handleSort("date")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Date</th>
-                    <th onClick={() => handleSort("receiptNumber")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Receipt No</th>
-                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Enrollment ID</th>
-                    <th onClick={() => handleSort("studentName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Student Name</th>
-                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Course Name</th>
-                    <th onClick={() => handleSort("totalCourseFees")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none text-right">Course Fee</th>
+                    <th onClick={() => handleSort("date")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("receiptNumber")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Receipt No <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Enrollment ID <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("studentName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Student Name <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Course <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("totalCourseFees")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Course Fee</th>
                     <th className="px-4 py-3">Guardian Name</th>
-                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Branch</th>
+                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Branch <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th className="px-4 py-3">Created By</th>
                   </>
                 )}
@@ -721,13 +750,13 @@ export default function AnalyticsView({
                 {activeTab === "inquiry-analytics" && (
                   <>
                     <th className="px-4 py-3">Action</th>
-                    <th onClick={() => handleSort("date")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Date</th>
-                    <th onClick={() => handleSort("aadharNumber")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Aadhaar</th>
-                    <th onClick={() => handleSort("fullName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Full Name</th>
-                    <th onClick={() => handleSort("phoneNo")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Phone</th>
+                    <th onClick={() => handleSort("date")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("aadharNumber")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Aadhaar <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("fullName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Full Name <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("phoneNo")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Phone <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th className="px-4 py-3">Parents No</th>
-                    <th onClick={() => handleSort("interestedCourse")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Course</th>
-                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/20 select-none">Branch</th>
+                    <th onClick={() => handleSort("interestedCourse")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Course <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Branch <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Admission</th>
                   </>
@@ -737,7 +766,7 @@ export default function AnalyticsView({
             </thead>
             <tbody className="divide-y divide-slate-900/80 bg-slate-950/20">
               {paginatedData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-900/20 text-slate-300 transition-colors">
+                <tr key={idx} className="hover:bg-slate-900/20 text-slate-350 transition-colors">
                   
                   {/* FEE STRUCTURE ROWS */}
                   {activeTab === "fee-structure" && (
@@ -746,18 +775,18 @@ export default function AnalyticsView({
                         {row.timestamp?.seconds ? new Date(row.timestamp.seconds * 1000).toLocaleDateString("en-GB") : row.timestamp || ""}
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-400">{row.enrollmentId}</td>
-                      <td className="px-4 py-3 text-slate-100 font-medium">{row.name}</td>
+                      <td className="px-4 py-3 text-slate-100 font-semibold">{row.name}</td>
                       <td className="px-4 py-3 text-slate-400 capitalize">{String(row.courseName).replace(/_/g, " ")}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.paymentMode}</td>
+                      <td className="px-4 py-3 text-slate-450 font-medium">{row.paymentMode}</td>
                       <td className="px-4 py-3 text-right">₹{(row.admissionFee || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-slate-400">₹{(row.admissionFeeDue || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-slate-500 font-semibold">₹{(row.admissionFeeDue || 0).toLocaleString()}</td>
                       <td className="px-4 py-3 text-right">₹{(row.courseFee || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-slate-400">₹{(row.courseFeeDue || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-slate-500 font-semibold">₹{(row.courseFeeDue || 0).toLocaleString()}</td>
                       <td className="px-4 py-3 text-right">₹{(row.examFee || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-slate-400">₹{(row.examFeeDue || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-teal-400">₹{(row.totalAmountDue || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 capitalize text-slate-400">{row.branch}</td>
-                      <td className="px-4 py-3 text-slate-500 text-[10px]">{row.userName}</td>
+                      <td className="px-4 py-3 text-right text-slate-500 font-semibold">₹{(row.examFeeDue || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right font-extrabold text-teal-400">₹{(row.totalAmountDue || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 capitalize text-slate-400 font-medium">{row.branch}</td>
+                      <td className="px-4 py-3 text-slate-550 text-[10px]">{row.userName}</td>
                     </>
                   )}
 
@@ -765,10 +794,10 @@ export default function AnalyticsView({
                   {activeTab === "due-fees" && (
                     <>
                       <td className="px-4 py-3 font-semibold text-slate-400">{row.enrollmentId}</td>
-                      <td className="px-4 py-3 text-slate-100 font-medium">{row.name}</td>
+                      <td className="px-4 py-3 text-slate-100 font-semibold">{row.name}</td>
                       <td className="px-4 py-3 text-slate-400 capitalize">{String(row.courseName).replace(/_/g, " ")}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-rose-400">₹{(row.totalAmountDue || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 capitalize text-slate-400">{row.branch}</td>
+                      <td className="px-4 py-3 text-right font-extrabold text-rose-450">₹{(row.totalAmountDue || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 capitalize text-slate-450 font-medium">{row.branch}</td>
                     </>
                   )}
 
@@ -778,20 +807,20 @@ export default function AnalyticsView({
                       <td className="px-4 py-3">
                         <button
                           onClick={() => onCoursePayment(row.enrollmentId, row.studentName, row.courseName, row.totalCourseFees, row.branch)}
-                          className="px-2.5 py-1 bg-gradient-to-r from-teal-500/10 to-indigo-500/10 border border-teal-500/20 text-teal-400 hover:opacity-90 active:scale-95 transition-all rounded-lg font-bold text-[10px] flex items-center gap-1"
+                          className="px-2.5 py-1 bg-gradient-to-r from-teal-500/10 to-indigo-500/10 border border-teal-500/25 text-teal-400 hover:opacity-90 active:scale-95 transition-all rounded-lg font-bold text-[10px] flex items-center gap-1.5 cursor-pointer hover-lift"
                         >
-                          <i className="fas fa-hand-holding-usd text-[9px]"></i> Course Pay
+                          <CircleDollarSign className="h-3.5 w-3.5 text-teal-450" /> Course Pay
                         </button>
                       </td>
                       <td className="px-4 py-3 font-mono text-[10px] text-slate-500">{row.date}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.receiptNumber}</td>
+                      <td className="px-4 py-3 text-slate-450 font-medium">{row.receiptNumber}</td>
                       <td className="px-4 py-3 font-semibold text-slate-400">{row.enrollmentId}</td>
-                      <td className="px-4 py-3 text-slate-100 font-medium">{row.studentName}</td>
+                      <td className="px-4 py-3 text-slate-100 font-semibold">{row.studentName}</td>
                       <td className="px-4 py-3 text-slate-400 capitalize">{String(row.courseName).replace(/_/g, " ")}</td>
-                      <td className="px-4 py-3 text-right text-slate-100 font-medium">₹{(row.totalCourseFees || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.guardianName || "-"}</td>
-                      <td className="px-4 py-3 capitalize text-slate-400">{row.branch}</td>
-                      <td className="px-4 py-3 text-slate-500 text-[10px]">{row.user}</td>
+                      <td className="px-4 py-3 text-right text-slate-100 font-bold">₹{(row.totalCourseFees || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-slate-450">{row.guardianName || "-"}</td>
+                      <td className="px-4 py-3 capitalize text-slate-450 font-medium">{row.branch}</td>
+                      <td className="px-4 py-3 text-slate-550 text-[10px]">{row.user}</td>
                     </>
                   )}
 
@@ -800,28 +829,28 @@ export default function AnalyticsView({
                     <>
                       <td className="px-4 py-3">
                         {row.admissionStatus === "Admitted" ? (
-                          <span className="px-2 py-0.5 bg-slate-900 text-slate-500 rounded-lg text-[9px] font-bold border border-slate-800">
+                          <span className="px-2.5 py-1 bg-slate-950 text-slate-600 rounded-lg text-[9px] font-bold border border-slate-900">
                             Admitted
                           </span>
                         ) : (
                           <button
                             onClick={() => onTakeAdmission(row)}
-                            className="px-2.5 py-1 bg-gradient-to-r from-teal-400 to-indigo-400 text-slate-950 hover:opacity-90 active:scale-95 transition-all rounded-lg font-bold text-[10px] flex items-center gap-1 shadow-md shadow-teal-400/5"
+                            className="px-2.5 py-1 bg-gradient-to-r from-teal-400 to-indigo-400 text-slate-950 hover:opacity-90 active:scale-95 transition-all rounded-lg font-bold text-[10px] flex items-center gap-1 shadow-md shadow-teal-400/5 cursor-pointer hover-lift"
                           >
-                            <i className="fas fa-user-plus text-[9px]"></i> Admit
+                            <UserCheck className="h-3.5 w-3.5 text-slate-950" /> Admit
                           </button>
                         )}
                       </td>
                       <td className="px-4 py-3 font-mono text-[10px] text-slate-500">{row.date}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.aadharNumber}</td>
-                      <td className="px-4 py-3 text-slate-100 font-medium">{row.fullName}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.phoneNo}</td>
-                      <td className="px-4 py-3 text-slate-400">{row.parentsNo || "-"}</td>
-                      <td className="px-4 py-3 text-slate-400 capitalize">{String(row.interestedCourse).replace(/_/g, " ")}</td>
-                      <td className="px-4 py-3 capitalize text-slate-400">{row.branch}</td>
-                      <td className="px-4 py-3 text-slate-500">{row.status}</td>
+                      <td className="px-4 py-3 text-slate-450 tracking-wider font-semibold">{row.aadharNumber}</td>
+                      <td className="px-4 py-3 text-slate-100 font-semibold">{row.fullName}</td>
+                      <td className="px-4 py-3 text-slate-400 font-medium">{row.phoneNo}</td>
+                      <td className="px-4 py-3 text-slate-400 font-medium">{row.parentsNo || "-"}</td>
+                      <td className="px-4 py-3 text-slate-400 capitalize font-medium">{String(row.interestedCourse).replace(/_/g, " ")}</td>
+                      <td className="px-4 py-3 capitalize text-slate-400 font-semibold">{row.branch}</td>
+                      <td className="px-4 py-3 text-slate-550 font-medium">{row.status}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                        <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold ${
                           row.admissionStatus === "Admitted" 
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
                             : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -842,42 +871,42 @@ export default function AnalyticsView({
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 pt-4 border-t border-slate-900/60 gap-4">
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 font-semibold">
             Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, processedData.length)} of {processedData.length} entries
           </span>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
-              className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+              className="p-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              <i className="fas fa-angle-double-left"></i>
+              <ChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+              className="p-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              <i className="fas fa-angle-left"></i>
+              <ChevronLeft className="h-4 w-4" />
             </button>
             
-            <span className="text-xs font-bold text-slate-300 px-3">
+            <span className="text-xs font-bold text-slate-350 px-3">
               Page {currentPage} of {totalPages}
             </span>
             
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+              className="p-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              <i className="fas fa-angle-right"></i>
+              <ChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
-              className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+              className="p-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              <i className="fas fa-angle-double-right"></i>
+              <ChevronsRight className="h-4 w-4" />
             </button>
           </div>
         </div>
