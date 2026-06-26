@@ -1,0 +1,100 @@
+<!-- <aside class="bg-blue-800 text-white w-64 hidden md:flex flex-col">
+    <div class="py-6 px-4 bg-blue-900 flex flex-col items-center justify-center">
+        <img src="https://i.postimg.cc/DZFDcqP8/IMG-20250320-WA0023-1-modified-3.png"
+            class="w-24 mx-auto mb-4 rounded-lg" alt="Institute Logo" />
+        <h2 class="text-lg font-bold">STI</h2>
+        <p class="text-xs text-blue-200">Role: <span id="userRoleDisplay"></span></p>
+    </div>
+    <div class="p-4">
+        <label class="block text-xs text-blue-200">Search Student ID</label>
+        <div class="mt-1 relative">
+            <input type="text" id="sideBarSearchId" class="w-full pl-4 pr-10 py-2 rounded-md text-black
+                    focus:ring-2 focus:ring-blue-300 focus:outline-none" placeholder="e.g. ST001" />
+            <button onclick="searchBySideBar()" class="absolute right-2 top-1.5 text-gray-500 hover:text-blue-600">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div> -->
+<aside class="fixed top-0 left-0 bg-white text-gray-900 w-64 hidden md:flex flex-col h-screen z-30 border-r border-gray-200 shadow-sm">
+  <!-- Header -->
+  <div class="px-6 py-6 border-b border-gray-200">
+    <div class="flex flex-col items-center justify-center">
+      <a href="#" onclick="openInquiryForm()" class="mb-3">
+        <img src="https://i.postimg.cc/FzvwbhS3/Untitled-1.png"
+             alt="Institute Logo"
+             class="w-30 h-30 object-contain rounded-lg bg-gray-50 p-2">
+      </a>
+      <p class="text-xs text-gray-600 flex items-center gap-2">
+        <span class="font-medium">Role:</span>
+        <span id="userRoleDisplay" class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+          admin
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 px-4 py-6 space-y-1">
+    <!-- Main Navigation -->
+    <div class="space-y-1">
+      <button onclick="openInquiryForm()"
+              class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
+        <div class="flex items-center justify-center w-6 h-6">
+          <i class="fas fa-file-signature text-gray-500 group-hover:text-gray-700"></i>
+        </div>
+        <span>New Inquiry</span>
+      </button>
+
+      <button onclick="openexamfees()"
+              class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
+        <div class="flex items-center justify-center w-6 h-6">
+          <i class="fas fa-receipt text-gray-500 group-hover:text-gray-700"></i>
+        </div>
+        <span>Exam Receipt</span>
+      </button>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="pt-6">
+      <div class="px-3 mb-2">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Analytics</h3>
+      </div>
+      <div class="space-y-1">
+        <button id="feeStructureBtn" onclick="toggleFeeStructure()"
+                class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
+          <div class="flex items-center justify-center w-6 h-6">
+            <i class="fas fa-hand-holding-usd text-gray-500 group-hover:text-gray-700"></i>
+          </div>
+          <span>Fees Structure</span>
+        </button>
+
+        <button onclick="toggleAdmissionAnalytics()"
+                class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
+          <div class="flex items-center justify-center w-6 h-6">
+            <i class="fas fa-chart-line text-gray-500 group-hover:text-gray-700"></i>
+          </div>
+          <span>Admission Structure</span>
+        </button>
+
+        <button onclick="toggleInquiryAnalytics()"
+                class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
+          <div class="flex items-center justify-center w-6 h-6">
+            <i class="fas fa-chart-bar text-gray-500 group-hover:text-gray-700"></i>
+          </div>
+          <span>Inquiry Structure</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Footer -->
+  <div class="p-4 border-t border-gray-200">
+    <button onclick="logout()"
+            class="group w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-200">
+      <div class="flex items-center justify-center w-6 h-6">
+        <i class="fas fa-sign-out-alt text-red-500 group-hover:text-red-600"></i>
+      </div>
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>

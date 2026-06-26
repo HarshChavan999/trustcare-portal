@@ -1,0 +1,237 @@
+v<div id="ifId" class="bg-white rounded-xl shadow-lg border border-gray-200 mt-6 ml-64">
+  <div class="bg-white text-gray-900 p-6 border-b border-gray-200">
+    <div class="flex flex-col items-center">
+    <div class="text-center">
+      <p class="text-3xl font-bold text-gray-700"><i class="fas fa-file-alt mr-1"></i>INQUIRY FORM</p>
+    </div>
+    </div>
+  </div>
+
+  
+  <form id="ifId" class="inquiry-form-container" onsubmit="InquiryFormHandle(event)">
+    <div class="p-6 space-y-4 max-w-4xl mx-auto">
+      <h2 class="text-xl font-semibold text-gray-700">Personal Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="aadharNumber" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-id-card text-blue-900 mr-2"></i>Aadhar Number
+          </label>
+          <div class="relative">
+            <input type="text" id="aadharNumber" name="aadharNumber" class="form-input w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500 text-gray-700 font-medium bg-gradient-to-r from-white to-gray-50/30 transition-all duration-300 hover:border-gray-300 hover:shadow-md" pattern="\d{12}" title="Please enter a 12-digit Aadhar number" maxlength="12" placeholder="Enter 12-digit Aadhar number">
+            <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <i id="loadingSpinner" class="fas fa-spinner fa-spin text-gray-500" style="display: none;"></i>
+              <i id="successIcon" class="fas fa-check-circle text-green-500" style="display: none;"></i>
+              <i id="searchIcon" class="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="date3334" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-calendar-alt text-blue-900 mr-2"></i>Date
+          </label>
+          <input type="date" id="date3334" name="date" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user text-blue-900 mr-2"></i>First Name*
+          </label>
+          <input type="text" id="firstName" name="firstName" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="middleName" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user text-blue-900 mr-2"></i>Middle Name
+          </label>
+          <input type="text" id="middleName" name="middleName" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user text-blue-900 mr-2"></i>Last Name*
+          </label>
+          <input type="text" id="lastName" name="lastName" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="qualification" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-graduation-cap text-blue-900 mr-2"></i>Qualification*
+          </label>
+          <input type="text" id="qualification" name="qualification" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="age" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-birthday-cake text-blue-900 mr-2"></i>Age*
+          </label>
+          <input type="number" id="age" name="age" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-venus-mars text-blue-900 mr-2"></i>Gender*
+          </label>
+          <select id="gender" name="gender" required class="form-select w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 class="text-xl font-semibold text-gray-700">Contact Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="phoneNo" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-mobile-alt text-blue-900 mr-2"></i>Phone*
+          </label>
+          <input type="tel" id="phoneNo" name="phoneNo" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700" required autocomplete="tel" pattern="[7-9][0-9]{9}" placeholder="e.g. 9876543210" maxlength="10">
+        </div>
+        <div>
+          <label for="whatsappNo" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fab fa-whatsapp text-blue-900 mr-2"></i>WhatsApp*
+          </label>
+          <input type="tel" id="whatsappNo" name="whatsappNo" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700" pattern="[7-9][0-9]{9}" placeholder="e.g. 9876543210" maxlength="10">
+        </div>
+        <div>
+          <label for="parentsNo" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user-friends text-blue-900 mr-2"></i>Parents No*
+          </label>
+          <input type="tel" id="parentsNo" name="parentsNo" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700" pattern="[7-9][0-9]{9}" placeholder="e.g. 9876543210" maxlength="10">
+        </div>
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+          <i class="fas fa-envelope text-blue-900 mr-2"></i>Email
+        </label>
+        <input type="email" id="email" name="email" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+      </div>
+
+      <h2 class="text-xl font-semibold text-gray-700">Address Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="addressLine1" class="block text-sm font-medium text-gray-700 mb-1">
+            Address Line 1*
+          </label>
+          <input type="text" id="addressLine1" name="addressLine1" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="addressLine2" class="block text-sm font-medium text-gray-700 mb-1">
+            Address Line 2
+          </label>
+          <input type="text" id="addressLine2" name="addressLine2" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="addressLine3" class="block text-sm font-medium text-gray-700 mb-1">
+            Address Line 3
+          </label>
+          <input type="text" id="addressLine3" name="addressLine3" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="pincode" class="block text-sm font-medium text-gray-700 mb-1">
+            Pincode*
+          </label>
+          <input type="text" id="pincode" name="pincode" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700" pattern="[0-9]{6}" title="6-digit pincode" maxlength="6">
+        </div>
+      </div>
+
+      <h2 class="text-xl font-semibold text-gray-700">Course Selection</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="interestedCourse" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-book text-blue-900 mr-2"></i>Select Course*
+          </label>
+          <select id="interestedCourse" name="interestedCourse" class="form-select w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" onchange="updateCourseDetails()">
+            <option value="" disabled selected>Select Course</option>
+            <option value="anm_nursing">ANM Nursing Diploma Course</option>
+            <option value="gnm_nursing">GNM Nursing Diploma Course</option>
+            <option value="dmlt">DMLT Diploma Course</option>
+            <option value="ot_technician">OT Technician Diploma Course</option>
+            <option value="electrician">Electrician Diploma Course</option>
+            <option value="ac_refrigerator">AC & Refrigerator Diploma Course</option>
+            <option value="basic_parlour">Basic Parlour Course</option>
+            <option value="general_nursing">General Nursing and Midwifery Assistant</option>
+          </select>
+        </div>
+        <div>
+          <label for="inquiryTakenBy" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user-tie text-blue-900 mr-2"></i>Inquiry Taken By*
+          </label>
+          <input type="text" id="inquiryTakenBy" name="inquiryTakenBy" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+        </div>
+        <div>
+          <label for="branch22" class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-building text-blue-900 mr-2"></i>Branch
+          </label>
+          <input type="text" id="branch22" name="branch" readonly class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed">
+        </div>
+      </div>
+
+      <div class="border-t border-gray-200 pt-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div class="mb-4 md:mb-0">
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="agree1" name="agree" required class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              <span class="ml-2 text-sm text-gray-700">I agree to the terms and conditions</span>
+            </label>
+            <div id="agreeError1" class="text-red-500 text-xs italic mt-1"></div>
+          </div>
+          <div class="flex justify-end space-x-4">
+            <button type="submit" onclick="copyInquiry()" id="submitButton2" class="bg-gray-600 hover:bg-gray-700 text-white font-medium tracking-wide py-2 px-4 rounded-md shadow-md transform hover:scale-105 transition duration-300 flex items-center justify-center gap-2">
+              <i class="fas fa-paper-plane mr-2"></i>Submit
+            </button>
+            <button onclick="openAdmissionForm()" onmouseover="copyInquiry()" class="bg-gray-600 hover:bg-gray-700 text-white font-medium tracking-wide py-2 px-4 rounded-md shadow-md transform hover:scale-105 transition duration-300 flex items-center justify-center gap-2">
+              <i class="fas fa-file-alt mr-2"></i>Take Admission
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div id="dataPopup" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl shadow-gray-500/20 w-full max-w-md max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50/80 to-slate-50/80 backdrop-blur-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-600 rounded-full flex items-center justify-center shadow-lg">
+          <i class="fas fa-search text-white text-sm"></i>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Existing Aadhar Found!</h2>
+        </div>
+      </div>
+      <button onclick="closePopup()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 transition-all duration-200 flex items-center justify-center group">
+        <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div id="popupContent" class="p-6 max-h-96 overflow-y-auto space-y-3"></div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end gap-4 p-6 border-t border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
+      <button onclick="closePopup(); clearInquiryFormFields(true);"
+              class="group relative px-6 py-3 text-sm font-semibold text-slate-600 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl hover:bg-white hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 transform hover:scale-105 active:scale-95">
+        <span class="flex items-center gap-2">
+          <i class="fas fa-plus-circle text-slate-500 group-hover:text-slate-600 transition-colors"></i>
+          Continue with New Inquiry
+        </span>
+      </button>
+      <button onclick="fillFormFromPopup()"
+              class="group relative px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-600 via-gray-700 to-slate-700 border-2 border-transparent rounded-xl hover:from-gray-700 hover:via-gray-800 hover:to-slate-800 hover:shadow-xl hover:shadow-gray-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95 overflow-hidden">
+        <span class="flex items-center gap-2 relative z-10">
+          <i class="fas fa-magic text-gray-200 group-hover:text-white transition-colors"></i>
+          Fill Form with This Data
+        </span>
+        <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,947 @@
+<div id="inquiryAnalyticsSection" class="hidden bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">Inquiry Analytics</h2>
+      <p class="text-gray-600 mt-1">Track and analyze all student inquiries</p>
+    </div>
+    <button onclick="closeInquiryAnalytics()"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 transition-colors">
+      <i class="fas fa-arrow-left"></i><span>Back</span>
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-alt text-blue-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">This Month</p>
+      </div>
+      <p id="iaThisMonth" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-week text-green-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">This Week</p>
+      </div>
+      <p id="iaThisWeek" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-day text-purple-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Today</p>
+      </div>
+      <p id="iaToday" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+  </div>
+
+  <!-- Enhanced Filter Section -->
+  <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Filter & Search</h3>
+      <button onclick="resetFilters()"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 rounded text-sm border border-gray-300 transition-colors">
+        Reset Filters
+      </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Course Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+        <select id="iaCourseSelect" onchange="filterInquiryData()"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="">All Courses</option>
+        </select>
+      </div>
+      
+      <!-- Phone/Aadhaar Search -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Search by Phone/Aadhaar</label>
+        <div class="flex gap-2">
+          <input type="text" id="iaSearchInput" 
+                 class="flex-1 px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Enter phone or Aadhaar number">
+          <button onclick="handleSearch()"
+                  class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </div>
+      
+      <!-- Date Range Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+        <div class="flex gap-2">
+          <input type="date" id="iaDateFrom" onchange="filterInquiryData()"
+                 class="w-1/2 px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <input type="date" id="iaDateTo" onchange="filterInquiryData()"
+                 class="w-1/2 px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-700">Show:</span>
+      <select id="iaPageSize" onchange="changeInquiryPageSize()" class="px-2 py-1.5 border rounded border-gray-300 bg-white">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+      </select>
+      <span class="text-sm text-gray-700">entries per page</span>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="copyTable('iaTableContainer')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-copy text-xs"></i> Copy
+      </button>
+      <button onclick="exportCSV('iaTableContainer','inquiry_analytics.csv')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-csv text-xs"></i> CSV
+      </button>
+      <button onclick="exportTablePDF('iaTableContainer','InquiryAnalytics')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-pdf text-xs"></i> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div id="iaTableContainer" class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('date')" id="sort-inquiry-date">
+              <div class="flex items-center gap-1">
+                Date
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('aadhaar')" id="sort-inquiry-aadhaar">
+              <div class="flex items-center gap-1">
+                Aadhaar
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('fullName')" id="sort-inquiry-fullName">
+              <div class="flex items-center gap-1">
+                Full Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('qualification')" id="sort-inquiry-qualification">
+              <div class="flex items-center gap-1">
+                Qualification
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('phone')" id="sort-inquiry-phone">
+              <div class="flex items-center gap-1">
+                Phone
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parents Number</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('age')" id="sort-inquiry-age">
+              <div class="flex items-center gap-1">
+                Age
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('interestedCourse')" id="sort-inquiry-interestedCourse">
+              <div class="flex items-center gap-1">
+                Course
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('inquiryTakenBy')" id="sort-inquiry-inquiryTakenBy">
+              <div class="flex items-center gap-1">
+                Taken By
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('branch')" id="sort-inquiry-branch">
+              <div class="flex items-center gap-1">
+                Branch
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="14" class="px-4 py-4 text-center text-gray-500">Loading inquiry data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-center mt-6 pt-4 border-t border-gray-200">
+    <div id="iaPageInfo" class="text-sm text-gray-700 mb-3 md:mb-0"></div>
+    
+    <div id="iaPagination" class="flex items-center gap-1">
+      <button id="iaFirstPage" onclick="changeInquiryPage(1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button id="iaPrevPage" onclick="changeInquiryPage(inquiryCurrentPage - 1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-left"></i>
+      </button>
+
+      <div id="iaPageNumbers" class="flex mx-1">
+        <!-- Page numbers will be generated here -->
+      </div>
+
+      <button id="iaNextPage" onclick="changeInquiryPage(inquiryCurrentPage + 1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-right"></i>
+      </button>
+      <button id="iaLastPage" onclick="changeInquiryPage(inquiryTotalPages)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let inquiryAnalyticsData = [];
+let filteredInquiryData = [];
+let inquiryCurrentPage = 1;
+let inquiryPageSize = 50;
+let inquiryTotalPages = 1;
+let currentInquirySortColumn = 'date';
+let currentInquirySortDirection = 'desc'; // 'asc' or 'desc'
+
+
+
+function loadInquiryAnalytics() {
+  const tableContainer = document.getElementById("iaTableContainer");
+  tableContainer.innerHTML = `
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aadhaar</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qualification</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parents Number</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taken By</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="14" class="px-4 py-4 text-center text-gray-500">Loading inquiry data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  google.script.run
+    .withSuccessHandler(function(response) {
+      console.log("Server response:", response); // Debugging
+      
+      // Check if response is null or undefined
+      if (!response) {
+        tableContainer.innerHTML = 
+          `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>No data received from server
+          </div>`;
+        return;
+      }
+      
+      // Check for error property
+      if (response.error) {
+        tableContainer.innerHTML = 
+          `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>${response.error}
+          </div>`;
+        return;
+      }
+
+      // Make sure data exists
+      if (!response.data) {
+        tableContainer.innerHTML = 
+          `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+            <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+            No inquiry data found
+          </div>`;
+        return;
+      }
+
+      inquiryAnalyticsData = response.data;
+      filteredInquiryData = [...inquiryAnalyticsData];
+
+      // Sort by date descending (latest first) initially
+      sortInquiryTable('date');
+
+      // Initialize pagination
+      inquiryCurrentPage = 1;
+      updateInquiryPagination();
+
+      // Update summary cards
+      updateInquirySummaryCards(inquiryAnalyticsData);
+    })
+    .withFailureHandler(function(error) {
+      console.error("Error loading analytics:", error);
+      tableContainer.innerHTML = 
+        `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Error loading inquiry data: ${error.message}
+        </div>`;
+    })
+    .getInquiryAnalyticsData("admin");
+}
+
+// Handle search button click
+function handleSearch() {
+  filterInquiryData();
+}
+
+// Allow Enter key to trigger search
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('iaSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
+  }
+});
+
+function filterInquiryData() {
+  const selectedCourse = document.getElementById("iaCourseSelect").value;
+  const searchTerm = document.getElementById("iaSearchInput").value.trim();
+  const dateFrom = document.getElementById("iaDateFrom").value;
+  const dateTo = document.getElementById("iaDateTo").value;
+
+  filteredInquiryData = inquiryAnalyticsData.filter(d => {
+    // Course filter
+    if (selectedCourse && d.interestedCourse !== selectedCourse) {
+      return false;
+    }
+    
+    // Phone/Aadhaar search - FIXED LOGIC
+    if (searchTerm) {
+      const phoneMatch = d.phone && d.phone.toString().includes(searchTerm);
+      const aadhaarMatch = d.aadhaar && d.aadhaar.toString().includes(searchTerm);
+      
+      // Return false if neither phone nor aadhaar matches
+      if (!phoneMatch && !aadhaarMatch) {
+        return false;
+      }
+    }
+    
+    // Date range filter
+    if (dateFrom && d.date) {
+      const recordDate = new Date(d.date);
+      const fromDate = new Date(dateFrom);
+      if (recordDate < fromDate) {
+        return false;
+      }
+    }
+    
+    if (dateTo && d.date) {
+      const recordDate = new Date(d.date);
+      const toDate = new Date(dateTo);
+      toDate.setDate(toDate.getDate() + 1); // Include the end date
+      if (recordDate >= toDate) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Reset to first page after filtering
+  inquiryCurrentPage = 1;
+  updateInquiryPagination();
+  updateInquirySummaryCards(filteredInquiryData);
+}
+
+function resetFilters() {
+  document.getElementById("iaCourseSelect").value = "";
+  document.getElementById("iaSearchInput").value = "";
+  document.getElementById("iaDateFrom").value = "";
+  document.getElementById("iaDateTo").value = "";
+
+  filteredInquiryData = [...inquiryAnalyticsData];
+  inquiryCurrentPage = 1;
+  updateInquiryPagination();
+  updateInquirySummaryCards(filteredInquiryData);
+}
+
+function updateInquirySummaryCards(data) {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentDate = now.toDateString();
+
+  // Get start of current week (Monday)
+  const startOfWeek = new Date(now);
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  startOfWeek.setDate(now.getDate() - daysToSubtract);
+  // Set to start of day for accurate comparison
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  let thisMonthCount = 0;
+  let thisWeekCount = 0;
+  let todayCount = 0;
+
+  data.forEach(item => {
+    if (item.date) {
+      try {
+        const itemDate = new Date(item.date);
+        // Set to start of day for accurate comparison
+        itemDate.setHours(0, 0, 0, 0);
+
+        const itemMonth = itemDate.getMonth();
+        const itemYear = itemDate.getFullYear();
+        const itemDateString = itemDate.toDateString();
+
+        // Count this month
+        if (itemMonth === currentMonth && itemYear === currentYear) {
+          thisMonthCount++;
+        }
+
+        // Count this week (from Monday to Sunday)
+        if (itemDate >= startOfWeek) {
+          thisWeekCount++;
+        }
+
+        // Count today
+        if (itemDateString === currentDate) {
+          todayCount++;
+        }
+      } catch (e) {
+        console.log("Error parsing date:", item.date);
+      }
+    }
+  });
+
+  document.getElementById("iaThisMonth").textContent = thisMonthCount.toLocaleString();
+  document.getElementById("iaThisWeek").textContent = thisWeekCount.toLocaleString();
+  document.getElementById("iaToday").textContent = todayCount.toLocaleString();
+}
+
+function updateInquiryPagination() {
+  inquiryTotalPages = Math.ceil(filteredInquiryData.length / inquiryPageSize);
+
+  // Show/hide pagination controls
+  const paginationEl = document.getElementById("iaPagination");
+  if (inquiryTotalPages > 1) {
+    paginationEl.classList.remove("hidden");
+  } else {
+    paginationEl.classList.add("hidden");
+  }
+
+  // Update page number buttons
+  const pageNumbersEl = document.getElementById("iaPageNumbers");
+  pageNumbersEl.innerHTML = "";
+
+  // Determine which page numbers to show
+  let startPage = Math.max(1, inquiryCurrentPage - 2);
+  let endPage = Math.min(inquiryTotalPages, startPage + 4);
+
+  // Adjust if we're near the end
+  if (endPage - startPage < 4 && startPage > 1) {
+    startPage = Math.max(1, endPage - 4);
+  }
+
+  // Create page number buttons
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = `px-3 py-1.5 mx-0.5 rounded text-sm border transition-colors ${i === inquiryCurrentPage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-700'}`;
+    pageBtn.onclick = () => changeInquiryPage(i);
+    pageNumbersEl.appendChild(pageBtn);
+  }
+
+  // Update navigation button states
+  document.getElementById("iaFirstPage").disabled = inquiryCurrentPage === 1;
+  document.getElementById("iaPrevPage").disabled = inquiryCurrentPage === 1;
+  document.getElementById("iaNextPage").disabled = inquiryCurrentPage === inquiryTotalPages;
+  document.getElementById("iaLastPage").disabled = inquiryCurrentPage === inquiryTotalPages;
+
+  // Render the current page
+  renderInquiryCurrentPage();
+}
+
+function changeInquiryPage(page) {
+  if (page < 1 || page > inquiryTotalPages) return;
+  inquiryCurrentPage = page;
+  updateInquiryPagination();
+}
+
+function changeInquiryPageSize() {
+  inquiryPageSize = parseInt(document.getElementById("iaPageSize").value);
+  inquiryCurrentPage = 1;
+  updateInquiryPagination();
+}
+
+function renderInquiryCurrentPage() {
+  const startIndex = (inquiryCurrentPage - 1) * inquiryPageSize;
+  const endIndex = Math.min(startIndex + inquiryPageSize, filteredInquiryData.length);
+  const pageData = filteredInquiryData.slice(startIndex, endIndex);
+
+  renderInquiryTable(pageData);
+
+  // Update page info
+  const pageInfo = document.getElementById("iaPageInfo");
+  if (pageInfo) {
+    pageInfo.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${filteredInquiryData.length} entries`;
+  }
+}
+
+function renderInquiryTable(dataArray) {
+  const tableContainer = document.getElementById("iaTableContainer");
+
+  if (!dataArray || dataArray.length === 0) {
+    tableContainer.innerHTML =
+      `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+        <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+        No inquiry data found matching your search criteria
+      </div>`;
+    return;
+  }
+
+  let h = `
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('date')" id="sort-inquiry-date">
+              <div class="flex items-center gap-1">
+                Date
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('aadhaar')" id="sort-inquiry-aadhaar">
+              <div class="flex items-center gap-1">
+                Aadhaar
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('fullName')" id="sort-inquiry-fullName">
+              <div class="flex items-center gap-1">
+                Full Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('qualification')" id="sort-inquiry-qualification">
+              <div class="flex items-center gap-1">
+                Qualification
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('phone')" id="sort-inquiry-phone">
+              <div class="flex items-center gap-1">
+                Phone
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parents Number</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('age')" id="sort-inquiry-age">
+              <div class="flex items-center gap-1">
+                Age
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('interestedCourse')" id="sort-inquiry-interestedCourse">
+              <div class="flex items-center gap-1">
+                Course
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('inquiryTakenBy')" id="sort-inquiry-inquiryTakenBy">
+              <div class="flex items-center gap-1">
+                Taken By
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortInquiryTable('branch')" id="sort-inquiry-branch">
+              <div class="flex items-center gap-1">
+                Branch
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+  `;
+
+  dataArray.forEach(d => {
+    h += `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3 whitespace-nowrap text-sm">
+          <button onclick='openAdmissionFormFromInquiry(${JSON.stringify(d).replace(/'/g, "\\'")})'
+                  class="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 text-white rounded text-sm flex items-center gap-1 transition-colors">
+            <i class="fas fa-user-plus text-xs"></i> Take Admission
+          </button>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.date || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.aadhaar || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${d.fullName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.qualification || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.phone || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.whatsapp || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.parentsNumber || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.email || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.age || ''}</td>
+        <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">${d.address || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${d.interestedCourse || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.inquiryTakenBy || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.branch || ''}</td>
+      </tr>
+    `;
+  });
+
+  h += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  tableContainer.innerHTML = h;
+}
+
+function sortInquiryTable(column) {
+  // If clicking the same column, toggle direction
+  if (currentInquirySortColumn === column) {
+    currentInquirySortDirection = currentInquirySortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentInquirySortColumn = column;
+    // Default to desc for date, asc for others
+    currentInquirySortDirection = column === 'date' ? 'desc' : 'asc';
+  }
+
+  // Sort the filtered data
+  filteredInquiryData.sort((a, b) => {
+    let aValue = a[column] || '';
+    let bValue = b[column] || '';
+
+    // Special handling for date column
+    if (column === 'date') {
+      try {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+        if (isNaN(aValue.getTime())) aValue = new Date(0); // Default to epoch if invalid
+        if (isNaN(bValue.getTime())) bValue = new Date(0);
+      } catch (e) {
+        aValue = new Date(0);
+        bValue = new Date(0);
+      }
+    } else if (column === 'age') {
+      // Numeric sorting for age
+      aValue = parseInt(aValue) || 0;
+      bValue = parseInt(bValue) || 0;
+    } else {
+      // String sorting for other columns
+      aValue = String(aValue).toLowerCase();
+      bValue = String(bValue).toLowerCase();
+    }
+
+    if (currentInquirySortDirection === 'asc') {
+      if (aValue < bValue) return -1;
+      if (aValue > bValue) return 1;
+      return 0;
+    } else {
+      if (aValue > bValue) return -1;
+      if (aValue < bValue) return 1;
+      return 0;
+    }
+  });
+
+  // Update sort indicators
+  updateInquirySortIndicators();
+
+  // Reset to first page and re-render
+  inquiryCurrentPage = 1;
+  updateInquiryPagination();
+}
+
+function updateInquirySortIndicators() {
+  // Reset all sort arrows
+  const allHeaders = ['date', 'aadhaar', 'fullName', 'qualification', 'phone', 'age', 'interestedCourse', 'inquiryTakenBy', 'branch'];
+  allHeaders.forEach(col => {
+    const header = document.getElementById(`sort-inquiry-${col}`);
+    if (header) {
+      const arrows = header.querySelector('.sort-arrows');
+      if (arrows) {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-gray-300"></i>
+          <i class="fas fa-sort-down text-gray-300"></i>
+        `;
+      }
+    }
+  });
+
+  // Highlight current sort column
+  const currentHeader = document.getElementById(`sort-inquiry-${currentInquirySortColumn}`);
+  if (currentHeader) {
+    const arrows = currentHeader.querySelector('.sort-arrows');
+    if (arrows) {
+      if (currentInquirySortDirection === 'asc') {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-blue-600"></i>
+          <i class="fas fa-sort-down text-gray-300"></i>
+        `;
+      } else {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-gray-300"></i>
+          <i class="fas fa-sort-down text-blue-600"></i>
+        `;
+      }
+    }
+  }
+}
+
+function  closeInquiryAnalytics() {
+  hideAllSections();
+  document.getElementById("ifId").classList.remove("hidden");
+}
+
+
+function openAdmissionFormFromInquiry(data) {
+  // Set flag to indicate we came from inquiry analytics
+  sessionStorage.setItem('cameFromInquiryAnalytics', 'true');
+
+  // Hide all sections and open admission form
+  hideAllSections();
+  document.getElementById("admissionFormSection").classList.remove("hidden");
+
+  // Pre-fill the form with selected inquiry data (includes course pre-filling)
+  prefillAdmissionFormFromInquiry(data);
+
+  // Wait for form to be ready, then execute both operations
+  setTimeout(() => {
+    // Generate receipt number and update course details simultaneously
+    generateReceiptNumber();
+
+    if (document.getElementById('courseSelect') && typeof updateCourseDetails === 'function') {
+      updateCourseDetails();
+    }
+  }, 100);
+}
+
+function generateReceiptNumber() {
+  const receiptInput = document.getElementById("receipt_number");
+  if (receiptInput) {
+    // 1. Reset the input field's state each time the form is opened.
+    receiptInput.readOnly = false;
+    receiptInput.value = "Generating..."; // Show immediate feedback.
+
+    // 2. Clear any lingering timers from previous times the form was opened.
+    if (typeof receiptLockTimer !== 'undefined' && receiptLockTimer) {
+      clearTimeout(receiptLockTimer);
+    }
+
+    // 3. Call the backend script to fetch the number.
+    google.script.run
+      .withSuccessHandler(function (newReceiptNumber) {
+        // 4. Populate the input field as soon as the number is received.
+        receiptInput.value = newReceiptNumber;
+        console.log(
+          `Populated receipt number: ${newReceiptNumber}. Field will lock in 5 seconds if not edited.`
+        );
+
+        // 5. Set a 5-second timer. If it completes, the field becomes read-only.
+        receiptLockTimer = setTimeout(() => {
+          receiptInput.readOnly = true;
+          console.log(`Receipt number ${newReceiptNumber} is now locked.`);
+        }, 5000); // 5000 milliseconds = 5 seconds
+
+        // 6. Listen for the *very first* input from the user.
+        // The { once: true } option automatically removes the listener after it runs once.
+        receiptInput.addEventListener(
+          "input",
+          () => {
+            console.log("User is typing. Cancelling the auto-lock timer.");
+            // If the user starts typing, cancel the timer that would have locked the field.
+            clearTimeout(receiptLockTimer);
+          },
+          { once: true }
+        );
+      })
+      .withFailureHandler(function (error) {
+        console.error("Error fetching receipt number: " + error.message);
+        receiptInput.value = "Error fetching number";
+      })
+      .getNextReceiptNumber();
+  }
+}
+
+function prefillAdmissionFormFromInquiry(data) {
+  // Split name into parts if possible
+  const fullName = data.fullName || "";
+  const nameParts = fullName ? fullName.split(' ') : ['', '', ''];
+  
+  // Pre-fill basic information
+  if (document.getElementById('receipt_number')) {
+      const receiptNumber = data.rowNumber || data.serialNumber || '';
+    document.getElementById('receipt_number').value = receiptNumber;
+  }
+  if (document.getElementById('first_name')) {
+    document.getElementById('first_name').value = nameParts[0] || '';
+  }
+  if (document.getElementById('last_name')) {
+    document.getElementById('last_name').value = nameParts[nameParts.length - 1] || '';
+  }
+  
+  // Middle name if applicable
+  if (nameParts.length > 2 && document.getElementById('middle_name')) {
+    document.getElementById('middle_name').value = nameParts.slice(1, -1).join(' ') || '';
+  }
+  // Pre-fill course information
+  const interestedCourse = data.interestedCourse || "";
+  if (interestedCourse && document.getElementById('courseSelect')) {
+    const courseSelect = document.getElementById('courseSelect');
+    const searchTerm = interestedCourse.toLowerCase().trim();
+    let found = false;
+
+    // First try exact match
+    for (let i = 0; i < courseSelect.options.length; i++) {
+        if (courseSelect.options[i].value.toLowerCase() === searchTerm ||
+            courseSelect.options[i].text.toLowerCase() === searchTerm) {
+            courseSelect.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+
+    // If not found, try partial match
+    if (!found) {
+        for (let i = 0; i < courseSelect.options.length; i++) {
+            if (courseSelect.options[i].text.toLowerCase().includes(searchTerm) ||
+                courseSelect.options[i].value.toLowerCase().includes(searchTerm)) {
+                courseSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    // If still not found, try matching course codes like "gnm", "enn"
+    if (!found) {
+        const courseCode = searchTerm.split('_')[0]; // Get "gnm" from "gnm_unsing"
+        for (let i = 0; i < courseSelect.options.length; i++) {
+            if (courseSelect.options[i].value.toLowerCase().includes(courseCode) ||
+                courseSelect.options[i].text.toLowerCase().includes(courseCode)) {
+                courseSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    // Note: Course details update is now handled after this pre-filling in openAdmissionFormFromInquiry
+  }
+  
+  // Pre-fill contact information if available
+  const phone = data.phone || "";
+  if (phone) {
+    const phoneInput = document.querySelector('input[name="phone"]');
+    if (phoneInput) phoneInput.value = phone;
+  }
+  
+  const email = data.email || "";
+  if (email) {
+    const emailInput = document.querySelector('input[name="email"]');
+    if (emailInput) emailInput.value = email;
+  }
+  
+  const address = data.address || "";
+  if (address) {
+    const addressInput = document.querySelector('input[name="address"], textarea[name="address"]');
+    if (addressInput) addressInput.value = address;
+  }
+}
+</script>

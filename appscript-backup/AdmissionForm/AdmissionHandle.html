@@ -1,0 +1,842 @@
+<script>
+// Active functions only - cleaned up from duplicate/unused code
+
+function previewPhoto(event) {
+  const photoPreview = document.getElementById('photo_preview');
+  const noPhotoText = document.getElementById('no_photo_text');
+  const file = event.target.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      photoPreview.src = e.target.result;
+      photoPreview.style.display = 'block';
+      noPhotoText.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    photoPreview.src = '#';
+    photoPreview.style.display = 'none';
+    noPhotoText.style.display = 'block';
+  }
+}
+
+function generateAndSaveEnrollment(enrollmentId) {
+  try {
+    // Get student details
+    const studentName = [
+      document.getElementById('first_name').value,
+      document.getElementById('middle_name').value,
+      document.getElementById('last_name').value
+    ].filter(Boolean).join(" ");
+
+    const course = document.getElementById('courseSelect').options[
+      document.getElementById('courseSelect').selectedIndex
+    ].text;
+
+    // Use the provided enrollment ID instead of generating a new one
+    loadReceipt(enrollmentId, studentName, course);
+
+    // Save enrollment data after receipt is shown
+    setTimeout(() => {
+      google.script.run
+        .withFailureHandler((error) => {
+          console.error("Save failed:", error);
+        })
+        .saveEnrollment({
+          enrollmentID: enrollmentId,
+          studentName: studentName,
+          course: course,
+          date: new Date().toLocaleDateString()
+        });
+    }, 1000);
+
+  } catch (error) {
+    console.error("Error:", error);
+    loadReceipt("Not Available");
+  }
+}
+
+function loadReceipt(enrollmentID, studentName, course) {
+    try {
+           const logoBase64 = "https://i.postimg.cc/15z0wxhX/cropped-circle-image-(1).png";
+
+        // Get receipt number from form field (already generated sequentially)
+        const receiptNo = document.getElementById('receipt_number').value || "AR-0001";
+        const date = new Date().toLocaleDateString('en-GB');
+
+        // Get student name from form fields
+        const firstName = document.getElementById('first_name').value || "";
+        const middleName = document.getElementById('middle_name').value || "";
+        const lastName = document.getElementById('last_name').value || "";
+        const studentName = [firstName, middleName, lastName].filter(Boolean).join(" ");
+
+        // Get payment mode from form field
+        const paymentMode = document.getElementById('payment_mode').value || "Cash";
+
+        // Get course details
+        const courseSelect = document.getElementById('courseSelect');
+        const courseName = courseSelect?.options[courseSelect.selectedIndex]?.text || "N/A";
+
+        // Map display names to internal course keys
+        const courseKeyMap = {
+            "ANM Nursing Diploma Course": "anm_nursing",
+            "GNM Nursing Diploma Course": "gnm_nursing",
+            "DMLT Diploma Course": "dmlt",
+            "OT Technician Diploma Course": "ot_technician",
+            "Electrician Diploma Course": "electrician",
+            "AC & Refrigerator Diploma Course": "ac_refrigerator",
+            "Basic Parlour Course": "basic_parlour",
+            "General Nursing and Midwifery Assistant": "general_nursing"
+        };
+
+        const courseKey = courseKeyMap[courseName];
+
+        // Get branch from localStorage, sessionStorage, or default
+        const branch = localStorage.getItem("userBranch") ||
+                      sessionStorage.getItem("userBranch") ||
+                      sessionStorage.getItem("branch") ||
+                      "kurla";
+        const courseData = typeof getCourseDataByLocation === 'function' ? getCourseDataByLocation(branch) : {};
+
+        // Use ONLY admission fee for the receipt amount
+        const totalAmount = courseData[courseKey]?.admission_fee || 5000; // Default to 5000 if not found
+         // ✅ FIX: Get the logged-in user name from sessionStorage or hidden field
+        const loggedInUser = sessionStorage.getItem("loggedInUser") ||
+                            document.getElementById("loggedInUserId")?.value ||
+                            document.getElementById("userName")?.value ||
+                            "Admin";
+
+        // Prepare data for the receipt
+        const receiptData = {
+            receiptNo: receiptNo,
+            date: date,
+            fullName: studentName,
+            proposeToPay: courseName,
+            totalAmount: formatCurrency(totalAmount),
+            paid: formatCurrency(totalAmount), // Assuming full payment
+            balance: formatCurrency(0), // Zero balance
+            examFees: "-",
+            receivedBy: loggedInUser,
+            enrollmentID: enrollmentID || "Not Generated", // Added enrollment ID with fallback
+            branch: branch, // Added branch
+            paymentMode: paymentMode // Added payment mode
+        };
+
+        // Format currency function
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2);
+        }
+
+        // The entire HTML structure for the receipt with original styling
+        const receiptPageHTML = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Shelar Training Institute Receipt</title>
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 0.5in;
+                    }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background: white;
+                    }
+
+                    .page-container {
+                        width: 210mm; /* A4 width */
+                        height: 297mm; /* A4 height */
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        padding: 10mm;
+                        box-sizing: border-box;
+                    }
+
+                    .receipt {
+                        width: 100%;
+                        min-height: 135mm;   /* fixed, safe half A4 */
+                        max-height: 135mm;
+                        border: 3px solid #000;
+                        border-radius: 15px;
+                        padding: 15px;
+                        box-sizing: border-box;
+                        background: white;
+                        margin-bottom: 10mm; /* Space between two receipts */
+                    }
+
+                    .enrollment-info {
+                        margin-top: 15px;
+                        padding-top: 10px;
+                        border-top: 1px dashed #ccc;
+                        text-align: center;
+                        font-weight: bold;
+                    }
+
+                    .header {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 15px;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 10px;
+                    }
+
+                     .logo img { width: 65px; height: auto;}
+                     
+                    .institute-name {
+                        font-size: 28px;
+                        font-weight: bold;
+                        color: #000;
+                        flex-grow: 1;
+                        letter-spacing: 1px;
+                        text-align: center;
+                    }
+
+                    .receipt-label {
+                        background: #333;
+                        color: white;
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+
+                    .receipt-content {
+                        display: flex;
+                         flex-direction: column;
+                         flex: 1;
+                    }
+
+                    .receipt-info {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 20px;
+                    }
+
+                    .receipt-no {
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+
+                    .date {
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+
+                    .form-fields {
+                        flex-grow: 1;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+
+                    .field-row {
+                        display: flex;
+                        align-items: center;
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+
+                    .field-label {
+                        min-width: 140px;
+                        color: #000;
+                    }
+
+                    .field-value {
+                        flex-grow: 1;
+                        border-bottom: 1px solid #000;
+                        padding: 2px 5px;
+                        min-height: 20px;
+                        color: #0066cc;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: calc(100% - 140px);
+                    }
+
+                    .amount-fields {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+
+                    .amount-field {
+                        flex: 1;
+                        min-width: 30%;
+                    }
+
+                    .amount-fields .field-value {
+                        max-width: none;
+                        white-space: normal;
+                        word-break: break-all;
+                        flex-grow: 1;
+                        padding-left: 0;
+                    }
+                    .amount-fields .field-label {
+                        min-width: 140px;
+                    }
+                    .footer {
+                        margin-top: auto; /* pushes footer to bottom */
+    padding-top: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-end;
+                    }
+
+                    .note {
+                        font-size: 18px;
+                        font-weight: bold;
+                        max-width: 60%;
+                    }
+
+                    .signature-area {
+                        text-align: center;
+                        min-width: 150px;
+                    }
+
+                    .signature-line {
+                        border-bottom: 1px solid #000;
+                        height: 40px;
+                        margin-bottom: 5px;
+                    }
+
+                    .signature-label {
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+
+                    @media print {
+                        .page-container {
+                            height: 297mm;
+                            padding: 10mm;
+                        }
+                        .receipt {
+                            margin-bottom: 5mm;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="page-container">
+                    <!-- First Receipt -->
+                    <div class="receipt">
+                        <div class="header">
+                            <div class="logo">
+                        <img src="${logoBase64}">
+                    </div> 
+                            <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                            <div class="receipt-label">STI RECEIPT</div>
+                        </div>
+
+                        <div class="receipt-content">
+                            <div class="receipt-info">
+                                <div class="receipt-no">Receipt No. ${receiptData.receiptNo}</div>
+                                <div class="date" style="font-weight: bold;">Date: ${receiptData.date}</div>
+                            </div>
+
+                            <div class="form-fields">
+                                <div class="field-row">
+                                    <div class="field-label">Full Name :</div>
+                                    <div class="field-value">${receiptData.fullName}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Propose to Pay :</div>
+                                    <div class="field-value">${receiptData.proposeToPay}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Total Amount :</div>
+                                    <div class="field-value">${receiptData.totalAmount}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Paid :</div>
+                                    <div class="field-value">${receiptData.paid}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Balance Amount :</div>
+                                    <div class="field-value">${receiptData.balance}</div>
+                                </div>
+
+                                <div class="field-row" style="justify-content: space-between;">
+                                    <div class="field-label">Received by :</div>
+                                    <div class="field-value" style="display: flex; align-items: center; border-bottom: none; flex-grow: 1; margin-left: 10px;"><span style="border-bottom: 1px solid #000; flex: 1; padding: 2px 5px; min-height: 20px; max-width: 60%;">${receiptData.receivedBy}</span><span style="margin-left: 20px; color: #000; white-space: nowrap;">Branch: </span><span style="border-bottom: 1px solid #000; color: #000; white-space: nowrap; flex-grow: 1;">${receiptData.branch}</span></div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Payment Mode :</div>
+                                    <div class="field-value">${receiptData.paymentMode}</div>
+                                </div>
+                            </div>
+
+                            <div class="enrollment-info">
+                                Enrollment ID: ${receiptData.enrollmentID}
+                            </div>
+
+                            <div class="footer">
+                                <div class="note">• Fees once paid are non-refundable</div>
+                                <div class="signature-area">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-label">Authority Signature</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                   <hr style="border: 2px dashed #000; margin: 25px 0;">
+                    <!-- Second Receipt (Copy) -->
+                    <div class="receipt">
+                        <div class="header">
+                            <div class="logo">
+                        <img src="${logoBase64}">
+                    </div> 
+
+                            <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                            <div class="receipt-label" style="font-size: 12px; padding: 5px 10px;">STUDENT RECEIPT</div>
+                        </div>
+
+                        <div class="receipt-content">
+                            <div class="receipt-info">
+                                <div class="receipt-no">Receipt No. ${receiptData.receiptNo}</div>
+                                <div class="date" style="font-weight: bold;">Date: ${receiptData.date}</div>
+                            </div>
+
+                            <div class="form-fields">
+                                <div class="field-row">
+                                    <div class="field-label">Full Name :</div>
+                                    <div class="field-value">${receiptData.fullName}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Propose to Pay :</div>
+                                    <div class="field-value">${receiptData.proposeToPay}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Total Amount :</div>
+                                    <div class="field-value">${receiptData.totalAmount}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Paid :</div>
+                                    <div class="field-value">${receiptData.paid}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Balance Amount :</div>
+                                    <div class="field-value">${receiptData.balance}</div>
+                                </div>
+
+                                <div class="field-row" style="justify-content: space-between;">
+                                    <div class="field-label">Received by :</div>
+                                    <div class="field-value" style="display: flex; align-items: center; border-bottom: none; flex-grow: 1; margin-left: 10px;"><span style="border-bottom: 1px solid #000; flex: 1; padding: 2px 5px; min-height: 20px; max-width: 60%;">${receiptData.receivedBy}</span><span style="margin-left: 20px; color: #000; white-space: nowrap;">Branch: </span><span style="border-bottom: 1px solid #000; color: #000; white-space: nowrap; flex-grow: 1;">${receiptData.branch}</span></div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Payment Mode :</div>
+                                    <div class="field-value">${receiptData.paymentMode}</div>
+                                </div>
+                            </div>
+
+                            <div class="enrollment-info">
+                                Enrollment ID: ${receiptData.enrollmentID}
+                            </div>
+
+                            <div class="footer">
+                                <div class="note">• Fees once paid are non-refundable</div>
+                                <div class="signature-area">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-label">Authority Signature</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                    }, 500);
+                </scr` + `ipt>
+            </body>
+            </html>
+        `;
+
+        // Show receipt in a modal instead of opening new window
+        showReceiptModal(receiptPageHTML);
+
+    } catch (error) {
+        console.error("Error generating receipt:", error);
+        const errorMessage = "Something went wrong. Please check the browser console for details.";
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffe0e0;
+            border: 1px solid #ff0000;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            color: #cc0000;
+            font-family: sans-serif;
+            text-align: center;
+        `;
+        errorDiv.innerHTML = `
+            <p>${errorMessage}</p>
+            <button onclick="this.parentNode.remove()" style="margin-top: 15px; padding: 8px 15px; background-color: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+}
+
+async function AdmissionHandle(event) {
+  event.preventDefault();
+  console.log("Form submission started");
+
+  const submitButton = document.getElementById('submitButton');
+  submitButton.disabled = true;
+  submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+
+  // Handle photo upload and store in sessionStorage
+  const photoInput = document.getElementById('student_photo');
+
+  if (photoInput.files && photoInput.files[0]) {
+    const file = photoInput.files[0];
+    try {
+      const photoData = await readFileAsDataURL(file);
+      sessionStorage.setItem('studentPhoto', photoData);
+      localStorage.setItem('admission_studentPhoto', photoData); // Also store in localStorage for persistence
+      console.log("Photo stored in sessionStorage and localStorage");
+      console.log("Photo data length:", photoData.length);
+      console.log("Photo data starts with:", photoData.substring(0, 50));
+    } catch (error) {
+      console.error("Error reading photo file:", error);
+      // Continue even if photo fails
+    }
+  } else {
+    console.log("No photo file found in input");
+  }
+
+  // Now submit form data after photo processing is complete
+  submitFormData();
+
+  function submitFormData() {
+    // Collect form data
+    const formData = new FormData(event.target);
+    const formObject = {};
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
+      if(key != "student_photo") {
+        formObject[key] = value;
+      }
+    });
+
+    formObject.student_name = [
+      formObject.first_name,
+      formObject.middle_name,
+      formObject.last_name
+    ].filter(Boolean).join(" ");
+
+    // Debug: Print form data before sending
+    console.log("Form data to submit:", formObject);
+
+    // Submit to Google Apps Script
+    google.script.run
+      .withSuccessHandler((response) => {
+        console.log("Server response:", response);
+        submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit';
+        submitButton.disabled = false;
+
+        if (response.success) {
+    // Store enrollment ID for transfer to course payment
+    if (response.enrollmentId) {
+      sessionStorage.setItem("enrollmentId", response.enrollmentId);
+      console.log("Enrollment ID stored in sessionStorage:", response.enrollmentId);
+      // Also store in a more persistent way
+      localStorage.setItem("admission_enrollmentId", response.enrollmentId);
+    }
+
+    // Store form data before resetting for course payment transfer
+    sessionStorage.setItem("first_name", document.getElementById('first_name').value);
+    sessionStorage.setItem("middle_name", document.getElementById('middle_name').value);
+    sessionStorage.setItem("last_name", document.getElementById('last_name').value);
+    sessionStorage.setItem("tempText4", document.getElementById('receipt_number').value);
+    sessionStorage.setItem("tempText5", document.getElementById('courseSelect').value);
+    // Store guardian information for receipt auto-fill
+    sessionStorage.setItem("guardian_name", document.getElementById('guardian_name').value);
+    sessionStorage.setItem("guardian_relation", document.getElementById('guardian_relation').value);
+
+    generateAndSaveEnrollment(response.enrollmentId);
+
+          // Navigate to course payment after receipt is shown
+          setTimeout(() => {
+            console.log("Navigating to course payment form after admission submission");
+            // Set flag to indicate user came from admission form
+            sessionStorage.setItem('cameFromAdmissionForm', 'true');
+            openCoursePayment();
+          }, 1500);
+
+          alert("Submission successful!\nEnrollment ID: " + (response.enrollmentId || "Not generated"));
+          // Note: Form reset moved after navigation to allow data transfer
+        } else {
+          alert("Error: " + response.message);
+        }
+      })
+      .withFailureHandler((error) => {
+        console.error("Submission failed:", error);
+        alert("Submission failed: " + error.message);
+        submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit';
+        submitButton.disabled = false;
+      })
+      .saveToSheet(formObject);
+  }
+}
+
+function generateReceiptAndNavigate() {
+  console.log("NEXT button clicked - generating receipt and navigating to course payment");
+
+  // Prevent form submission if this is triggered from a button click
+  event?.preventDefault();
+
+  // Generate enrollment ID and show receipt (similar to generateAndSaveEnrollment)
+  google.script.run
+    .withSuccessHandler((enrollmentID) => {
+      console.log("Enrollment ID generated:", enrollmentID);
+
+      // Store enrollment ID in both sessionStorage and localStorage
+      if (enrollmentID) {
+        sessionStorage.setItem("enrollmentId", enrollmentID);
+        localStorage.setItem("admission_enrollmentId", enrollmentID);
+        console.log("Enrollment ID stored for course payment transfer:", enrollmentID);
+      }
+
+      // Show receipt with the proper enrollment ID
+      try {
+        loadReceipt(enrollmentID);
+      } catch (receiptError) {
+        console.error("Error showing receipt:", receiptError);
+        // Continue with navigation even if receipt fails
+      }
+
+      // After a short delay to allow receipt to process, navigate to course payment
+      setTimeout(() => {
+        console.log("Navigating to course payment form");
+        openCoursePayment();
+      }, 1500); // Reduced delay since we're not waiting for receipt
+
+    })
+    .withFailureHandler((error) => {
+      console.error("Failed to generate enrollment ID:", error);
+      alert("Failed to generate enrollment ID. Please try again.");
+    })
+    .getNextEnrollmentNumber();
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsDataURL(file);
+  });
+}
+
+function goBackToInquiry() {
+  console.log("Back button clicked - checking where to go back");
+
+  // Check if we came from inquiry analytics
+  const cameFromAnalytics = sessionStorage.getItem('cameFromInquiryAnalytics');
+
+  // Check if we came from new inquiry form
+  const cameFromNewInquiry = sessionStorage.getItem('cameFromNewInquiry');
+
+  if (cameFromAnalytics === 'true') {
+    // Clear the flag
+    sessionStorage.removeItem('cameFromInquiryAnalytics');
+
+    // Go back to inquiry analytics
+    console.log("Going back to inquiry analytics");
+    hideAllSections();
+    document.getElementById("inquiryAnalyticsSection").classList.remove("hidden");
+  } else if (cameFromNewInquiry === 'true') {
+    // Clear the flag
+    sessionStorage.removeItem('cameFromNewInquiry');
+
+    // Go back to new inquiry form
+    console.log("Going back to new inquiry form");
+    hideAllSections();
+    document.getElementById("ifId").classList.remove("hidden");
+  } else {
+    // Default fallback - go to inquiry form
+    console.log("Default: going back to inquiry form");
+    hideAllSections();
+    document.getElementById("ifId").classList.remove("hidden");
+  }
+}
+
+function showReceiptModal(receiptHTML) {
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  `;
+
+  // Create modal content
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  `;
+
+  // Create close button
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '×';
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  // Create iframe for receipt content
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = `
+    width: 100%;
+    height: 900px;
+    border: none;
+    border-radius: 8px;
+  `;
+
+  // Set receipt content in iframe
+  iframe.srcdoc = receiptHTML;
+
+  // Add close functionality
+  closeButton.onclick = () => {
+    document.body.removeChild(modal);
+  };
+
+  // Close on overlay click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
+
+  // Assemble modal
+  modalContent.appendChild(closeButton);
+  modalContent.appendChild(iframe);
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+}
+
+
+// Function to populate fees when admission form loads with pre-filled data
+function populateAdmissionFees() {
+  const courseSelect = document.getElementById('courseSelect');
+  console.log('populateAdmissionFees called, courseSelect value:', courseSelect ? courseSelect.value : 'null');
+  if (courseSelect && courseSelect.value) {
+    // If course is already selected, update the fees
+    console.log('Course is selected, calling updateCourseDetails');
+    updateCourseDetails();
+  } else {
+    console.log('No course selected in populateAdmissionFees');
+  }
+}
+
+function getCourseDataByLocation(branch) {
+  // Use the same data as in script.html for consistency
+  if (branch === "thane") {
+    const courseData = {
+      anm_nursing: { duration: "1 year", fees: 8500, admission_fee: 5000, exam_fee: 500 },
+      gnm_nursing: { duration: "3 years", fees: 100000, admission_fee: 5000, exam_fee: 500 },
+      dmlt: { duration: "1 year", fees: 700, admission_fee: 5000, exam_fee: 500 },
+      ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+      general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+    };
+    return courseData;
+  } else if (branch === "kurla") {
+    const courseData = {
+      anm_nursing: { duration: "1 year", fees: 65000, admission_fee: 5000, exam_fee: 500 },
+      gnm_nursing: { duration: "3 years", fees: 100000, admission_fee: 5000, exam_fee: 500 },
+      dmlt: { duration: "1 year", fees: 70000, admission_fee: 5000, exam_fee: 500 },
+      ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+      general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+    };
+    return courseData;
+  } else if (branch === "nalasapora") {
+    const courseData = {
+      anm_nursing: { duration: "1 year", fees: 55000, admission_fee: 5000, exam_fee: 500 },
+      gnm_nursing: { duration: "3 years", fees: 90000, admission_fee: 5000, exam_fee: 500 },
+      dmlt: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+      ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+      general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+    };
+    return courseData;
+  } else if (branch === "karad") {
+    const courseData = {
+      anm_nursing: { duration: "1 Year", fees: 36000, admission_fee: 3000, monthly_fee: 3000, exam_fee: 6000 },
+      gnm_nursing: { duration: "3 years", fees: 95000, admission_fee: 5000, exam_fee: 500 },
+      dmlt: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+      ot_technician: { duration: "1 Year", fees: 36000, admission_fee: 3000, monthly_fee: 3000, exam_fee: 6000 },
+      electrician: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+      ac_refrigerator: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+      basic_parlour: { duration: "2 Month", fees: 5000, admission_fee: 1000, monthly_fee: 2500, exam_fee: 1000 }
+    };
+    return courseData;
+  } else {
+    // Default branch data
+    const courseData = {
+      anm_nursing: { duration: "1 year", fees: 60000, admission_fee: 5000, exam_fee: 500 },
+      gnm_nursing: { duration: "3 years", fees: 95000, admission_fee: 5000, exam_fee: 500 },
+      dmlt: { duration: "1 year", fees: 55000, admission_fee: 5000, exam_fee: 500 },
+      ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+      general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+    };
+    return courseData;
+  }
+}
+
+function handlePhotoUpload(event) {
+  previewPhoto(event);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('student_photo')?.addEventListener('change', previewPhoto);
+});
+</script>

@@ -1,0 +1,1434 @@
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #receiptFormSection, #receiptFormSection * {
+      visibility: visible;
+    }
+    #receiptFormSection {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    .undertaking-container.hidden {
+      display: none;
+    }
+    .undertaking-container {
+      display: block !important;
+      page-break-before: always;
+    }
+    #receiptFormSection {
+      -webkit-print-color-adjust: exact;
+      font-size: 9pt;
+    }
+    #receiptFormSection .download-section {
+      display: none;
+    }
+    #receiptFormSection .receipt-container {
+      border: 2px solid #0066cc;
+      box-shadow: none;
+    }
+    /* Compact print styles */
+    #receiptFormSection .form-row {
+      margin-bottom: 4px !important;
+    }
+    #receiptFormSection .form-group label {
+      margin-bottom: 2px !important;
+      font-size: 8pt !important;
+    }
+    #receiptFormSection .form-group input, 
+    #receiptFormSection .form-group select {
+      padding: 2px 0 !important;
+      font-size: 8pt !important;
+    }
+    #receiptFormSection .installment-table {
+      font-size: 7pt !important;
+    }
+    #receiptFormSection .installment-table th, 
+    #receiptFormSection .installment-table td {
+      padding: 2px !important;
+    }
+    #receiptFormSection .section-divider {
+      margin: 2px 0 8px 0 !important;
+      padding-bottom: 4px !important;
+    }
+    #receiptFormSection .photo-section {
+      width: 60px !important;
+      height: 80px !important;
+    }
+    #receiptFormSection .logo-section img {
+      width: 130px !important;
+      height: 130px !important;
+    }
+    #receiptFormSection .signature-section {
+      margin-top: 8px !important;
+    }
+    #receiptFormSection .signature-line {
+      height: 25px !important;
+    }
+    #receiptFormSection .agreement-section {
+      margin: 8px 0 !important;
+      font-size: 7pt !important;
+      line-height: 1.3 !important;
+    }
+    #receiptFormSection .receipt-title {
+      font-size: 11pt !important;
+      margin: 4px 0 !important;
+    }
+    /* Undertaking print styles */
+    .undertaking-container {
+      page-break-before: always;
+      margin-top: 10px;
+      display: flex !important;
+      flex-direction: column;
+      font-size: 9pt;
+      border: 2px solid #0066cc;
+    }
+    .undertaking-container .receipt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 85px;
+      width: 100%;
+      padding: 5px 15px;
+    }
+    .undertaking-container .logo-section {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 160px;
+      height: 85px;
+    }
+    .undertaking-container .logo-section img {
+  height: 85px;
+  width: 160px;
+  object-fit: contain;
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+}
+
+    .undertaking-container .title {
+      text-align: center;
+      margin-top: 5px;
+      background-color: #002147;
+      color: white;
+      padding: 3px 0;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .undertaking-container ul {
+      margin-top: 10px;
+      padding-left: 15px;
+      font-size: 11pt;
+    }
+    .undertaking-container ul li {
+      margin-bottom: 5px;
+      line-height: 1.5;
+    }
+    .undertaking-container .declaration {
+      margin-top: auto;
+      line-height: 1.5;
+      font-size: 11pt;
+      padding: 20px 0;
+    }
+    .undertaking-container .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      page-break-inside: avoid;
+    }
+    .undertaking-container .signature-box {
+      text-align: center;
+      width: 23%;
+    }
+    .undertaking-container .signature-line {
+      border-bottom: 1px solid #000;
+      height: 30px;
+      margin-bottom: 3px;
+    }
+    .undertaking-container .signature-box p {
+      font-size: 8pt;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  #receiptFormSection {
+    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+  }
+
+  #receiptFormSection .receipt-container {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    padding: 0;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* #receiptFormSection .receipt-header {
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+  }
+
+  #receiptFormSection .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #receiptFormSection .logo-section img {
+    width: 130px;
+    height: 130px;
+    background: white;
+    border-radius: 0;
+    padding: 3px;
+  }
+
+  #receiptFormSection .institute-info {
+    font-size: 9pt;
+    line-height: 1.3;
+    font-weight: bold;
+    color: #2C3E50;
+    text-align: center;
+  } */
+  #receiptFormSection .receipt-header {
+    padding: 5px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 85px;
+    width: 100%;
+  }
+
+  #receiptFormSection .logo-section {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 85px;
+  }
+
+  #receiptFormSection .logo-section img {
+    height: 85px;
+    width: 160px;
+    object-fit: contain;
+  }
+
+  /* #receiptFormSection .institute-info {
+    flex: 1;
+    text-align: center;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #002147;
+    line-height: 1.3;
+  }
+
+  #receiptFormSection .institute-info .institute-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  #receiptFormSection .institute-info .address-line {
+    font-size: 11px;
+    margin: 1px 0;
+    font-weight: 500;
+  }
+
+  #receiptFormSection .institute-info .contact-info {
+    font-size: 11px;
+    margin: 1px 0;
+    font-weight: 500;
+  } */
+
+
+  #receiptFormSection .photo-section {
+    width: 80px;
+    height: 100px;
+    border: 2px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  #receiptFormSection .photo-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #receiptFormSection .photo-placeholder {
+    text-align: center;
+    font-size: 8pt;
+    color: #555;
+  }
+
+  #receiptFormSection .receipt-title {
+    text-align: center;
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 8px 0;
+    text-transform: uppercase;
+  }
+
+  #receiptFormSection .form-content {
+    flex: 1;
+    padding-bottom: 8px;
+  }
+
+  #receiptFormSection .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  #receiptFormSection .form-group {
+    flex: 1;
+  }
+
+  #receiptFormSection .form-group label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 3px;
+    font-size: 9pt;
+    color: #555;
+  }
+
+  #receiptFormSection .form-group input,
+  #receiptFormSection .form-group select {
+    width: 100%;
+    padding: 3px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 9pt;
+    background: transparent;
+    transition: border-color 0.3s;
+  }
+  
+  #receiptFormSection .form-group input:focus,
+  #receiptFormSection .form-group select:focus {
+    outline: none;
+    border-bottom-color: #7DCEA0;
+  }
+
+  #receiptFormSection .fee-details {
+    margin-top: 15px;
+    border: 1px solid #ccc;
+    padding: 8px;
+  }
+
+  #receiptFormSection .fee-row {
+    display: flex;
+    margin-bottom: 4px;
+  }
+
+  #receiptFormSection .fee-label {
+    font-weight: bold;
+    width: 120px;
+  }
+
+  #receiptFormSection .agreement-section {
+    margin: 15px 0;
+    font-size: 8pt;
+    line-height: 1.4;
+  }
+
+  #receiptFormSection .signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    page-break-inside: avoid;
+  }
+
+  #receiptFormSection .signature-box {
+    text-align: center;
+    width: 23%;
+  }
+
+  #receiptFormSection .signature-line {
+    border-bottom: 1px solid #000;
+    height: 30px;
+    margin-bottom: 3px;
+  }
+
+  #receiptFormSection .signature-box p {
+    font-size: 8pt;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  #receiptFormSection .download-section {
+    text-align: center;
+    padding: 15px 0;
+  }
+
+  #receiptFormSection .btn {
+    padding: 10px 20px;
+    margin: 0 8px;
+    border: none;
+    background: #2C3E50;
+    color: white;
+    cursor: pointer;
+    font-size: 9pt;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+
+  #receiptFormSection .btn:hover {
+    background: #34495E;
+  }
+  
+  #receiptFormSection .btn-print {
+    background: #7DCEA0;
+  }
+  
+  #receiptFormSection .btn-print:hover {
+    background: #A9DFBF;
+  }
+
+  #receiptFormSection .hidden {
+    display: none;
+  }
+  #receiptFormSection .section-divider {
+    text-align: center;
+    font-size: 9pt;
+    font-weight: 400;
+    color: #2C3E50;
+    margin: 4px 0 15px 0;
+    border-bottom: 1px solid #7DCEA0;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  #receiptFormSection .installment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 8pt;
+  }
+
+  #receiptFormSection .installment-table th,
+  #receiptFormSection .installment-table td {
+    border: 1px solid #eee;
+    padding: 3px;
+    text-align: center;
+  }
+
+  #receiptFormSection .installment-table th {
+    background-color: #00133a;
+    color: white;
+    font-weight: 600;
+  }
+
+  #receiptFormSection .total-section {
+    font-weight: bold;
+    font-size: 10pt;
+    text-align: right;
+    margin-top: 8px;
+  }
+
+  /* Compact mode for printing with many installments */
+  .compact-mode .form-row {
+    margin-bottom: 2px !important;
+  }
+  .compact-mode .form-group label {
+    margin-bottom: 1px !important;
+    font-size: 8pt !important;
+  }
+  .compact-mode .installment-table {
+    font-size: 7pt !important;
+  }
+  .compact-mode .installment-table th,
+  .compact-mode .installment-table td {
+    padding: 1px !important;
+  }
+  .compact-mode .photo-section {
+    width: 60px !important;
+    height: 80px !important;
+  }
+  .compact-mode .agreement-section {
+    margin: 5px 0 !important;
+    font-size: 7pt !important;
+  }
+
+  /* Undertaking container styles */
+  .undertaking-container {
+    display: none;
+    font-family: 'Roboto', sans-serif;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+
+  .undertaking-container .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #002147;
+    padding-bottom: 5px;
+  }
+
+  .undertaking-container .logo {
+    display: flex;
+    align-items: center;
+    background: transparent;
+  }
+
+  .undertaking-container .logo img {
+    height: 25px;
+    margin-right: 10px;
+    background: transparent;
+  }
+</style>
+
+<div id="receiptFormSection">
+  <main>
+    <form onsubmit="AdmissionHandle(event)" enctype="multipart/form-data">
+      <div class="receipt-container" id="receiptContainer">
+        <div class="receipt-header">
+          <div class="logo-section">
+            <img src="https://i.postimg.cc/FzvwbhS3/Untitled-1.png" alt="STI Logo" />
+          </div>
+          <!-- <div class="institute-info">
+            <strong>Shelar Training Institute</strong><br>
+            Bungalow no. C34, <br>
+            Near BMC School, <br>
+            Kamgar Nagar, Kurla East,400024<br>
+            Mob.: +61 9867285184 +61 7400406467
+          </div> -->
+              <div class="institute-info">
+            <div style="text-align: center; font-family: 'Georgia', 'Times New Roman', serif; color: #002147; line-height: 1.3;">
+              <div style="margin-top: 5px; font-size: 12px;">
+                Shelar Training Institute , Bungalow No a95, Near Nandikeshwar Mandir,<br />
+                Kamgar Nagar, Kurla (E)
+              </div>
+              <div style="font-size: 11px; margin: 1px 0; font-weight: 500;">
+                Mob.: +91 9867285184 | +91 7400406467
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="receipt-title">ADMISSION RECEIPT</div>
+
+        <div class="form-content">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Receipt No.</label>
+              <input type="text" id="receiptNoAF" name="receiptNoAF">
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="receiptDateAF" name="receiptDateAF">
+            </div>
+            <div class="photo-section" onclick="document.getElementById('photoInputAF').click()">
+              <div class="photo-placeholder" id="photoPlaceholderAF">
+                Passport<br>Photo
+              </div>
+              <input type="file" id="photoInputAF" accept="image/*" class="hidden" onchange="handlePhotoUploadAF(event)">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Enrollment No.</label>
+              <input type="text" id="enrollmentNoAF" name="enrollmentNoAF">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label>Student Name</label>
+              <input type="text" id="studentNameAF" name="studentNameAF" style="width: 100%">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label>Course Name</label>
+              <input type="text" id="courseName" name="courseName" readonly style="background: transparent; border-bottom: 1px solid #ccc;">
+            </div>
+            <div class="form-group">
+              <label>Course Year</label>
+              <select id="courseYear" name="courseYear" onchange="generateInstallmentTables()">
+                <!-- Options will be populated dynamically based on course duration -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Duration</label>
+              <input type="text" id="receiptCourseDuration" name="courseDuration">
+            </div>
+          </div>
+
+          <div class="section-divider">Fee Details</div>
+
+          <div class="installment-section">
+            <div class="form-row">
+              <div class="form-group">
+                <label id="installmentLabel">Installments (per year)</label>
+                <div id="installmentInputContainer">
+                  <select id="installmentCount" name="installmentCount" onchange="generateInstallmentTables()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                    <option value="12">12</option>
+                  </select>
+                </div>
+                <div id="totalInstallmentsDisplay" style="display: none; margin-top: 5px; font-size: 9pt; color: #2C3E50; font-weight: bold;">
+                  Total installments: <span id="totalInstallmentsCount"></span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Course Fee</label>
+                <input type="text" id="totalFee" name="totalFee" readonly style="background: transparent; border-bottom: 1px solid #ccc;">
+              </div>
+              <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="startDate" name="startDate" onchange="generateInstallmentTables()">
+              </div>
+            </div>
+            <div id="installmentTablesContainer"></div>
+          </div>
+        </div>
+
+        <div class="agreement-section">
+          <p><strong>I Am Mr./Ms.</strong> <input type="text" id="guardianName" name="guardianName" style="width: 120px; border: none; border-bottom: 1px solid #ccc;"> <input type="text" id="guardianRelation" name="guardianRelation" style="width: 120px; border: none; border-bottom: 1px solid #ccc;"> <strong>of Mr./Ms.</strong> <input type="text" id="agreementStudentName" name="agreementStudentName" style="width: 120px; border: none; border-bottom: 1px solid #ccc;">. <strong>I Agree with all Terms And Conditions.</strong></p>
+        </div>
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Parent Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Student Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Manager Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Director Signature</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Undertaking Form -->
+      <div class="undertaking-container hidden" id="undertakingContainer">
+        <div class="receipt-header">
+          <div class="logo-section">
+            <img src="https://i.postimg.cc/FzvwbhS3/Untitled-1.png" alt="STI Logo" />
+          </div>
+          <div class="institute-info">
+            <div style="text-align: center; font-family: 'Georgia', 'Times New Roman', serif; color: #002147; line-height: 1.3;">
+              <div style="margin-top: 5px; font-size: 12px;">
+                Shelar Training Institute C/24, Bungalow, Near Nandikeshwar Mandir,<br />
+                Kamgar Nagar, Kurla (E)
+              </div>
+              <div style="font-size: 11px; margin: 1px 0; font-weight: 500;">
+                Mob.: +91 9867285184 | +91 7400406467
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="title">हमी पत्र / UNDER TAKING</div>
+
+        <ul>
+          <li><strong>भरलेली फी परत मिळणार नाही.</strong></li>
+<li><strong>दिलेल्या तारखेवर फी भरावी अन्यथा आम्ही दंड घेऊ.</strong></li>
+<li><strong>जर तुम्हाला प्रवेश रद्द करायचा असल्यास तुम्हाला पूर्ण फी भरणे गरजेचे आहे.</strong></li>
+          <li>जर तुम्ही गैरवर्तन केले तर तुमचे प्रवेश रद्द करण्यात येईल.</li>
+          <li>तुमचे गुण तुमच्या उपस्थिती आणि तुमच्या वर्तनावर अवलंबून असतील.</li>
+          <li>8 दिवसांपेक्षा जास्त गैरहजर असाल तर तुमचे प्रवेश रद्द करण्यात येईल.</li>
+          <li>परीक्षेची फी एक महिना आगोदर भरावी.</li>
+          <li>जर तुम्ही OJT मध्ये संबंधीत तर STI तुमच्यासाठी जबाबदार नाही.</li>
+          <li>75% उपस्थिती अनिवार्य आहे.</li>
+          <li>दिलेल्या वेळाप्रमाणे परीक्षा द्यावी अन्यथा परीक्षेचे फी वाढेल याला STI जबाबदार नाही.</li>
+          <li>जर तुम्ही व तुमचे पालक दिलेल्या अटी विशेषता वाद घालत असतील तर कायदेशीर रित्या कारवाई केली जाईल.</li>
+          <li>विनंती वेळेवर येणे अनिवार्य आहे. अन्यथा वर्गात प्रवेश दिला जाणार नाही.</li>
+        </ul>
+
+        <ul>
+          <li><strong>Paid Fees Not Refundable.</strong></li>
+<li><strong>Pay Your Fees Above Given Date Otherwise We Charge Penalties.</strong></li>
+<li><strong>If You Want To Cancel Admission Still You Have To Pay Full Fees.</strong></li>
+          <li>If You Misbehave Then We Will Cancel Your Admission.</li>
+          <li>Final Marks Are Based On Attendance And Behavior Etc.</li>
+          <li>More Than 8 Days Absent Will Cancel The Admission, Without Your Permission.</li>
+          <li>Exam Fees Should Have To Pay Before 1 Month Of Exam.</li>
+          <li>If You Dropping OJT, STI Is Not Responsible For You.</li>
+          <li>75% Attendance Should Be Compulsory.</li>
+          <li>Give Exam In Given Schedule. If You Delay Then STI Will Not Responsible, Exam Fees Will Increase.</li>
+          <li>If You And Your Guardian Argue Against The Terms And Conditions, Legal Action Will Be Taken.</li>
+          <li>It Is Compulsory To Come on Time Otherwise You Are Not Permitted To Sit In Lecture.</li>
+        </ul>
+
+        <div class="declaration">
+          I Am Mr./Ms ___________________ Mother/ Father/Husband/ Sister/ Brother Of ____________________ I Am Agree With Terms And Condition.<br><br>
+          मी श्री / श्रीमती ________________ , ____________________ आई/वडील/पती/बहीण/भाऊ , मला सर्व अटी मंजूर आहेत.
+        </div>
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Parent Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Student Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Manager Signature</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Director Signature</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="download-section">
+        <button type="button" class="btn btn-print" onclick="prepareForPrint()">Print Receipt</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  // Function to get course data by location (imported from script.html)
+  // function getCourseDataByLocation(branch) {
+  //   if (branch === "thane") {
+  //     const courseData = {
+  //       anm_nursing: { duration: "1 year", fees: 8500, admission_fee: 5000, exam_fee: 500 },
+  //       gnm_nursing: { duration: "3 years", fees: 100000, admission_fee: 5000, exam_fee: 500 },
+  //       dmlt: { duration: "1 year", fees: 700, admission_fee: 5000, exam_fee: 500 },
+  //       ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+  //       general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+  //     };
+
+  //     // Auto-calculate totals
+  //     Object.keys(courseData).forEach(course => {
+  //       const years = parseInt(courseData[course].duration.split(" ")[0]);
+  //       courseData[course].total = courseData[course].fees * years;
+  //     });
+
+  //     return courseData;
+  //   } else if (branch === "kurla") {
+  //     const courseData = {
+  //       anm_nursing: { duration: "1 year", fees: 65000, admission_fee: 5000, exam_fee: 500 },
+  //       gnm_nursing: { duration: "3 years", fees: 100000, admission_fee: 5000, exam_fee: 500 },
+  //       dmlt: { duration: "1 year", fees: 70000, admission_fee: 5000, exam_fee: 500 },
+  //       ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+  //       general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+  //     };
+
+  //     // Auto-calculate totals
+  //     Object.keys(courseData).forEach(course => {
+  //       const years = parseInt(courseData[course].duration.split(" ")[0]);
+  //       courseData[course].total = courseData[course].fees * years;
+  //     });
+
+  //     return courseData;
+  //   } else if (branch === "nalasapora") {
+  //     const courseData = {
+  //       anm_nursing: { duration: "1 year", fees: 55000, admission_fee: 5000, exam_fee: 500 },
+  //       gnm_nursing: { duration: "3 years", fees: 90000, admission_fee: 5000, exam_fee: 500 },
+  //       dmlt: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+  //       ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 },
+  //       general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000, exam_fee: 500 }
+  //     };
+
+  //     // Auto-calculate totals
+  //     Object.keys(courseData).forEach(course => {
+  //       const years = parseInt(courseData[course].duration.split(" ")[0]);
+  //       courseData[course].total = courseData[course].fees * years;
+  //     });
+
+  //     return courseData;
+  // } else if (branch === "karad") {
+  //   const courseData = {
+  //     anm_nursing: { duration: "1 Year", fees: 36000, admission_fee: 3000, monthly_fee: 3000, exam_fee: 6000 },
+  //     gnm_nursing: { duration: "3 years", fees: 95000, admission_fee: 5000, exam_fee: 500 },
+  //     dmlt: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+  //     ot_technician: { duration: "1 Year", fees: 36000, admission_fee: 3000, monthly_fee: 3000, exam_fee: 6000 },
+  //     electrician: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+  //     ac_refrigerator: { duration: "1 Year", fees: 24000, admission_fee: 2000, monthly_fee: 4000, exam_fee: 6000 },
+  //     basic_parlour: { duration: "2 Month", fees: 5000, admission_fee: 1000, monthly_fee: 2500, exam_fee: 1000 }
+  //   };
+
+  //     // Auto-calculate totals
+  //     Object.keys(courseData).forEach(course => {
+  //       const years = parseInt(courseData[course].duration.split(" ")[0]);
+  //       courseData[course].total = courseData[course].fees * years;
+  //     });
+
+  //     return courseData;
+  //   }
+  // }
+
+  // Helper function to get current branch
+  function getCurrentBranch() {
+    // Try to get branch from various sources
+    let branch = sessionStorage.getItem("userBranch") ||
+                 sessionStorage.getItem("branch") ||
+                 localStorage.getItem("userBranch") ||
+                 "kurla"; // Default to kurla
+
+    // Also check if there's branch info in completeReceiptData
+    const completeReceiptData = JSON.parse(sessionStorage.getItem('completeReceiptData') || '{}');
+    if (completeReceiptData.branch) {
+      branch = completeReceiptData.branch;
+    }
+
+    return branch;
+  }
+
+  // Get course data for current branch
+  function getCurrentCourseData() {
+    const branch = getCurrentBranch();
+    return getCourseDataByLocation(branch);
+  }
+
+  document.getElementById('receiptDateAF').valueAsDate = new Date();
+  document.getElementById('startDate').valueAsDate = new Date();
+
+  // Function to populate course year dropdown based on duration
+  function populateCourseYearDropdown() {
+    const durationInput = document.getElementById('receiptCourseDuration');
+    const courseYearSelect = document.getElementById('courseYear');
+    const durationText = durationInput.value.trim();
+
+    // Clear existing options
+    courseYearSelect.innerHTML = '';
+
+    // Parse duration to get number of years (e.g., "3 years" -> 3)
+    const durationMatch = durationText.match(/^(\d+)/);
+    const numberOfYears = durationMatch ? parseInt(durationMatch[1]) : 1;
+
+    // Add options based on number of years
+    for (let i = 1; i <= numberOfYears; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `${i}${i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} Year`;
+      courseYearSelect.appendChild(option);
+    }
+
+    // If no options were added (invalid duration), add a default
+    if (courseYearSelect.options.length === 0) {
+      const option = document.createElement('option');
+      option.value = '1';
+      option.textContent = '1st Year';
+      courseYearSelect.appendChild(option);
+    }
+  }
+
+  // Add course change event listener to update fee and duration dynamically
+  document.getElementById('courseName').addEventListener('change', function () {
+    const selected = this.value;
+    const currentCourseData = getCurrentCourseData();
+    if (currentCourseData[selected]) {
+      // Only update duration if it wasn't set from course payment workflow
+      const completeReceiptData = JSON.parse(sessionStorage.getItem('completeReceiptData') || '{}');
+      console.log('Course change event - completeReceiptData:', completeReceiptData);
+      console.log('Course change event - courseDuration from workflow:', completeReceiptData.courseDuration);
+
+      if (!completeReceiptData.courseDuration || completeReceiptData.courseDuration.trim() === '') {
+        document.getElementById('receiptCourseDuration').value = currentCourseData[selected].duration;
+        console.log('Updated duration from courseData:', currentCourseData[selected].duration);
+      } else {
+        // If we have workflow data, preserve the workflow duration but update fee
+        console.log('Preserving workflow duration:', completeReceiptData.courseDuration);
+        document.getElementById('receiptCourseDuration').value = completeReceiptData.courseDuration;
+      }
+
+      // Set total fee including admission fee
+      const courseFee = currentCourseData[selected].fees;
+      const admissionFee = currentCourseData[selected].admission_fee || 0;
+      const totalFeeWithAdmission = courseFee + admissionFee;
+      document.getElementById('totalFee').value = totalFeeWithAdmission;
+
+      populateCourseYearDropdown(); // Update course year options based on duration
+      generateInstallmentTables(); // refresh table
+    }
+  });
+
+  // Add duration change event listener to update course year dropdown
+  document.getElementById('receiptCourseDuration').addEventListener('input', populateCourseYearDropdown);
+
+  function handlePhotoUploadAF(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const photoSection = document.querySelector('#receiptFormSection .photo-section');
+        photoSection.innerHTML = `<img src="${e.target.result}" alt="Student Photo">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function generateInstallmentTables() {
+    let installmentCount = document.getElementById('installmentCount').value;
+    const totalFee = parseFloat(document.getElementById('totalFee').value) || 0;
+    const startDate = new Date(document.getElementById('startDate').value);
+    const selectedYear = parseInt(document.getElementById('courseYear').value);
+    const courseDuration = document.getElementById('receiptCourseDuration').value;
+
+    const container = document.getElementById('installmentTablesContainer');
+    container.innerHTML = '';
+
+    // Check if we have a custom installment schedule from course payment
+    const completeReceiptData = JSON.parse(sessionStorage.getItem('completeReceiptData') || '{}');
+    if (completeReceiptData.installmentSchedule && completeReceiptData.installmentSchedule.length > 0) {
+      // Use the custom schedule from course payment - split by year if more than 12 installments
+      const totalInstallments = completeReceiptData.installmentSchedule.length;
+
+      if (totalInstallments > 12) {
+        // Split installments by course duration/years
+        const numberOfYears = courseDuration ? parseInt(courseDuration.split(' ')[0]) || 1 : 1;
+        const installmentsPerYear = Math.ceil(totalInstallments / numberOfYears);
+
+        // Calculate start and end indices for the selected year
+        const startIndex = (selectedYear - 1) * installmentsPerYear;
+        const endIndex = Math.min(startIndex + installmentsPerYear, totalInstallments);
+
+        // Get installments for the selected year
+        const yearInstallments = completeReceiptData.installmentSchedule.slice(startIndex, endIndex);
+
+        // Generate table for this year's installments
+        const tableHTML = generateInstallmentTableFromSchedule(yearInstallments);
+        container.innerHTML = tableHTML;
+      } else {
+        // Less than or equal to 12 installments - show all
+        const tableHTML = generateInstallmentTableFromSchedule(completeReceiptData.installmentSchedule);
+        container.innerHTML = tableHTML;
+      }
+
+      // Update installment status from course payment data
+      updateInstallmentStatusFromCoursePayment();
+    } else if (completeReceiptData.paymentType === "full" || installmentCount === "-") {
+      // Generate single row table for full payment
+      const tableHTML = `
+        <table class="installment-table">
+          <thead>
+            <tr>
+              <th>Installment</th>
+              <th>Due Date</th>
+              <th>Amount (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>-</td>
+              <td>-</td>
+              <td>₹${totalFee.toLocaleString()}</td>
+              <td>Full Paid</td>
+            </tr>
+          </tbody>
+        </table>`;
+      container.innerHTML = tableHTML;
+    } else {
+      // Normal installment table generation
+      const installmentCountNum = parseInt(installmentCount) || 12;
+      if (!startDate) return;
+
+      // If no totalFee, use a default
+      if (totalFee <= 0) {
+        totalFee = 120000; // Default total fee for demo
+      }
+
+      // Calculate number of years from course duration (e.g., "3 years" -> 3)
+      const numberOfYears = courseDuration ? parseInt(courseDuration.split(' ')[0]) || 1 : 1;
+      const yearFee = totalFee / numberOfYears;
+
+      const tableHTML = generateVerticalInstallmentTable(selectedYear, installmentCountNum, yearFee, startDate);
+      container.innerHTML = tableHTML;
+
+      // Update installment status from course payment data
+      updateInstallmentStatusFromCoursePayment();
+    }
+
+    const totalSection = document.createElement('div');
+    totalSection.className = 'total-section';
+    totalSection.textContent = `Total Fee: ₹${totalFee.toLocaleString()}`;
+    container.appendChild(totalSection);
+  }
+
+  function generateInstallmentTableFromSchedule(installmentSchedule) {
+    let tableHTML = `
+      <table class="installment-table">
+        <thead>
+          <tr>
+            <th>Installment</th>
+            <th>Due Date</th>
+            <th>Amount (₹)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    installmentSchedule.forEach((installment, index) => {
+      const formattedDate = installment.dueDate ? new Date(installment.dueDate).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }) : '-';
+
+      const displayStatus = installment.status === 'Full Paid' ? 'Paid' :
+                           installment.status === 'Paid' ? 'Paid' :
+                           ''; // Empty string for pending status
+
+      const statusClass = installment.status === 'Full Paid' ? 'style="color: #10B981; font-weight: bold;"' :
+                         installment.status === 'Paid' ? 'style="color: #10B981; font-weight: bold;"' :
+                         'style="color: #F59E0B;"';
+
+      tableHTML += `
+        <tr>
+          <td>${installment.installmentNumber}</td>
+          <td>${formattedDate}</td>
+          <td>₹${installment.amount.toLocaleString()}</td>
+          <td id="installment-status-${installment.installmentNumber}" ${statusClass}>${displayStatus}</td>
+        </tr>`;
+    });
+
+    tableHTML += `</tbody></table>`;
+    return tableHTML;
+  }
+
+  function generateVerticalInstallmentTable(year, installmentCount, yearFee, startDate) {
+    const installmentAmount = Math.round(yearFee / installmentCount);
+    let tableHTML = `
+      <table class="installment-table">
+        <thead>
+          <tr>
+            <th>Installment</th>
+            <th>Due Date</th>
+            <th>Amount (₹)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    // Adjust start date based on the selected year (year 1 = 0 years, year 2 = 1 year, year 3 = 2 years)
+    const yearAdjustedStartDate = new Date(startDate);
+    yearAdjustedStartDate.setFullYear(startDate.getFullYear() + (year - 1));
+
+    for (let i = 0; i < installmentCount; i++) {
+      const dueDate = new Date(yearAdjustedStartDate);
+      dueDate.setMonth(yearAdjustedStartDate.getMonth() + i);
+      const formattedDate = dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const amount = (i === installmentCount - 1) ? yearFee - (installmentAmount * (installmentCount - 1)) : installmentAmount;
+
+      tableHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${formattedDate}</td>
+          <td>₹${amount.toLocaleString()}</td>
+          <td id="installment-status-${i + 1}"></td>
+        </tr>`;
+    }
+
+    tableHTML += `</tbody></table>`;
+    return tableHTML;
+  }
+
+  function downloadPdfWithHtml2Pdf() {
+    // Clone the containers to avoid modifying the original ones
+    const receiptClone = document.getElementById('receiptContainer').cloneNode(true);
+    const undertakingClone = document.getElementById('undertakingContainer').cloneNode(true);
+
+    // Create a temporary container to hold both elements
+    const tempContainer = document.createElement('div');
+    tempContainer.appendChild(receiptClone);
+    tempContainer.appendChild(undertakingClone);
+
+    // Show the undertaking container for PDF generation
+    undertakingClone.style.display = 'block';
+
+    const studentName = document.getElementById('studentNameAF').value || 'receipt';
+    const opt = {
+      margin: 0,
+      filename: `${studentName.replace(/\s+/g, '_')}_Admission_Receipt.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(tempContainer).set(opt).save();
+
+    // Clean up
+    tempContainer.remove();
+  }
+
+
+
+  function prepareForPrint() {
+    // First, save installment data to the sheet
+    const completeReceiptData = JSON.parse(sessionStorage.getItem('completeReceiptData') || '{}');
+    const installmentCountValue = document.getElementById('installmentCount').value;
+    const totalInstallmentsDisplay = document.getElementById('totalInstallmentsDisplay');
+
+    // Determine installment count - use total installments display if visible, otherwise use select value
+    let installmentCount = 1;
+    if (totalInstallmentsDisplay && totalInstallmentsDisplay.style.display !== 'none') {
+      installmentCount = parseInt(document.getElementById('totalInstallmentsCount').textContent) || 1;
+    } else {
+      installmentCount = parseInt(installmentCountValue) || 1;
+    }
+
+    const receiptData = {
+      enrollmentNo: document.getElementById('enrollmentNoAF').value,
+      studentName: document.getElementById('studentNameAF').value,
+      courseName: document.getElementById('courseName').value,
+      paymentType: completeReceiptData.paymentType || document.querySelector('input[name="Coursepayment_type"]:checked')?.value || "full",
+      totalFee: parseFloat(document.getElementById('totalFee').value) || 0,
+      installmentCount: installmentCount,
+      startDate: document.getElementById('startDate').value,
+      courseYear: parseInt(document.getElementById('courseYear').value) || 1,
+      paymentMethod: document.getElementById('pay-select')?.value || "Cash"
+    };
+
+    // Save installment data
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          console.log("Installment data saved:", result.message);
+          // Now proceed with printing
+          proceedWithPrinting();
+        } else {
+          alert("Error saving installment data: " + result.message);
+          // Still proceed with printing even if saving fails
+          proceedWithPrinting();
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error("Error saving installment data:", error);
+        alert("Error saving installment data. Proceeding with printing.");
+        // Still proceed with printing
+        proceedWithPrinting();
+      })
+      .saveInstallmentDataOnReceiptGeneration(receiptData);
+  }
+
+  function proceedWithPrinting() {
+    // Determine installment count - use total installments display if visible, otherwise use select value
+    let installmentCount = 1;
+    const totalInstallmentsDisplay = document.getElementById('totalInstallmentsDisplay');
+    if (totalInstallmentsDisplay && totalInstallmentsDisplay.style.display !== 'none') {
+      installmentCount = parseInt(document.getElementById('totalInstallmentsCount').textContent) || 1;
+    } else {
+      installmentCount = parseInt(document.getElementById('installmentCount').value) || 1;
+    }
+
+    // Enable compact mode if many installments
+    if (installmentCount >= 6) {
+      document.getElementById('receiptContainer').classList.add('compact-mode');
+    }
+
+    // Show undertaking container
+    document.getElementById('undertakingContainer').classList.remove('hidden');
+
+    window.print();
+
+    // Reset after printing and clear photo
+    setTimeout(() => {
+      document.getElementById('receiptContainer').classList.remove('compact-mode');
+      document.getElementById('undertakingContainer').classList.add('hidden');
+      clearPhotoAfterPrint();
+    }, 1000);
+  }
+
+  function clearPhotoAfterPrint() {
+    const photoSection = document.querySelector('#receiptFormSection .photo-section');
+    const photoPlaceholder = document.getElementById('photoPlaceholderAF');
+    const photoImg = photoSection.querySelector('img');
+
+    // Remove the uploaded photo image if it exists
+    if (photoImg) {
+      photoImg.remove();
+    }
+
+    // Show the placeholder text again
+    if (photoPlaceholder) {
+      photoPlaceholder.style.display = 'block';
+    }
+
+    // Clear the file input
+    const photoInput = document.getElementById('photoInputAF');
+    if (photoInput) {
+      photoInput.value = '';
+    }
+  }
+
+  function openreceiptFormSection() {
+    hideAllSections();
+
+    const section = document.getElementById("receiptFormSection");
+    if (!section) {
+      console.error("Admission form section not found!");
+      return;
+    }
+    section.classList.remove("hidden");
+
+    console.log("Opening receipt form section");
+
+    // 🔥 CRITICAL: Check if coming from CoursePayment workflow vs. direct access
+    const completeReceiptData = JSON.parse(sessionStorage.getItem('completeReceiptData') || '{}');
+
+    console.log("Retrieved completeReceiptData:", completeReceiptData);
+
+    if (Object.keys(completeReceiptData).length > 0) {
+      console.log("Prefilling from complete workflow data:", completeReceiptData);
+      // Delay prefill to ensure DOM is ready
+      setTimeout(() => {
+        prefillAdmissionReceipt(completeReceiptData);
+      }, 100);
+    } else {
+      console.log("No completeReceiptData found, using fallback behavior");
+      // Fallback to old behavior for direct access
+
+      // Pre-fill if coming from session
+      const storedCourse = sessionStorage.getItem("STUD_Course");
+      const currentCourseData = getCurrentCourseData();
+      if (storedCourse && currentCourseData[storedCourse]) {
+        document.getElementById("courseName").value = storedCourse;
+        document.getElementById("receiptCourseDuration").value = currentCourseData[storedCourse].duration;
+        // Set total fee including admission fee
+        const courseFee = currentCourseData[storedCourse].fees;
+        const admissionFee = currentCourseData[storedCourse].admission_fee || 0;
+        const totalFeeWithAdmission = courseFee + admissionFee;
+        document.getElementById("totalFee").value = totalFeeWithAdmission;
+        populateCourseYearDropdown(); // Update course year options based on duration
+      }
+    }
+
+    generateInstallmentTables();
+  }
+
+  function prefillAdmissionReceipt(completeReceiptData) {
+    try {
+      // 🔥 CRITICAL: Fill all required inputs from complete workflow data
+      console.log("Prefilling admission receipt with complete data:", completeReceiptData);
+      console.log("Course duration from completeReceiptData:", completeReceiptData.courseDuration);
+
+      // Basic info - Use unique IDs with AF suffix
+      document.getElementById("receiptNoAF").value = completeReceiptData.receiptNo || "";
+      if (completeReceiptData.receiptDate) {
+        document.getElementById("receiptDateAF").value = completeReceiptData.receiptDate;
+      } else {
+        // Set current date if not provided
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById("receiptDateAF").value = `${yyyy}-${mm}-${dd}`;
+      }
+      document.getElementById("enrollmentNoAF").value = completeReceiptData.enrollmentNo || "";
+      document.getElementById("studentNameAF").value = completeReceiptData.studentName || "";
+      console.log("Prefilling data:", {
+        receiptNo: completeReceiptData.receiptNo,
+        receiptDate: completeReceiptData.receiptDate || "current date",
+        studentName: completeReceiptData.studentName
+      });
+
+      // Course info - Temporarily remove change listener to prevent interference
+      const courseSelect = document.getElementById("courseName");
+      const originalChangeHandler = courseSelect.onchange;
+      courseSelect.onchange = null; // Temporarily disable
+
+      document.getElementById("courseName").value = completeReceiptData.courseName || "";
+      document.getElementById("courseYear").value = completeReceiptData.courseYear || "1";
+      document.getElementById("receiptCourseDuration").value = completeReceiptData.courseDuration || "";
+
+      // Update course year dropdown based on duration
+      populateCourseYearDropdown();
+
+      // Re-enable the change listener
+      courseSelect.onchange = originalChangeHandler;
+
+      // Fee details
+      document.getElementById("totalFee").value = completeReceiptData.totalFee || "";
+
+      // Handle installment display based on payment type and schedule
+      if (completeReceiptData.installmentSchedule && completeReceiptData.installmentSchedule.length > 0) {
+        // Coming from course payment with custom schedule - show total installments
+        const totalInstallments = completeReceiptData.installmentSchedule.length;
+        document.getElementById("installmentLabel").textContent = "Installments";
+        document.getElementById("installmentInputContainer").style.display = "none";
+        document.getElementById("totalInstallmentsDisplay").style.display = "block";
+        document.getElementById("totalInstallmentsCount").textContent = totalInstallments;
+        // Don't set installmentCount select value since it's hidden
+      } else if (completeReceiptData.paymentType === "full") {
+        document.getElementById("installmentCount").value = "";
+        document.getElementById("installmentLabel").textContent = "Installments (per year)";
+        document.getElementById("installmentInputContainer").style.display = "block";
+        document.getElementById("totalInstallmentsDisplay").style.display = "none";
+      } else {
+        document.getElementById("installmentCount").value = completeReceiptData.installmentCount || "12";
+        document.getElementById("installmentLabel").textContent = "Installments (per year)";
+        document.getElementById("installmentInputContainer").style.display = "block";
+        document.getElementById("totalInstallmentsDisplay").style.display = "none";
+      }
+
+      document.getElementById("startDate").value = completeReceiptData.startDate || "";
+
+      // Critical: Guardian agreement section - FIXED property names
+      const guardianNameField = document.getElementById("guardianName");
+      const guardianRelationField = document.getElementById("guardianRelation");
+      const agreementStudentNameField = document.getElementById("agreementStudentName");
+
+      if (guardianNameField && guardianRelationField && agreementStudentNameField) {
+        // Use guardianName, studentRelation, and studentName from completeReceiptData
+        guardianNameField.value = completeReceiptData.guardianName || "";
+        guardianRelationField.value = completeReceiptData.studentRelation || "";
+        agreementStudentNameField.value = completeReceiptData.studentName || "";
+        console.log("Prefilled agreement fields:", completeReceiptData.guardianName, completeReceiptData.studentRelation, completeReceiptData.studentName);
+      } else {
+        console.warn("Agreement fields not found in form.");
+      }
+
+      console.log("Admission receipt prefill completed successfully - duration set to:", document.getElementById("receiptCourseDuration").value);
+
+      // 🔥 CRITICAL: Generate installment table after prefill since onchange events don't fire for programmatic value setting
+      generateInstallmentTables();
+
+      // 🔥 CRITICAL: Handle student photo display
+      const studentPhoto = completeReceiptData.studentPhoto ||
+                          sessionStorage.getItem('studentPhoto') ||
+                          localStorage.getItem('admission_studentPhoto');
+
+      console.log("AdmissionReceipt - Photo display attempt:");
+      console.log("completeReceiptData.studentPhoto:", completeReceiptData.studentPhoto ? "EXISTS (length: " + completeReceiptData.studentPhoto.length + ")" : "NOT FOUND");
+      console.log("sessionStorage studentPhoto:", sessionStorage.getItem('studentPhoto') ? "EXISTS (length: " + sessionStorage.getItem('studentPhoto').length + ")" : "NOT FOUND");
+      console.log("localStorage admission_studentPhoto:", localStorage.getItem('admission_studentPhoto') ? "EXISTS (length: " + localStorage.getItem('admission_studentPhoto').length + ")" : "NOT FOUND");
+      console.log("Final selected studentPhoto:", studentPhoto ? "EXISTS (length: " + studentPhoto.length + ")" : "NOT FOUND");
+
+      if (studentPhoto) {
+        const photoSection = document.querySelector('#receiptFormSection .photo-section');
+        const photoPlaceholder = document.getElementById('photoPlaceholderAF');
+
+        console.log("Photo section found:", !!photoSection);
+        console.log("Photo placeholder found:", !!photoPlaceholder);
+
+        if (photoSection && photoPlaceholder) {
+          // Hide the placeholder text and show the image
+          photoPlaceholder.style.display = 'none';
+
+          // Create and add the image element while preserving the file input
+          const imgElement = document.createElement('img');
+          imgElement.src = studentPhoto;
+          imgElement.alt = 'Student Photo';
+          imgElement.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 2;';
+
+          // Make sure the photo section has relative positioning
+          photoSection.style.position = 'relative';
+
+          photoSection.appendChild(imgElement);
+          console.log("Student photo displayed in receipt - image element created and added");
+
+          // Verify the image loaded
+          imgElement.onload = () => console.log("Photo image loaded successfully");
+          imgElement.onerror = () => console.error("Photo image failed to load");
+        } else {
+          console.error("Photo section or placeholder not found in DOM");
+        }
+      } else {
+        console.log("No student photo available to display");
+      }
+
+      // 🔥 CRITICAL: Add custom prefill logic for any additional fields if needed
+      // Use completeReceiptData object for any custom requirements
+
+    } catch (error) {
+      console.error("Error in prefillAdmissionReceipt:", error);
+    }
+  }
+
+  function updateInstallmentStatusFromCoursePayment() {
+    const receiptNo = document.getElementById('receiptNoAF').value;
+    if (!receiptNo || receiptNo.trim() === '') {
+      console.log('No receipt number available for fetching installment status');
+      return;
+    }
+
+    console.log('Fetching installment payments for receipt:', receiptNo);
+
+    google.script.run
+      .withSuccessHandler(function(serverPayments) {
+        console.log('Received installment payments:', serverPayments);
+
+        // Only update cells that have actual payments - don't clear everything first
+        if (serverPayments && serverPayments.length > 0) {
+          // Create a map of paid installment numbers for quick lookup
+          const paidInstallments = {};
+          serverPayments.forEach(payment => {
+            paidInstallments[payment.installmentNumber] = payment;
+          });
+
+          // Update status for each paid installment only
+          Object.keys(paidInstallments).forEach(installmentNum => {
+            const statusCell = document.getElementById(`installment-status-${installmentNum}`);
+            if (statusCell) {
+              statusCell.textContent = 'Paid';
+              statusCell.style.color = '#10B981'; // Green color for paid
+              statusCell.style.fontWeight = 'bold';
+              console.log(`Updated installment ${installmentNum} status to Paid`);
+            } else {
+              console.log(`Status cell not found for installment ${installmentNum}`);
+            }
+          });
+        } else {
+          console.log('No installment payments found - keeping existing status display');
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Error fetching installment payments:', error);
+        // Don't modify status cells on error - keep existing display
+      })
+      .getInstallmentPaymentsForStudent(receiptNo);
+  }
+
+  function AdmissionHandle(event) {
+    event.preventDefault();
+    console.log("Form submitted");
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    generateInstallmentTables();
+  });
+</script>

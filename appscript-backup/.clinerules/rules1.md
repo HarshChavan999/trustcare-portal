@@ -1,0 +1,2 @@
+a. "AdmissionFormReceipt.html" this is the main admission receipt
+b.  Dataflow: First the data is feed in inquiry form then the required data is prefilled in admission form after clicking next the required data is prefilled in cousrepayment 
