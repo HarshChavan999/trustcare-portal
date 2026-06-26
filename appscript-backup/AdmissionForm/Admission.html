@@ -1,0 +1,162 @@
+<div id="admissionFormSection" class="bg-white rounded-xl shadow-lg border border-gray-200 mt-6">
+  <div class="bg-white text-gray-900 p-6 border-b border-gray-200">
+  <div class="flex items-center justify-center">
+      <!-- <div class="flex items-center space-x-4 mb-4 md:mb-0">
+        <div class="logo-container" style="width: 180px; height: auto; display: flex; justify-content: center; align-items: center;">
+          <img src="https://i.postimg.cc/FzvwbhS3/Untitled-1.png" alt="Logo" style="width: 100%; max-width: 160px; height: auto; padding: 5px;" />
+        </div>
+      </div> -->
+      <!-- <div class="text-center"> -->
+        <!-- <p class="text-gray-600 font-medium text-lg"><i class="fas fa-file-alt mr-1"></i>ADMISSION FORM</p> -->
+        <p class="text-3xl font-bold text-gray-700">
+  <i class="fas fa-file-alt mr-2"></i>ADMISSION FORM
+</p>
+
+      <!-- </div> -->
+    </div>
+  </div>
+
+  <form onsubmit="AdmissionHandle(event)" enctype="multipart/form-data">
+    <div class="p-6 space-y-8">
+      <div class="space-y-4">
+        <h2 class="text-xl font-semibold text-gray-800">Receipt Information</h2>
+          <div>
+            <label for="receipt_number" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-receipt text-blue-900 mr-2"></i>Receipt Number
+            </label>
+            <input type="text" id="receipt_number" name="receipt_number" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., R-0014" />
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-800">Student Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-user text-blue-900 mr-2"></i>First Name*
+            </label>
+            <input type="text" id="first_name" name="first_name" placeholder="First Name" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" readonly />
+          </div>
+          <div>
+            <label for="middle_name" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-user text-blue-900 mr-2"></i>Middle Name
+            </label>
+            <input type="text" id="middle_name" name="middle_name" placeholder="Middle Name" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" readonly />
+          </div>
+          <div>
+            <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-user text-blue-900 mr-2"></i>Last Name*
+            </label>
+            <input type="text" id="last_name" name="last_name" placeholder="Last Name" required class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" readonly />
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-800">Photo Upload</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <div>
+            <label for="student_photo" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-camera text-blue-900 mr-2"></i>Upload Student Photo
+            </label>
+            <input type="file" id="student_photo" name="student_photo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" onchange="handlePhotoUpload(event)" />
+          </div>
+          <div class="flex items-center justify-center h-full min-h-[120px] bg-gray-100 border border-gray-300 rounded-lg p-2 overflow-hidden">
+            <img id="photo_preview" src="#" alt="Student Photo" class="max-w-full max-h-40 object-contain rounded-md shadow-sm" style="display: none;" />
+            <span id="no_photo_text" class="text-gray-500 text-sm">No Photo Selected</span>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-800">Course Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="courseSelect" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-book-open text-blue-900 mr-2"></i>Course Name
+            </label>
+            <select id="courseSelect" name="courseSelect" class="form-select w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" onchange="updateCourseDetails()" readonly>
+              <option value="" disabled selected>Select Course</option>
+              <option value="anm_nursing">ANM Nursing Diploma Course</option>
+              <option value="gnm_nursing">GNM Nursing Diploma Course</option>
+              <option value="dmlt">DMLT Diploma Course</option>
+              <option value="ot_technician">OT Technician Diploma Course</option>
+              <option value="electrician">Electrician Diploma Course</option>
+              <option value="ac_refrigerator">AC & Refrigerator Diploma Course</option>
+              <option value="basic_parlour">Basic Parlour Course</option>
+              <option value="general_nursing">General Nursing and Midwifery Assistant</option>
+            </select>
+          </div>
+          <div>
+            <label for="courseDurationText" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-clock text-blue-900 mr-2"></i>Course Duration
+            </label>
+            <input type="text" id="courseDurationText" name="courseDurationText" placeholder="Course Duration" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="totalCourseFees" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-dollar-sign text-blue-900 mr-2"></i>Total Course Fees
+            </label>
+            <input type="text" id="totalCourseFees" name="totalCourseFees" placeholder="Total Fees" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="admissionFee" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-money-bill-wave text-blue-900 mr-2"></i>Admission Fee
+            </label>
+            <input type="text" id="admissionFee" name="admissionFee" placeholder="Admission Fee" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed" />
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-800">Payment Information</h2>
+        <div class="space-y-3">
+          <div>
+            <label for="payment_mode" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-credit-card text-blue-900 mr-2"></i>Payment Mode
+            </label>
+            <select id="payment_mode" name="payment_mode" class="form-select w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">Select Payment Mode</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              <option value="UPI">UPI</option>
+              <option value="Cheque">Bank Check</option>
+            </select>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-800">Guardian Information</h2>
+        <div class="space-y-3">
+          <div>
+            <label for="guardian_relation" class="block text-sm font-medium text-gray-700 mb-1">
+              Guardian Relation
+            </label>
+            <input type="text" id="guardian_relation" name="guardian_relation" placeholder="e.g., I am Mr./Ms. (Mother/Father/Husband/Sister/Brother of)" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div>
+            <label for="guardian_name" class="block text-sm font-medium text-gray-700 mb-1">
+              Guardian's Full Name
+            </label>
+            <input type="text" id="guardian_name" name="guardian_name" placeholder="Guardian's Full Name" class="form-input w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-4">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 md:mb-0">
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="agree" name="agree" required class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                <span class="ml-2 text-sm text-gray-700">I agree to the terms and conditions</span>
+              </label>
+              <div id="agreeError" class="text-red-500 text-xs italic mt-1"></div>
+            </div>
+            <div class="flex justify-end space-x-4">
+              <button type="button" onclick="goBackToInquiry()" class="bg-gray-600 hover:bg-gray-700 text-white font-medium tracking-wide py-2 px-4 rounded-md shadow-md transform hover:scale-105 transition duration-300 flex items-center justify-center gap-2">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+              </button>
+              <button type="reset" style="display:none" class="bg-gray-500 hover:bg-gray-600 text-white font-medium tracking-wide py-2.5 px-6 rounded-md shadow-lg transform hover:scale-105 transition duration-300 flex items-center justify-center gap-2">
+                <i class="fas fa-undo mr-2"></i>Reset
+              </button>
+              <button type="submit" id="submitButton" class="bg-gray-600 hover:bg-gray-700 text-white font-medium tracking-wide py-2 px-4 rounded-md shadow-md transform hover:scale-105 transition duration-300 flex items-center justify-center gap-2">
+                <i class="fas fa-arrow-right mr-2"></i>Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,171 @@
+<div id="admissionAnalyticsSection"
+     class="hidden bg-white rounded-xl shadow-lg p-6 border border-gray-200 mt-6">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Admission Analytics</h2>
+    <button onclick="closeAdmissionAnalytics()"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center gap-2">
+      <i class="fas fa-arrow-left"></i><span>Back</span>
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+    <div class="bg-blue-50 p-4 rounded flex flex-col items-center">
+      <p class="text-sm text-gray-700">Total Records</p>
+      <p id="aaTotalRecords" class="text-xl font-bold text-blue-900">0</p>
+    </div>
+    <div class="bg-green-50 p-4 rounded flex flex-col items-center">
+      <p class="text-sm text-gray-700">Total Course Fees</p>
+      <p id="aaTotalFees" class="text-xl font-bold text-green-900">0</p>
+    </div>
+    <div class="bg-purple-50 p-4 rounded flex flex-col items-center">
+      <p class="text-sm text-gray-700">Average Course Fee</p>
+      <p id="aaAverageFees" class="text-xl font-bold text-purple-900">0</p>
+    </div>
+    <div class="bg-yellow-50 p-4 rounded flex flex-col items-center">
+      <p class="text-sm text-gray-700">Top Course</p>
+      <p id="aaTopCourse" class="text-xl font-bold text-yellow-900">-</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <select id="aaCourseSelect"
+            class="px-4 py-2 border rounded-lg border-gray-300"
+            onchange="filterAdmissionAnalytics()">
+      <option value="">All Courses</option>
+    </select>
+    <select id="aaAgreementSelect"
+            class="px-4 py-2 border rounded-lg border-gray-300"
+            onchange="filterAdmissionAnalytics()">
+      <option value="">All Agreements</option>
+      <option value="Agreed">Agreed</option>
+      <option value="Not Agreed">Not Agreed</option>
+    </select>
+    <button onclick="copyTable('aaTableContainer')"
+            class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm">Copy</button>
+    <button onclick="exportCSV('aaTableContainer','admission_analytics.csv')"
+            class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm">CSV</button>
+    <button onclick="exportTablePDF('aaTableContainer','AdmissionAnalytics')"
+            class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm">PDF</button>
+  </div>
+
+  <div id="aaTableContainer" class="overflow-x-auto"></div>
+</div>
+
+<script>
+let admissionData = [];
+
+function loadAdmissionAnalytics() {
+  google.script.run
+    .withSuccessHandler(function (response) {
+      if (response.error) {
+        document.getElementById("aaTableContainer").textContent = "Error loading admissions.";
+        return;
+      }
+
+      admissionData = response.data;
+
+      document.getElementById("aaTotalRecords").textContent = response.summary.totalRecords;
+      document.getElementById("aaTotalFees").textContent = "₹" + response.summary.totalFees.toLocaleString();
+      document.getElementById("aaAverageFees").textContent = "₹" + response.summary.averageFees.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      document.getElementById("aaTopCourse").textContent = response.summary.topCourse || "-";
+
+      renderAdmissionAnalyticsTable(admissionData);
+    })
+    .getAdmissionAnalyticsData("admin");
+}
+
+function filterAdmissionAnalytics() {
+  const course = document.getElementById("aaCourseSelect").value.toLowerCase();
+  const agreement = document.getElementById("aaAgreementSelect").value.toLowerCase();
+
+  const filtered = admissionData.filter(d => {
+    let courseMatch = !course || d.course.toLowerCase() === course;
+    let agreementMatch = !agreement || d.agreement.toLowerCase() === agreement;
+    return courseMatch && agreementMatch;
+  });
+
+  const totalRecords = filtered.length;
+  const totalFees = filtered.reduce((sum, item) => sum + item.totalFees, 0);
+  const averageFees = totalRecords > 0 ? totalFees / totalRecords : 0;
+
+  let topCourse = "-";
+  let counts = {};
+  filtered.forEach(item => {
+    counts[item.course] = (counts[item.course] || 0) + 1;
+    if (counts[item.course] > (counts[topCourse] || 0)) {
+      topCourse = item.course;
+    }
+  });
+
+  document.getElementById("aaTotalRecords").textContent = totalRecords;
+  document.getElementById("aaTotalFees").textContent = "₹" + totalFees.toLocaleString();
+  document.getElementById("aaAverageFees").textContent = "₹" + averageFees.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  document.getElementById("aaTopCourse").textContent = topCourse;
+
+  renderAdmissionAnalyticsTable(filtered);
+}
+
+function renderAdmissionAnalyticsTable(dataArray) {
+  let h = `<table class='min-w-full'>
+      <thead class='bg-gray-50'>
+        <tr>
+          <th class='px-4 py-2 text-left'>Receipt No</th>
+          <th class='px-4 py-2 text-left'>Name</th>
+          <th class='px-4 py-2 text-left'>Course</th>
+          <th class='px-4 py-2 text-left'>Duration</th>
+          <th class='px-4 py-2 text-left'>Total Course Fees</th>
+          <th class='px-4 py-2 text-left'>Guardian</th>
+          <th class='px-4 py-2 text-left'>Agreement</th>
+          <th class='px-4 py-2 text-left'>Actions</th>
+        </tr>
+      </thead><tbody>`;
+  dataArray.forEach(d => {
+    const nameParts = d.name.split(' ');
+    const firstName = nameParts[0] || '';
+    const middleName = nameParts.slice(1, -1).join(' ') || '';
+    const lastName = nameParts[nameParts.length - 1] || '';
+    h += `<tr class='border-b'>
+      <td class='px-4 py-2'>${d.receipt}</td>
+      <td class='px-4 py-2'>${d.name}</td>
+      <td class='px-4 py-2'>${d.course}</td>
+      <td class='px-4 py-2'>${d.duration}</td>
+      <td class='px-4 py-2'>₹${d.totalFees.toLocaleString()}</td>
+      <td class='px-4 py-2'>${d.guardianRelation}</td>
+      <td class='px-4 py-2'>${d.agreement}</td>
+      <td class='px-4 py-2'>
+        <button onclick="openCoursePaymentFromAnalytics('${d.receipt}', '${firstName}', '${middleName}', '${lastName}', '${d.course}', '${d.tenure}', '${d.totalFees}')" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+          Course Payment
+        </button>
+      </td>
+    </tr>`;
+  });
+  h += "</tbody></table>";
+  document.getElementById("aaTableContainer").innerHTML = h;
+}
+
+function openCoursePaymentFromAnalytics(receiptNumber, firstName, middleName, lastName, course, tenure, totalFees) {
+  // Set sessionStorage data for course payment
+  const admissionData = {
+    receiptNumber: receiptNumber,
+    firstName: firstName,
+    middleName: middleName,
+    lastName: lastName,
+    courseName: course,
+    tenure: parseInt(tenure) || 12,
+    totalFees: parseFloat(totalFees) || 0,
+    paymentType: 'partial' // Always assume partial payment for admission analytics
+  };
+
+  sessionStorage.setItem('admissionDataForPayment', JSON.stringify(admissionData));
+
+  // Open course payment section
+  openCoursePayment();
+}
+
+function closeAdmissionAnalytics() {
+  hideAllSections();
+  document.getElementById("ifId").classList.remove("hidden");
+}
+</script>

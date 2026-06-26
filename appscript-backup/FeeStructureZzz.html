@@ -1,0 +1,525 @@
+<div id="feeStructureSection" class="hidden bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">Fee Structure</h2>
+      <p class="text-gray-600 mt-1">Track and analyze all student fee payments</p>
+    </div>
+    <button onclick="closeFeeStructure()"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 transition-colors">
+      <i class="fas fa-arrow-left"></i><span>Back</span>
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-list text-blue-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Total Records</p>
+      </div>
+      <p id="fsTotalRecords" class="text-xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-rupee-sign text-green-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Total Fees Collected</p>
+      </div>
+      <p id="fsTotalFees" class="text-xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calculator text-purple-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Due Total Fees</p>
+      </div>
+      <p id="fsTotalDueFees" class="text-xl font-bold text-gray-900">0</p>
+    </div>
+  </div>
+
+  <!-- Enhanced Filter Section -->
+  <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Filter & Search</h3>
+      <button onclick="resetFilters()"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 rounded text-sm border border-gray-300 transition-colors">
+        Reset Filters
+      </button>
+    </div>
+
+    <div class="flex flex-col sm:flex-row flex-wrap gap-4">
+      <!-- Search by Name or Enrollment ID -->
+      <div class="flex-1 min-w-0 sm:flex-none sm:w-80">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Search by Name or Enrollment ID</label>
+        <div class="flex gap-2">
+          <input type="text" id="fsSearchInput"
+                 oninput="filterFeeStructure()"
+                 class="flex-1 px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Enter name or enrollment ID">
+          <button onclick="handleSearch()"
+                  class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Mode Filter -->
+      <div class="flex-1 min-w-0 sm:flex-none sm:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
+        <select id="fsPaymentModeSelect"
+                onchange="filterFeeStructure()"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="">All Payment Modes</option>
+          <option value="Bank">Bank</option>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+
+      <!-- Course Filter -->
+      <div class="flex-1 min-w-0 sm:flex-none sm:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+        <select id="fsCourseSelect"
+                onchange="filterFeeStructure()"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="">All Courses</option>
+        </select>
+      </div>
+
+      <!-- Branch Filter -->
+      <div class="flex-1 min-w-0 sm:flex-none sm:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+        <select id="fsBranchSelect"
+                onchange="filterFeeStructure()"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="">All Branches</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-700">Show:</span>
+      <select id="fsPageSize" onchange="changePageSize()" class="px-2 py-1.5 border rounded border-gray-300 bg-white">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+      </select>
+      <span class="text-sm text-gray-700">entries per page</span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="copyTable('fsTableContainer')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-copy text-xs"></i> Copy
+      </button>
+      <button onclick="exportCSV('fsTableContainer','fee_structure.csv')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-csv text-xs"></i> CSV
+      </button>
+      <button onclick="exportTablePDF('fsTableContainer','FeeStructure')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-pdf text-xs"></i> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div id="fsTableContainer" class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TimeStamp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment ID</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Mode</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total_Amount_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User_Name</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="7" class="px-4 py-4 text-center text-gray-500">Loading fee structure data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-center mt-6 pt-4 border-t border-gray-200">
+    <div id="fsPageInfo" class="text-sm text-gray-700 mb-3 md:mb-0"></div>
+
+    <div id="fsPagination" class="flex items-center gap-1">
+      <button id="fsFirstPage" onclick="changePage(1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button id="fsPrevPage" onclick="changePage(currentPage - 1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-left"></i>
+      </button>
+
+      <div id="fsPageNumbers" class="flex mx-1">
+        <!-- Page numbers will be generated here -->
+      </div>
+
+      <button id="fsNextPage" onclick="changePage(currentPage + 1)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-right"></i>
+      </button>
+      <button id="fsLastPage" onclick="changePage(totalPages)"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+let feeStructureData = [];
+let filteredData = [];
+let currentPage = 1;
+let pageSize = 50;
+let totalPages = 1;
+
+function loadFeeStructure() {
+  console.log("loadFeeStructure() CALLED");
+
+  // Initialize pagination variables
+  feeStructureData = [];
+  filteredData = [];
+  currentPage = 1;
+
+  // Load course list for filter dropdown (optional, no blocking)
+  google.script.run
+    .withSuccessHandler(function (courseList) {
+      const sel = document.getElementById("fsCourseSelect");
+      if (sel) {
+        sel.innerHTML = `<option value="">All Courses</option>`;
+
+        // Check if courseList is valid
+        if (Array.isArray(courseList) && courseList.length > 0 && !courseList[0].includes('Error')) {
+          courseList.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.textContent = c;
+            sel.appendChild(opt);
+          });
+        } else {
+          console.log("No courses found or error:", courseList);
+        }
+      }
+    })
+    .getCourseListFromAdmissions();
+
+  // Load fee structure data
+  google.script.run
+    .withSuccessHandler(function (response) {
+      console.log("Received fee structure data:", response);
+
+      if (response.error) {
+        const tableContainer = document.getElementById("fsTableContainer");
+        tableContainer.innerHTML =
+          `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>${response.error}
+          </div>`;
+        return;
+      }
+
+      // Check if data exists
+      if (!response.data || response.data.length === 0) {
+        const tableContainer = document.getElementById("fsTableContainer");
+        tableContainer.innerHTML =
+          `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+            <i class="fas fa-info-circle text-gray-500 mr-2"></i>No fee structure data found
+          </div>`;
+        return;
+      }
+
+      // Store global data for filtering
+      feeStructureData = response.data;
+      filteredData = [...feeStructureData];
+
+      // Populate branch dropdown
+      const branches = [...new Set(feeStructureData.map(d => d.branch).filter(b => b))].sort();
+      const branchSel = document.getElementById("fsBranchSelect");
+      if (branchSel) {
+        branchSel.innerHTML = `<option value="">All Branches</option>`;
+        branches.forEach(b => {
+          const opt = document.createElement("option");
+          opt.value = b;
+          opt.textContent = b;
+          branchSel.appendChild(opt);
+        });
+      }
+
+      // Initialize pagination
+      currentPage = 1;
+      updatePagination();
+
+      // Populate summary cards
+      updateFsSummaryCards(filteredData);
+    })
+    .withFailureHandler(function(error) {
+      console.error("Error loading fee structure:", error);
+      const tableContainer = document.getElementById("fsTableContainer");
+      tableContainer.innerHTML =
+        `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Error loading fee structure: ${error.message}
+        </div>`;
+    })
+    .getFeeStructureData("admin");
+}
+
+// Handle search button click
+function handleSearch() {
+  filterFeeStructure();
+}
+
+// Allow Enter key to trigger search
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('fsSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
+  }
+});
+
+function filterFeeStructure() {
+  const paymentMode = document.getElementById("fsPaymentModeSelect").value.toLowerCase();
+  const selectedCourse = document.getElementById("fsCourseSelect").value;
+  const selectedBranch = document.getElementById("fsBranchSelect").value;
+  const searchTerm = document.getElementById("fsSearchInput").value.trim();
+
+  // Filter the global dataset
+  filteredData = feeStructureData.filter(d => {
+    // Payment mode filter
+    if (paymentMode && d.paymentMode && d.paymentMode.toLowerCase() !== paymentMode) {
+      return false;
+    }
+
+    // Course filter
+    if (selectedCourse && d.courseName !== selectedCourse) {
+      return false;
+    }
+
+    // Branch filter
+    if (selectedBranch && d.branch !== selectedBranch) {
+      return false;
+    }
+
+    // Search filter (by name or enrollment ID)
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = d.name && d.name.toLowerCase().includes(searchLower);
+      const enrollmentIdMatch = d.enrollmentId && d.enrollmentId.toString().toLowerCase().includes(searchLower);
+
+      if (!nameMatch && !enrollmentIdMatch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Update summary cards based on filtered data
+  updateFsSummaryCards(filteredData);
+
+  // Reset to first page after filtering
+  currentPage = 1;
+  updatePagination();
+}
+
+function resetFilters() {
+  document.getElementById("fsPaymentModeSelect").value = "";
+  document.getElementById("fsCourseSelect").value = "";
+  document.getElementById("fsBranchSelect").value = "";
+  document.getElementById("fsSearchInput").value = "";
+
+  filteredData = [...feeStructureData];
+  currentPage = 1;
+  updatePagination();
+  updateFsSummaryCards(filteredData);
+}
+
+function updateFsSummaryCards(data) {
+  const totalRecords = data.length;
+  const totalFeesCollected = data.reduce((sum, item) => {
+    // Calculate total fees collected (paid amounts)
+    const admissionPaid = (item.admissionFee || 0) - (item.admissionFeeDue || 0);
+    const coursePaid = (item.courseFee || 0) - (item.courseFeeDue || 0);
+    const examPaid = (item.examFee || 0) - (item.examFeeDue || 0);
+    return sum + Math.max(0, admissionPaid) + Math.max(0, coursePaid) + Math.max(0, examPaid);
+  }, 0);
+  const totalDueFees = data.reduce((sum, item) => {
+    const admissionDue = item.admissionFeeDue || 0;
+    const courseDue = item.courseFeeDue || 0;
+    const examDue = item.examFeeDue || 0;
+    return sum + admissionDue + courseDue + examDue;
+  }, 0);
+
+  document.getElementById("fsTotalRecords").textContent = totalRecords.toLocaleString();
+  document.getElementById("fsTotalFees").textContent = "₹" + totalFeesCollected.toLocaleString();
+  document.getElementById("fsTotalDueFees").textContent = "₹" + totalDueFees.toLocaleString();
+}
+
+function updatePagination() {
+  totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Show/hide pagination controls
+  const paginationEl = document.getElementById("fsPagination");
+  if (totalPages > 1) {
+    paginationEl.classList.remove("hidden");
+  } else {
+    paginationEl.classList.add("hidden");
+  }
+
+  // Update page number buttons
+  const pageNumbersEl = document.getElementById("fsPageNumbers");
+  pageNumbersEl.innerHTML = "";
+
+  // Determine which page numbers to show
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, startPage + 4);
+
+  // Adjust if we're near the end
+  if (endPage - startPage < 4 && startPage > 1) {
+    startPage = Math.max(1, endPage - 4);
+  }
+
+  // Create page number buttons
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = `px-3 py-1.5 mx-0.5 rounded text-sm border transition-colors ${i === currentPage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-700'}`;
+    pageBtn.onclick = () => changePage(i);
+    pageNumbersEl.appendChild(pageBtn);
+  }
+
+  // Update navigation button states
+  document.getElementById("fsFirstPage").disabled = currentPage === 1;
+  document.getElementById("fsPrevPage").disabled = currentPage === 1;
+  document.getElementById("fsNextPage").disabled = currentPage === totalPages;
+  document.getElementById("fsLastPage").disabled = currentPage === totalPages;
+
+  // Render the current page
+  renderCurrentPage();
+}
+
+function changePage(page) {
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  updatePagination();
+}
+
+function changePageSize() {
+  pageSize = parseInt(document.getElementById("fsPageSize").value);
+  currentPage = 1;
+  updatePagination();
+}
+
+function renderCurrentPage() {
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+  const pageData = filteredData.slice(startIndex, endIndex);
+
+  renderFeeStructureTable(pageData);
+
+  // Update page info
+  const pageInfo = document.getElementById("fsPageInfo");
+  if (pageInfo) {
+    pageInfo.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${filteredData.length} entries`;
+  }
+}
+
+function renderFeeStructureTable(dataArray) {
+  const tableContainer = document.getElementById("fsTableContainer");
+
+  if (!dataArray || dataArray.length === 0) {
+    tableContainer.innerHTML =
+      `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+        <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+        No fee structure data found matching your search criteria
+      </div>`;
+    return;
+  }
+
+  let h = `
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TimeStamp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment ID</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Mode</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam_Fee</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam_Fee_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total_Amount_Due</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User_Name</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+  `;
+
+  dataArray.forEach(d => {
+    h += `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.timestamp || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.enrollmentId || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${d.name || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.courseName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.paymentMode || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.admissionFee || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.admissionFeeDue || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.courseFee || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.courseFeeDue || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.examFee || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">₹${(d.examFeeDue || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">₹${(d.totalAmountDue || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.branch || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.userName || ''}</td>
+      </tr>
+    `;
+  });
+
+  h += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  tableContainer.innerHTML = h;
+}
+
+function closeFeeStructure() {
+  hideAllSections();
+  document.getElementById("ifId").classList.remove("hidden");
+}
+</script>

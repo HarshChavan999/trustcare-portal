@@ -1,0 +1,64 @@
+<script>
+  function updateCourseDetails() {
+    const select = document.getElementById("courseSelect");
+    const value = select.value;
+    const durationDiv = document.getElementById("courseDurationText");
+    const feesDiv = document.getElementById("totalCourseFees");
+    const admissionFeeDiv = document.getElementById("admissionFee");
+
+    console.log('updateCourseDetails called with course:', value);
+
+    // Get branch from sessionStorage, localStorage, or element
+    const branch = sessionStorage.getItem('branch') ||
+                  localStorage.getItem('userBranch') ||
+                  (document.getElementById("branch22") ? document.getElementById("branch22").value : 'kurla');
+
+    console.log('Branch determined as:', branch);
+
+    const courseData = getCourseDataByLocation(branch);
+
+    console.log('Course data for branch:', courseData);
+    console.log('Looking for course:', value);
+
+    if (courseData[value]) {
+      const course = courseData[value];
+      console.log('Course found:', course);
+
+      // Update duration
+      durationDiv.textContent = course.duration;
+      document.getElementById("courseDurationText").value = course.duration;
+
+      // Update course fees
+      feesDiv.textContent = course.fees;
+      document.getElementById("totalCourseFees").value = course.fees ? '₹' + course.fees.toLocaleString() : '';
+
+      // Update admission fee if the element exists (for admission form)
+      if (admissionFeeDiv) {
+        admissionFeeDiv.value = course.admission_fee ? '₹' + course.admission_fee.toLocaleString() : '';
+        console.log('Updated admission fee:', admissionFeeDiv.value);
+      }
+
+      console.log('Updated fields - Duration:', durationDiv.value, 'Fees:', document.getElementById("totalCourseFees").value);
+
+      // // Set course years based on duration
+      // if (courseData[value].duration.includes("2")) {
+      //   durationDiv.value = "2";
+      // } else if (courseData[value].duration.includes("3")) {
+      //   durationDiv.value = "3";
+      // } else {
+      //   durationDiv.value = "1";
+      // }
+    } else {
+      console.log('Course not found in courseData, using fallback');
+
+      feesDiv.textContent = "";
+      durationDiv.value = "1"; // Default to 1 year if no course is selected
+
+      // Clear admission fee if element exists
+      if (admissionFeeDiv) {
+        admissionFeeDiv.value = '';
+      }
+    }
+    updateYearPaymentOptions(); // Recalculate options based on new years
+  }
+</script>

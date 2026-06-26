@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced Fee Management Dashboard</title>
+  <!-- Tailwind CSS -->
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* Android-style SweetAlert2 customization */
+    .swal2-popup {
+      border-radius: 28px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+      backdrop-filter: blur(10px);
+      background: #f5f5f5 !important;
+    }
+
+    .swal2-confirm {
+      border-radius: 20px !important;
+      padding: 12px 24px !important;
+      font-weight: 600 !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .swal2-styled:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5) !important;
+    }
+
+    /* Floating animation */
+    @keyframes slideInFromBottom {
+      0% {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .swal2-show {
+      animation: slideInFromBottom 0.3s ease-out !important;
+    }
+
+    /* Success icon styling */
+    .swal2-success-ring {
+      border-color: #10b981 !important;
+    }
+
+    .swal2-success-line-tip, .swal2-success-line-long {
+      background-color: #10b981 !important;
+    }
+  </style>
+  <!-- html2pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!---------------------Admission Form ----------------------------->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!---------------------Admission Form End ----------------------------->
+
+  <?!= include('style'); ?>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 10px;
+      margin: 0;
+    }
+
+    .receipt-container {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #000;
+      padding: 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: white;
+      color: black;
+      padding: 15px;
+      min-height: 130px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      max-width: calc(100% - 105px);
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .logo-section img {
+      height: 80px;
+      width: auto;
+      object-fit: contain;
+      background: white;
+      padding: 2px;
+      border-radius: 3px;
+    }
+
+    .institute-info h1 {
+      font-size: 20px;
+      margin-bottom: 5px;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+  .institute-info p {
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: normal;
+    display: block;
+    margin: 0;
+  }
+
+    .contact-info {
+      font-size: 11px;
+      line-height: 1.4;
+      margin-top: 0px;
+      margin-left: 97px;
+    }
+
+    .photo-section {
+      width: 90px;
+      height: 110px;
+      border: 2px solid black;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .photo-section:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .photo-placeholder {
+      color: black;
+      font-size: 10px;
+      text-align: center;
+      padding: 8px;
+      line-height: 1.3;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .uploaded-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+
+    .receipt-title {
+      background: #34495e;
+      color: white;
+      text-align: center;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .form-content {
+      padding: 20px;
+    }
+
+    .form-row {
+      display: flex;
+      margin-bottom: 15px;
+      gap: 15px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 3px;
+      color: #2c3e50;
+      font-size: 12px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #bdc3c7;
+      border-radius: 3px;
+      font-size: 12px;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    .installment-section {
+      margin: 20px 0;
+    }
+
+    .installment-header {
+      background: #ecf0f1;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 3px;
+      border-left: 3px solid #3498db;
+    }
+
+    .installment-header h3 {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .installment-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .installment-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 10px;
+      border: 1px solid #34495e;
+    }
+
+    .installment-table th {
+      background: #34495e;
+      color: white;
+      padding: 6px 4px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 10px;
+      border: 1px solid #34495e;
+    }
+
+    .installment-table td {
+      padding: 6px 4px;
+      border: 1px solid #bdc3c7;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .installment-table .date-row {
+      background: #ecf0f1;
+      font-weight: bold;
+    }
+
+    .installment-table .amount-row {
+      background: #f8f9fa;
+    }
+
+    .installment-table .status-row {
+      background: #ffffff;
+    }
+
+    .installment-table select {
+      width: 100%;
+      padding: 2px;
+      font-size: 9px;
+      border: 1px solid #bdc3c7;
+    }
+
+    .total-section {
+      background: #2c3e50;
+      color: white;
+      padding: 10px;
+      border-radius: 3px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .year-section {
+      margin-top: 30px;
+    }
+
+    .year-header {
+      background: #3498db;
+      color: white;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .year-content {
+      border: 1px solid #bdc3c7;
+      border-top: none;
+      padding: 15px;
+      border-radius: 0 0 3px 3px;
+    }
+
+    .agreement-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 3px;
+      border-left: 3px solid #e74c3c;
+      font-size: 12px;
+    }
+
+    .agreement-section input {
+      border: none;
+      border-bottom: 1px solid #2c3e50;
+      background: transparent;
+      font-size: 12px;
+      padding: 2px;
+    }
+
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #ecf0f1;
+    }
+
+    .signature-box {
+      text-align: center;
+      flex: 1;
+      margin: 0 10px;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid #2c3e50;
+      margin-bottom: 8px;
+      height: 40px;
+    }
+
+    .signature-box p {
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+    }
+
+    .btn-success {
+      background: #27ae60;
+    }
+
+    .btn-success:hover {
+      background: #219a52;
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .download-section {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .scrollable-table {
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+      }
+
+      .receipt-container {
+        width: 210mm;
+        min-height: 297mm;
+        border: 2px solid #000;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .btn,
+      .download-section {
+        display: none !important;
+      }
+
+      .installment-controls {
+        display: none !important;
+      }
+
+      .photo-section {
+        cursor: default;
+      }
+
+      .installment-table select {
+        border: none;
+        background: transparent;
+        font-size: 9px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+
+      .agreement-section input {
+        border: none;
+        border-bottom: 1px solid #000;
+        background: transparent;
+      }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+  </style>
+
+
+</head>
+
+<body class="bg-gray-100">
+  <div id="loginSection"
+    class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-md p-8 space-y-6">
+      <div class="text-center space-y-2">
+        <img src="https://i.postimg.cc/FzvwbhS3/Untitled-1.png" alt="Logo" class="h-12 mx-auto" />
+        <h2 class="text-2xl font-semibold text-gray-900">Shelar Training Institute</h2>
+        <p class="text-sm text-gray-600">Enter your credentials to access your account</p>
+      </div>
+      <form id="loginForm" class="space-y-4">
+        <div class="space-y-2">
+          <label for="loginUsername" class="text-sm font-medium text-gray-700">Username</label>
+          <div class="relative">
+            <input type="text" id="loginUsername" class="w-full px-3 py-2 border border-gray-300 rounded-md
+                        focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors" placeholder="Enter username"
+              required />
+            <i class="fas fa-user absolute right-3 top-2.5 text-gray-400"></i>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label for="loginPassword" class="text-sm font-medium text-gray-700">Password</label>
+          <div class="relative">
+            <input type="password" id="loginPassword" class="w-full px-3 py-2 border border-gray-300 rounded-md
+                        focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors" placeholder="••••••••" required />
+            <i class="fas fa-lock absolute right-3 top-2.5 text-gray-400"></i>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-gray-900 text-white py-2 px-4 rounded-md
+                  hover:bg-gray-800 transition-colors font-medium text-sm">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+  <!-- MAIN APP SECTION -->
+  <div id="appSection" class="hidden min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- SIDEBAR -->
+
+      <?!= include('SideBar'); ?>
+
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 p-4 overflow-y-auto">
+        <div class="ml-64">
+          <!-- HIDDEN INPUTS -->
+          <input type="hidden" id="userName" />
+          <input type="hidden" id="userRole" />
+          <input type="hidden" id="userBranch">
+          <input type="hidden" id="loggedInUserId" name="loggedInUserId" />
+
+
+          <div id="slipFormSection" class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Student
+                  ID</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="studentId"
+                    class="w-44 px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none" />
+                  <!-- Button to fetch old slips by typed ID -->
+                  <button type="button" onclick="searchOldFeesFromSlip()"
+                    class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">
+                    View Old Slips
+                  </button>
+                </div>
+              </div>
+              <img src="https://i.postimg.cc/DZFDcqP8/IMG-20250320-WA0023-1-modified-3.png"
+                class="w-24 mx-auto mb-4 rounded-lg" alt="Institute Logo" />
+              <div class="text-right">
+                <p class="text-lg font-bold text-red-600">TRAINEE COPY</p>
+                <p class="text-sm text-gray-500">Generated at: <span id="generatedTime"></span></p>
+              </div>
+            </div>
+            <div class="text-center mb-6">
+              <h1 class="text-3xl font-bold text-gray-800 mb-2">Shelar Training
+                Institute</h1>
+            </div>
+            <form id="receiptForm" class="space-y-6">
+              <input type="hidden" id="recordRowNumber" />
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input type="date" id="date"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none"
+                    onchange="updateMonthField()" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <input type="text" id="monthField"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 bg-gray-50 focus:border-blue-500 outline-none"
+                    readonly />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Session</label>
+                  <select id="session"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none">
+                    <option value>Loading...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Transaction
+                    ID</label>
+                  <input type="text" id="transactionId"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                  <select id="trade"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none">
+                    <option value>Loading...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Student
+                    Name</label>
+                  <input type="text" id="studentName"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Father's
+                    Name</label>
+                  <input type="text" id="fatherName"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none" />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Paid
+                    Amount ($)</label>
+                  <input type="number" id="paidAmount"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none"
+                    oninput="convertAmountToWords()" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Amount
+                    in Words</label>
+                  <input type="text" id="paidAmountInWord"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 bg-gray-50 focus:border-blue-500 outline-none"
+                    readonly />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                  <select id="feesType"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none">
+                    <option value>Loading...</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Payment
+                    Mode</label>
+                  <select id="paymentMode"
+                    class="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 outline-none">
+                    <option value>Loading...</option>
+                  </select>
+                </div>
+              </div>
+              <input type="hidden" id="remark" />
+              <div class="mt-12 pt-6 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between gap-4">
+                  <div class="text-sm text-gray-500">
+                    <p>* Fees once paid cannot be refunded under any
+                      circumstances</p>
+                    <p class="mt-2"> Gmail:
+                      shelartraininginstitute@gmail.com</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-medium">Authorized Signature</p>
+                    <div class="mt-2 h-12 w-48 border-b-2 border-gray-300"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="no-print mt-8 flex flex-wrap justify-end gap-4">
+                <button type="reset" style="display:none"
+                  class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg">Clear</button>
+                <button id="btnSubmitNew" type="submit"
+                  class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                  Save Receipt
+                </button>
+                <button id="btnUpdateData" type="button"
+                  class="hidden px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium"
+                  onclick="updateFeeData()">
+                  Update Receipt
+                </button>
+              </div>
+            </form>
+          </div>
+          <!-- ADD RECEIPT SECTION -->
+          <div id="separateReceipt"
+            class="hidden printable bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl mx-auto my-8">
+            <div class="flex items-center mb-4">
+              <img src="https://i.postimg.cc/DZFDcqP8/IMG-20250320-WA0023-1-modified-3.png"
+                class="w-24 mx-auto mb-4 rounded-lg" alt="Institute Logo" />
+              <h1 class="text-2xl font-bold text-center">SHELAR TRAINING
+                INSTITUTE</h1>
+            </div>
+            <div class="text-center mb-4">
+              <span class="border border-black px-2 py-1">RECEIPT</span>
+            </div>
+            <div class="flex justify-between mb-4">
+              <div>
+                <span class="font-bold">Receipt No.</span>
+                <span id="receiptNumber">400</span>
+              </div>
+              <div>
+                <span class="font-bold">Date :</span>
+                <span id="receiptDate">________________</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <span class="font-bold">Full Name :</span>
+              <span id="receiptStudentName">______________________________</span>
+            </div>
+            <div class="mb-4">
+              <span class="font-bold">Propose to Pay :</span>
+              <span id="receiptCourse">______________________________</span>
+            </div>
+            <div class="flex justify-between mb-4">
+              <div>
+                <span class="font-bold">Total Amount :</span>
+                <span id="receiptTotalAmount">________________</span>
+              </div>
+              <div>
+                <span class="font-bold">Paid :</span>
+                <span id="receiptPaidAmount">________________</span>
+              </div>
+              <div>
+                <span class="font-bold">Balance Amount :</span>
+                <span id="receiptBalance">________________</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <!-- <span class="font-bold">Exam Fees :</span> -->
+              <span id="receiptExamFees">______________________________</span>
+            </div>
+            <div class="mb-4">
+              <span class="font-bold">Received by :</span>
+              <span id="receiptReceivedBy">______________________________</span>
+            </div>
+            <div class="mb-4">
+              <span class="font-bold">•</span>
+              <span>Once you pay fees for course not refundable.</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold">Authority Signature</span>
+            </div>
+            <div class="no-print mt-6 text-center">
+              <button onclick="printReceipt()" class="px-6 py-2 bg-blue-600 text-white rounded-lg">
+                <i class="fas fa-print mr-2"></i>Print Receipt
+              </button>
+              <button onclick="backToSlipForm()" class="px-6 py-2 bg-gray-500 text-white rounded-lg ml-4">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+              </button>
+            </div>
+          </div>
+
+
+
+          <?!= include('OldFees'); ?>
+          <?!= include('AnalyticsSection'); ?>
+          <?!= include('AnalyticsSection2'); ?>
+          <?!= include('ManageStudentSection'); ?>
+          <?!= include('Dashboard'); ?>
+          <?!= include('CoursePayment'); ?>
+          <?!= include('DueFees'); ?>
+          <?!= include('FeeStructureZzz'); ?>
+          <?!= include('Admissionanalytics.html'); ?>
+          <?!= include('InquiryAnalytics.html'); ?>
+          <?!= HtmlService.createHtmlOutputFromFile('AdmissionForm/Admission').getContent(); ?>
+          <?!= HtmlService.createHtmlOutputFromFile('AdmissionForm/AdmissionFormReceipt').getContent(); ?>
+          <?!= include('admissionreceipt'); ?>
+          <?!= include('examfees'); ?>
+          <?!= HtmlService.createHtmlOutputFromFile('InquiryForm/Inquiry').getContent(); ?>
+          <?!= HtmlService.createHtmlOutputFromFile('InquiryForm/InquiryHandle').getContent(); ?>
+          <?!= include('StudentModal'); ?>
+          <?!= include('script'); ?>
+          <?!= HtmlService.createHtmlOutputFromFile('AdmissionForm/AdmissionHandle').getContent(); ?>
+
+          <?!= include('coursedetails'); ?>
+          <?!= include('payment'); ?>
+          <?!= include('generatePDF'); ?>
+          <!---------------------------Admission Form End--------------------------->
+</body>
+
+</html>

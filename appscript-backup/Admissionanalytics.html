@@ -1,0 +1,1012 @@
+<div id="admissionAnalyticsSection" class="hidden bg-white rounded-xl shadow-lg p-6 border border-gray-200 mt-6">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Admission Analytics</h2>
+      <p class="text-gray-600 mt-1">Track and analyze all student admissions</p>
+    </div>
+    <button onclick="closeAdmissionAnalytics()"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center gap-2 transition-colors">
+      <i class="fas fa-arrow-left"></i><span>Back</span>
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-alt text-blue-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">This Month</p>
+      </div>
+      <p id="aaThisMonth" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-week text-green-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">This Week</p>
+      </div>
+      <p id="aaThisWeek" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-calendar-day text-purple-600 text-sm"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Today</p>
+      </div>
+      <p id="aaToday" class="text-2xl font-bold text-gray-900">0</p>
+    </div>
+  </div>
+
+  <!-- Enhanced Filter Section -->
+  <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Filter & Search</h3>
+      <button onclick="resetAdmissionFilters()"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 rounded text-sm border border-gray-300 transition-colors">
+        Reset Filters
+      </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Course Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+        <select id="aaCourseSelect"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onchange="filterAdmissionAnalytics()">
+          <option value="">All Courses</option>
+        </select>
+      </div>
+      
+      <!-- Time Period Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+        <select id="aaTimePeriodSelect"
+                class="w-full px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onchange="filterAdmissionAnalytics()">
+          <option value="">All</option>
+          <option value="thisMonth">This Month</option>
+          <option value="thisWeek">This Week</option>
+          <option value="today">Today</option>
+        </select>
+      </div>
+      
+      <!-- Search by Name/Enrollment -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Search by Name/Enrollment</label>
+        <div class="flex gap-2">
+          <input type="text" id="aaSearchInput"
+                 class="flex-1 px-3 py-2 border rounded-lg border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Enter name or enrollment ID">
+          <button onclick="handleAdmissionSearch()"
+                  class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-700">Show:</span>
+      <select id="aaPageSize" onchange="changeAdmissionPageSize()" class="px-2 py-1.5 border rounded border-gray-300 bg-white">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+      </select>
+      <span class="text-sm text-gray-700">entries per page</span>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="copyTable('aaTableContainer')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-copy text-xs"></i> Copy
+      </button>
+      <button onclick="exportCSV('aaTableContainer','admission_analytics.csv')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-csv text-xs"></i> CSV
+      </button>
+      <button onclick="exportTablePDF('aaTableContainer','AdmissionAnalytics')"
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm transition-colors flex items-center gap-1">
+        <i class="fas fa-file-pdf text-xs"></i> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div id="aaTableContainer" class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('date')" id="sort-date">
+              <div class="flex items-center gap-1">
+                Timestamp
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('receiptNumber')" id="sort-receiptNumber">
+              <div class="flex items-center gap-1">
+                Receipt Number
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('enrollmentId')" id="sort-enrollmentId">
+              <div class="flex items-center gap-1">
+                Enrollment ID
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('firstName')" id="sort-firstName">
+              <div class="flex items-center gap-1">
+                First Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Middle Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('lastName')" id="sort-lastName">
+              <div class="flex items-center gap-1">
+                Last Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('courseName')" id="sort-courseName">
+              <div class="flex items-center gap-1">
+                Course Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('courseDuration')" id="sort-courseDuration">
+              <div class="flex items-center gap-1">
+                Course Duration
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('totalCourseFees')" id="sort-totalCourseFees">
+              <div class="flex items-center gap-1">
+                Total Course Fees
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Relation</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agreement</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="14" class="px-4 py-4 text-center text-gray-500">Loading admission data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="flex flex-col md:flex-row justify-between items-center mt-6 pt-4 border-t border-gray-200">
+    <div id="aaPageInfo" class="text-sm text-gray-700 mb-3 md:mb-0"></div>
+    
+    <div id="aaPagination" class="flex items-center gap-1">
+      <button id="aaFirstPage" onclick="changeAdmissionPage(1)" 
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button id="aaPrevPage" onclick="changeAdmissionPage(currentAdmissionPage - 1)" 
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-left"></i>
+      </button>
+      
+      <div id="aaPageNumbers" class="flex mx-1">
+        <!-- Page numbers will be generated here -->
+      </div>
+      
+      <button id="aaNextPage" onclick="changeAdmissionPage(currentAdmissionPage + 1)" 
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-right"></i>
+      </button>
+      <button id="aaLastPage" onclick="changeAdmissionPage(totalAdmissionPages)" 
+              class="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let admissionData = [];
+let filteredAdmissionData = [];
+let currentAdmissionPage = 1;
+let admissionPageSize = 50;
+let totalAdmissionPages = 1;
+let currentSortColumn = 'date';
+let currentSortDirection = 'desc'; // 'asc' or 'desc'
+
+function toggleAdmissionAnalytics() {
+  hideAllSections();
+  document.getElementById("admissionAnalyticsSection").classList.remove("hidden");
+  
+  // Load course list for filter dropdown
+  google.script.run
+    .withSuccessHandler(function (courseList) {
+      const sel = document.getElementById("aaCourseSelect");
+      sel.innerHTML = `<option value="">All Courses</option>`;
+      
+      // Check if courseList is valid
+      if (Array.isArray(courseList) && courseList.length > 0 && !courseList[0].includes('Error')) {
+        courseList.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          sel.appendChild(opt);
+        });
+      } else {
+        console.log("No courses found or error:", courseList);
+      }
+    })
+    .withFailureHandler(function(error) {
+      console.error("Failed to load course list:", error);
+    })
+    .getCourseListFromAdmissions();
+
+  loadAdmissionAnalytics();
+}
+
+function loadAdmissionAnalytics() {
+  const tableContainer = document.getElementById("aaTableContainer");
+  tableContainer.innerHTML = `
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt Number</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment ID</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Middle Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Duration</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Course Fees</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Relation</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agreement</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="14" class="px-4 py-4 text-center text-gray-500">Loading admission data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  google.script.run
+    .withSuccessHandler(function(response) {
+      console.log("Server response:", response);
+      
+      if (!response) {
+        tableContainer.innerHTML = 
+          `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>No data received from server
+          </div>`;
+        return;
+      }
+      
+      if (response.error) {
+        tableContainer.innerHTML = 
+          `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>${response.error}
+          </div>`;
+        return;
+      }
+
+      if (!response.data) {
+        tableContainer.innerHTML = 
+          `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+            <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+            No admission data found
+          </div>`;
+        return;
+      }
+
+      admissionData = response.data;
+      filteredAdmissionData = [...admissionData];
+
+      // Sort by date descending (latest first) initially
+      sortAdmissionTable('date');
+
+      // Initialize pagination
+      currentAdmissionPage = 1;
+      updateAdmissionPagination();
+
+      // Update summary cards
+      updateAdmissionSummaryCards(admissionData);
+    })
+    .withFailureHandler(function(error) {
+      console.error("Error loading analytics:", error);
+      tableContainer.innerHTML = 
+        `<div class="bg-red-50 p-4 rounded-lg text-red-700 text-center border border-red-200">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Error loading admission data: ${error.message}
+        </div>`;
+    })
+    .getAdmissionAnalyticsData("admin");
+}
+
+function handleAdmissionSearch() {
+  filterAdmissionAnalytics();
+}
+
+// Allow Enter key to trigger search
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('aaSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleAdmissionSearch();
+      }
+    });
+  }
+});
+
+function filterAdmissionAnalytics() {
+  const selectedCourse = document.getElementById("aaCourseSelect").value;
+  const timePeriod = document.getElementById("aaTimePeriodSelect").value;
+  const searchTerm = document.getElementById("aaSearchInput").value.trim().toLowerCase();
+
+  // Get current date information for filtering
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentDate = now.toDateString();
+
+  // Get start of current week (Monday)
+  const startOfWeek = new Date(now);
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  startOfWeek.setDate(now.getDate() - daysToSubtract);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Get end of current week (Sunday)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  filteredAdmissionData = admissionData.filter(d => {
+    // Course filter
+    if (selectedCourse && d.courseName !== selectedCourse) {
+      return false;
+    }
+
+    // Time period filter
+    if (timePeriod) {
+      if (!d.date) return false;
+
+      try {
+        // Try multiple date parsing methods for robustness
+        let itemDate = null;
+
+        // First try direct Date constructor
+        itemDate = new Date(d.date);
+
+        // If that fails, try parsing common formats
+        if (isNaN(itemDate.getTime())) {
+          // Try dd/mm/yyyy format
+          const ddmmyyyyMatch = d.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (ddmmyyyyMatch) {
+            itemDate = new Date(ddmmyyyyMatch[3], ddmmyyyyMatch[2] - 1, ddmmyyyyMatch[1]);
+          } else {
+            // Try mm/dd/yyyy format
+            const mmddyyyyMatch = d.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyyMatch) {
+              itemDate = new Date(mmddyyyyMatch[3], mmddyyyyMatch[1] - 1, mmddyyyyMatch[2]);
+            } else {
+              // Try yyyy-mm-dd format
+              const yyyymmddMatch = d.date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+              if (yyyymmddMatch) {
+                itemDate = new Date(yyyymmddMatch[1], yyyymmddMatch[2] - 1, yyyymmddMatch[3]);
+              } else {
+                // Try dd-mm-yyyy format
+                const ddmmyyyyDashMatch = d.date.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                if (ddmmyyyyDashMatch) {
+                  itemDate = new Date(ddmmyyyyDashMatch[3], ddmmyyyyDashMatch[2] - 1, ddmmyyyyDashMatch[1]);
+                } else {
+                  // Try month name format (e.g., "Dec 1, 2025")
+                  const monthNameMatch = d.date.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+                  if (monthNameMatch) {
+                    itemDate = new Date(`${monthNameMatch[1]} ${monthNameMatch[2]}, ${monthNameMatch[3]}`);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // If still invalid, skip this item
+        if (isNaN(itemDate.getTime())) {
+          return false;
+        }
+
+        // Set to start of day for accurate comparison
+        itemDate.setHours(0, 0, 0, 0);
+
+        const itemMonth = itemDate.getMonth();
+        const itemYear = itemDate.getFullYear();
+        const itemDateString = itemDate.toDateString();
+
+        // Check time period filter
+        if (timePeriod === 'thisMonth') {
+          if (!(itemMonth === currentMonth && itemYear === currentYear)) {
+            return false;
+          }
+        } else if (timePeriod === 'thisWeek') {
+          if (!(itemDate >= startOfWeek && itemDate <= endOfWeek)) {
+            return false;
+          }
+        } else if (timePeriod === 'today') {
+          if (itemDateString !== currentDate) {
+            return false;
+          }
+        }
+      } catch (e) {
+        // Skip items with parsing errors
+        return false;
+      }
+    }
+
+    // Name/Enrollment search
+    if (searchTerm) {
+      const firstNameMatch = d.firstName && d.firstName.toLowerCase().includes(searchTerm);
+      const middleNameMatch = d.middleName && d.middleName.toLowerCase().includes(searchTerm);
+      const lastNameMatch = d.lastName && d.lastName.toLowerCase().includes(searchTerm);
+      const fullNameMatch = firstNameMatch || middleNameMatch || lastNameMatch;
+      const enrollmentMatch = d.enrollmentId && d.enrollmentId.toString().includes(searchTerm);
+
+      if (!fullNameMatch && !enrollmentMatch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Reset to first page after filtering
+  currentAdmissionPage = 1;
+  updateAdmissionPagination();
+  updateAdmissionSummaryCards(filteredAdmissionData);
+}
+
+function resetAdmissionFilters() {
+  document.getElementById("aaCourseSelect").value = "";
+  document.getElementById("aaTimePeriodSelect").value = "";
+  document.getElementById("aaSearchInput").value = "";
+
+  filteredAdmissionData = [...admissionData];
+  currentAdmissionPage = 1;
+  updateAdmissionPagination();
+  updateAdmissionSummaryCards(filteredAdmissionData);
+}
+
+function updateAdmissionSummaryCards(data) {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentDate = now.toDateString();
+
+  // Get start of current week (Monday)
+  const startOfWeek = new Date(now);
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  startOfWeek.setDate(now.getDate() - daysToSubtract);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Get end of current week (Sunday)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  let thisMonthCount = 0;
+  let thisWeekCount = 0;
+  let todayCount = 0;
+
+  data.forEach((item) => {
+    if (item.date) {
+      try {
+        // Try multiple date parsing methods for robustness
+        let itemDate = null;
+
+        // First try direct Date constructor
+        itemDate = new Date(item.date);
+
+        // If that fails, try parsing common formats
+        if (isNaN(itemDate.getTime())) {
+          // Try dd/mm/yyyy format
+          const ddmmyyyyMatch = item.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (ddmmyyyyMatch) {
+            itemDate = new Date(ddmmyyyyMatch[3], ddmmyyyyMatch[2] - 1, ddmmyyyyMatch[1]);
+          } else {
+            // Try mm/dd/yyyy format
+            const mmddyyyyMatch = item.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyyMatch) {
+              itemDate = new Date(mmddyyyyMatch[3], mmddyyyyMatch[1] - 1, mmddyyyyMatch[2]);
+            } else {
+              // Try yyyy-mm-dd format
+              const yyyymmddMatch = item.date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+              if (yyyymmddMatch) {
+                itemDate = new Date(yyyymmddMatch[1], yyyymmddMatch[2] - 1, yyyymmddMatch[3]);
+              } else {
+                // Try dd-mm-yyyy format
+                const ddmmyyyyDashMatch = item.date.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                if (ddmmyyyyDashMatch) {
+                  itemDate = new Date(ddmmyyyyDashMatch[3], ddmmyyyyDashMatch[2] - 1, ddmmyyyyDashMatch[1]);
+                } else {
+                  // Try month name format (e.g., "Dec 1, 2025")
+                  const monthNameMatch = item.date.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+                  if (monthNameMatch) {
+                    itemDate = new Date(`${monthNameMatch[1]} ${monthNameMatch[2]}, ${monthNameMatch[3]}`);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // If still invalid, skip this item
+        if (isNaN(itemDate.getTime())) {
+          return;
+        }
+
+        // Set to start of day for accurate comparison
+        itemDate.setHours(0, 0, 0, 0);
+
+        const itemMonth = itemDate.getMonth();
+        const itemYear = itemDate.getFullYear();
+        const itemDateString = itemDate.toDateString();
+
+        // Count this month
+        if (itemMonth === currentMonth && itemYear === currentYear) {
+          thisMonthCount++;
+        }
+
+        // Count this week (from Monday to Sunday)
+        if (itemDate >= startOfWeek && itemDate <= endOfWeek) {
+          thisWeekCount++;
+        }
+
+        // Count today
+        if (itemDateString === currentDate) {
+          todayCount++;
+        }
+      } catch (e) {
+        // Skip items with parsing errors
+      }
+    }
+  });
+
+  document.getElementById("aaThisMonth").textContent = thisMonthCount.toLocaleString();
+  document.getElementById("aaThisWeek").textContent = thisWeekCount.toLocaleString();
+  document.getElementById("aaToday").textContent = todayCount.toLocaleString();
+}
+
+function updateAdmissionPagination() {
+  totalAdmissionPages = Math.ceil(filteredAdmissionData.length / admissionPageSize);
+  
+  // Show/hide pagination controls
+  const paginationEl = document.getElementById("aaPagination");
+  if (totalAdmissionPages > 1) {
+    paginationEl.classList.remove("hidden");
+  } else {
+    paginationEl.classList.add("hidden");
+  }
+  
+  // Update page number buttons
+  const pageNumbersEl = document.getElementById("aaPageNumbers");
+  pageNumbersEl.innerHTML = "";
+  
+  // Determine which page numbers to show
+  let startPage = Math.max(1, currentAdmissionPage - 2);
+  let endPage = Math.min(totalAdmissionPages, startPage + 4);
+  
+  // Adjust if we're near the end
+  if (endPage - startPage < 4 && startPage > 1) {
+    startPage = Math.max(1, endPage - 4);
+  }
+  
+  // Create page number buttons
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = `px-3 py-1.5 mx-0.5 rounded text-sm border transition-colors ${i === currentAdmissionPage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-700'}`;
+    pageBtn.onclick = () => changeAdmissionPage(i);
+    pageNumbersEl.appendChild(pageBtn);
+  }
+  
+  // Update navigation button states
+  document.getElementById("aaFirstPage").disabled = currentAdmissionPage === 1;
+  document.getElementById("aaPrevPage").disabled = currentAdmissionPage === 1;
+  document.getElementById("aaNextPage").disabled = currentAdmissionPage === totalAdmissionPages;
+  document.getElementById("aaLastPage").disabled = currentAdmissionPage === totalAdmissionPages;
+  
+  // Render the current page
+  renderCurrentAdmissionPage();
+}
+
+function changeAdmissionPage(page) {
+  if (page < 1 || page > totalAdmissionPages) return;
+  currentAdmissionPage = page;
+  updateAdmissionPagination();
+}
+
+function changeAdmissionPageSize() {
+  admissionPageSize = parseInt(document.getElementById("aaPageSize").value);
+  currentAdmissionPage = 1;
+  updateAdmissionPagination();
+}
+
+function renderCurrentAdmissionPage() {
+  const startIndex = (currentAdmissionPage - 1) * admissionPageSize;
+  const endIndex = Math.min(startIndex + admissionPageSize, filteredAdmissionData.length);
+  const pageData = filteredAdmissionData.slice(startIndex, endIndex);
+  
+  renderAdmissionTable(pageData);
+  
+  // Update page info
+  const pageInfo = document.getElementById("aaPageInfo");
+  if (pageInfo) {
+    pageInfo.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${filteredAdmissionData.length} entries`;
+  }
+}
+
+function renderAdmissionTable(dataArray) {
+  const tableContainer = document.getElementById("aaTableContainer");
+  
+  if (!dataArray || dataArray.length === 0) {
+    tableContainer.innerHTML = 
+      `<div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+        <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+        No admission data found matching your search criteria
+      </div>`;
+    return;
+  }
+
+  let h = `
+    <div class="min-w-full">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('date')" id="sort-date">
+              <div class="flex items-center gap-1">
+                Timestamp
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('receiptNumber')" id="sort-receiptNumber">
+              <div class="flex items-center gap-1">
+                Receipt Number
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('enrollmentId')" id="sort-enrollmentId">
+              <div class="flex items-center gap-1">
+                Enrollment ID
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('firstName')" id="sort-firstName">
+              <div class="flex items-center gap-1">
+                First Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Middle Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('lastName')" id="sort-lastName">
+              <div class="flex items-center gap-1">
+                Last Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('courseName')" id="sort-courseName">
+              <div class="flex items-center gap-1">
+                Course Name
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('courseDuration')" id="sort-courseDuration">
+              <div class="flex items-center gap-1">
+                Course Duration
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortAdmissionTable('totalCourseFees')" id="sort-totalCourseFees">
+              <div class="flex items-center gap-1">
+                Total Course Fees
+                <div class="sort-arrows">
+                  <i class="fas fa-sort-up text-gray-300"></i>
+                  <i class="fas fa-sort-down text-gray-300"></i>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Relation</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guardian Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agreement</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+  `;
+  
+  dataArray.forEach((d, index) => {
+    const dataId = `admission-data-${index}`;
+    h += `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3 whitespace-nowrap text-sm">
+          <button id="course-payment-btn-${index}"
+                  data-admission='${JSON.stringify(d).replace(/'/g, "\\'")}'
+                  onclick="redirectToCoursePaymentFromTable('course-payment-btn-${index}')"
+                  class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm flex items-center gap-1 transition-colors">
+            <i class="fas fa-credit-card text-xs"></i> Course Payment
+          </button>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.date || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.receiptNumber || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.enrollmentId || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${d.firstName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.middleName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.lastName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.courseName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.courseDuration || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600">₹${(d.totalCourseFees || 0).toLocaleString()}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.guardianRelation || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.guardianName || ''}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${d.agreement === 'Agreed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+            ${d.agreement || 'Not Agreed'}
+          </span>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${d.user || ''}</td>
+      </tr>
+    `;
+  });
+  
+  h += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  tableContainer.innerHTML = h;
+}
+
+function sortAdmissionTable(column) {
+  // If clicking the same column, toggle direction
+  if (currentSortColumn === column) {
+    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSortColumn = column;
+    // Default to desc for date, asc for others
+    currentSortDirection = column === 'date' ? 'desc' : 'asc';
+  }
+
+  // Sort the filtered data
+  filteredAdmissionData.sort((a, b) => {
+    let aValue = a[column] || '';
+    let bValue = b[column] || '';
+
+    // Special handling for date column
+    if (column === 'date') {
+      try {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+        if (isNaN(aValue.getTime())) aValue = new Date(0); // Default to epoch if invalid
+        if (isNaN(bValue.getTime())) bValue = new Date(0);
+      } catch (e) {
+        aValue = new Date(0);
+        bValue = new Date(0);
+      }
+    } else if (column === 'totalCourseFees') {
+      // Numeric sorting for fees
+      aValue = parseFloat(aValue) || 0;
+      bValue = parseFloat(bValue) || 0;
+    } else {
+      // String sorting for other columns
+      aValue = String(aValue).toLowerCase();
+      bValue = String(bValue).toLowerCase();
+    }
+
+    if (currentSortDirection === 'asc') {
+      if (aValue < bValue) return -1;
+      if (aValue > bValue) return 1;
+      return 0;
+    } else {
+      if (aValue > bValue) return -1;
+      if (aValue < bValue) return 1;
+      return 0;
+    }
+  });
+
+  // Update sort indicators
+  updateSortIndicators();
+
+  // Reset to first page and re-render
+  currentAdmissionPage = 1;
+  updateAdmissionPagination();
+}
+
+function updateSortIndicators() {
+  // Reset all sort arrows
+  const allHeaders = ['date', 'receiptNumber', 'enrollmentId', 'firstName', 'lastName', 'courseName', 'courseDuration', 'totalCourseFees'];
+  allHeaders.forEach(col => {
+    const header = document.getElementById(`sort-${col}`);
+    if (header) {
+      const arrows = header.querySelector('.sort-arrows');
+      if (arrows) {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-gray-300"></i>
+          <i class="fas fa-sort-down text-gray-300"></i>
+        `;
+      }
+    }
+  });
+
+  // Highlight current sort column
+  const currentHeader = document.getElementById(`sort-${currentSortColumn}`);
+  if (currentHeader) {
+    const arrows = currentHeader.querySelector('.sort-arrows');
+    if (arrows) {
+      if (currentSortDirection === 'asc') {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-blue-600"></i>
+          <i class="fas fa-sort-down text-gray-300"></i>
+        `;
+      } else {
+        arrows.innerHTML = `
+          <i class="fas fa-sort-up text-gray-300"></i>
+          <i class="fas fa-sort-down text-blue-600"></i>
+        `;
+      }
+    }
+  }
+}
+
+function closeAdmissionAnalytics() {
+  hideAllSections();
+  document.getElementById("ifId").classList.remove("hidden");
+}
+
+function redirectToCoursePaymentFromTable(buttonId) {
+  console.log("redirectToCoursePaymentFromTable called with buttonId:", buttonId);
+
+  const button = document.getElementById(buttonId);
+  if (!button) {
+    console.error("Button not found:", buttonId);
+    return;
+  }
+
+  const dataString = button.getAttribute('data-admission');
+  if (!dataString) {
+    console.error("No data-admission attribute found on button");
+    return;
+  }
+
+  try {
+    const data = JSON.parse(dataString);
+    console.log("Parsed data:", data);
+    redirectToCoursePayment(data);
+  } catch (error) {
+    console.error("Error parsing data-admission:", error);
+  }
+}
+
+function redirectToCoursePayment(data) {
+  console.log("redirectToCoursePayment called with data:", data);
+
+  // Store admission data in sessionStorage for Course Payment page
+  sessionStorage.setItem('admissionDataForPayment', JSON.stringify(data));
+  console.log("Data stored in sessionStorage");
+
+  // Try to navigate using the global functions
+  try {
+    // Check if hideAllSections exists in global scope
+    if (typeof window.hideAllSections === 'function') {
+      console.log("Calling hideAllSections");
+      window.hideAllSections();
+    } else {
+      console.log("hideAllSections not found, trying direct navigation");
+      // Fallback: manually hide sections
+      const sections = document.querySelectorAll('[id$="Section"]');
+      sections.forEach(section => {
+        if (section.id !== 'coursePaymentSection') {
+          section.classList.add('hidden');
+        }
+      });
+    }
+
+    const coursePaymentSection = document.getElementById("coursePaymentSection");
+    if (coursePaymentSection) {
+      console.log("Showing coursePaymentSection");
+      coursePaymentSection.classList.remove("hidden");
+
+      // Try to populate form data if function is available
+      setTimeout(() => {
+        if (typeof window.populateCoursePaymentFromAdmission === 'function') {
+          console.log("Calling populateCoursePaymentFromAdmission");
+          window.populateCoursePaymentFromAdmission(data);
+        } else {
+          console.log("populateCoursePaymentFromAdmission function not found");
+        }
+      }, 200);
+    } else {
+      console.error("Course Payment section not found in DOM");
+      alert("Error: Course Payment section not available. Please refresh the page and try again.");
+    }
+  } catch (error) {
+    console.error("Error in redirectToCoursePayment:", error);
+    alert("Navigation error: " + error.message);
+  }
+}
+
+function viewAdmissionDetails(data) {
+  // Implement view admission details functionality
+  console.log("View admission details:", data);
+  // You can implement a modal or redirect to detailed view
+  const fullName = `${data.firstName || ''} ${data.middleName || ''} ${data.lastName || ''}`.trim();
+  alert(`Viewing details for: ${fullName}\nCourse: ${data.courseName}\nTotal Fees: ₹${data.totalCourseFees}`);
+}
+</script>

@@ -1,0 +1,947 @@
+
+
+<div class="hidden" id="feeReceiptForm" style="position: fixed; top: 0; left: 256px; width: calc(100vw - 256px); height: 100vh; background: #ffffff; z-index: 50;">
+  <div class="flex items-center justify-center w-full h-full p-4" style="background: #ffffff;">
+    <div class="w-full max-w-2xl">
+      <!-- Progress indicator -->
+      <div class="mb-8">
+        <div class="flex items-center justify-center space-x-2 mb-4">
+          <div class="w-3 h-3 bg-white rounded-full opacity-50"></div>
+          <div class="w-8 h-3 bg-white rounded-full"></div>
+          <div class="w-3 h-3 bg-white rounded-full opacity-50"></div>
+        </div>
+        <h1 class="text-2xl font-light text-gray-800 text-center mb-2">Exam Fee Receipt</h1>
+      </div>
+
+      <form id="examReceiptForm" class="space-y-6" onsubmit="FeeReceiptFormHandle(event)">
+        <!-- Enrollment ID -->
+        <div class="form-field animate-slide-up" style="animation-delay: 0.1s;">
+          <label for="enrollmentIdInput" class="block text-sm font-medium text-gray-700 mb-2">
+            Enrollment ID <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <input type="text" id="enrollmentIdInput" name="enrollmentId"
+                   class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none transition-all duration-300"
+                   placeholder="Enter your enrollment ID">
+            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+<!-- Date & Receipt Number (Auto-populated) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="form-field animate-slide-up" style="animation-delay: 0.6s;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+            <div class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed flex items-center">
+              <span id="receiptDateDisplay">Loading...</span>
+            </div>
+            <input type="hidden" id="receiptDate" name="receiptDate" value="">
+          </div>
+
+          <div class="form-field animate-slide-up" style="animation-delay: 0.7s;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Receipt Number</label>
+            <div class="relative">
+              <input type="text" id="ExamReceiptNumber" name="receiptNumber"
+                     class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 placeholder-gray-500 focus:outline-none transition-all duration-300 cursor-not-allowed"
+                     readonly>
+              <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Name & Course Name -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="form-field animate-slide-up" style="animation-delay: 0.2s;">
+            <label for="studentNameInput" class="block text-sm font-medium text-gray-700 mb-2">
+              Student Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="studentNameInput" name="studentName"
+                   class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none transition-all duration-300"
+                   required placeholder="Enter student name">
+          </div>
+
+          <div class="form-field animate-slide-up" style="animation-delay: 0.3s;">
+            <label for="courseNameInput" class="block text-sm font-medium text-gray-700 mb-2">
+              Course Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="courseNameInput" name="courseName"
+                   class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none transition-all duration-300"
+                   required placeholder="Enter course name">
+          </div>
+        </div>
+
+        <!-- Total Amount & Payment Mode -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="form-field animate-slide-up" style="animation-delay: 0.4s;">
+            <label for="totalAmount" class="block text-sm font-medium text-gray-700 mb-2">
+              Total Amount (₹) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="number" id="totalAmount" name="totalAmount" value="500" readonly
+                     class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 placeholder-gray-500 focus:outline-none transition-all duration-300 cursor-not-allowed">
+              <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field animate-slide-up" style="animation-delay: 0.5s;">
+            <label for="paymentModeInput" class="block text-sm font-medium text-gray-700 mb-2">
+              Payment Mode <span class="text-red-500">*</span>
+            </label>
+            <select id="paymentModeInput" name="paymentMode"
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none transition-all duration-300 appearance-none"
+                    required>
+              <option value="" disabled selected class="text-gray-900">Select Payment Mode</option>
+              <option value="Cash" class="text-gray-900"> Cash</option>
+              <option value="Cheque" class="text-gray-900"> Cheque</option>
+              <option value="Bank Transfer" class="text-gray-900"> Bank Transfer</option>
+              <option value="UPI" class="text-gray-900"> UPI</option>
+              <option value="Credit/Debit Card" class="text-gray-900"> Credit/Debit Card</option>
+            </select>
+          </div>
+        </div>
+
+        
+
+        <!-- Terms & Submit -->
+        <div class="form-field animate-slide-up pt-6" style="animation-delay: 0.8s;">
+          <div class="flex flex-col space-y-4">
+            <label class="flex items-start space-x-3 cursor-pointer group">
+              <input type="checkbox" id="agreeTerms" name="agreeTerms" required
+                     class="mt-1 w-4 h-4 text-blue-600 bg-gray-50 border-gray-300 rounded focus:ring-blue-500 focus:ring-offset-0 transition-all duration-300">
+              <span class="text-sm text-gray-700 leading-relaxed">
+                I acknowledge and agree to the payment details above. Fees once paid are non-refundable.
+              </span>
+            </label>
+            <div id="agreeError" class="text-red-500 text-xs opacity-0 transition-opacity duration-300"></div>
+          </div>
+
+          <div class="flex justify-center pt-6">
+            <button type="button" onclick="generateAndSaveReceipt()" id="generateReceiptBtn"
+                    class="group relative px-8 py-4 bg-gray-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-400 overflow-hidden">
+              <span class="relative z-10 flex items-center justify-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Generate Receipt
+              </span>
+              <div class="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  // Calculate balance amount automatically
+    // document.getElementById('paidAmount').addEventListener('input', function() {
+    //     const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+    //     const paid = parseFloat(this.value) || 0;
+    //     const balance = total - paid;
+    //     document.getElementById('balanceAmount').value = balance.toFixed(2);
+    // });
+    
+    // Handle form submission
+    function FeeReceiptFormHandle(e) {
+  e.preventDefault();
+
+  const form = document.getElementById('examReceiptForm');
+  const formData = new FormData(form);
+
+  const receiptNumber = formData.get('receiptNumber');
+
+  // Validate that receipt number is loaded
+  if (!receiptNumber || receiptNumber === 'Generating...' || receiptNumber === '') {
+    showNotification("Please wait for the receipt number to load before submitting.", "error");
+    return;
+  }
+
+  // Get current date in a format that Google Apps Script can handle
+  const now = new Date();
+  const dateString = (now.getMonth() + 1) + '/' + now.getDate() + '/' + now.getFullYear();
+
+  const data = {
+    receiptDate: dateString, // Current date as MM/DD/YYYY string
+    receiptNumber: receiptNumber,
+    enrollmentId: formData.get('enrollmentId'),
+    studentName: formData.get('studentName'),
+    courseName: formData.get('courseName'),
+    totalAmount: formData.get('totalAmount'),
+    paymentMode: formData.get('paymentMode'),
+    agreeTerms: formData.get('agreeTerms') ? 'Yes' : 'No'
+  };
+
+  // Show loading state
+  const submitBtn = document.getElementById('generateReceiptBtn');
+  const originalText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+  submitBtn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      // Reset button
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+
+      if (result && result.success) {
+        // Success notification
+        showNotification(result.message || "Receipt saved successfully!", "success");
+
+        // Reset form but keep the date
+        form.reset();
+
+        // Reload only receipt number for next entry (without resetting date)
+        loadexamfeeOnly();
+      } else {
+        // Error notification
+        showNotification(result.message || "Failed to save receipt. Please try again.", "error");
+      }
+    })
+    .withFailureHandler(function(error) {
+      // Reset button
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+
+      // Error notification
+      showNotification("Error saving receipt: " + error.message, "error");
+      console.error("Save receipt error:", error);
+    })
+    .saveReceiptData(data);
+}
+
+    // Notification function
+    function showNotification(message, type = "info") {
+      // Remove any existing notifications
+      const existingNotifications = document.querySelectorAll('.notification-toast');
+      existingNotifications.forEach(notification => notification.remove());
+
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification-toast fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+
+      // Set colors based on type
+      if (type === "success") {
+        notification.classList.add('bg-green-500', 'text-white');
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>${message}</span>
+          </div>
+        `;
+      } else if (type === "error") {
+        notification.classList.add('bg-red-500', 'text-white');
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span>${message}</span>
+          </div>
+        `;
+      } else {
+        notification.classList.add('bg-blue-500', 'text-white');
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <i class="fas fa-info-circle mr-2"></i>
+            <span>${message}</span>
+          </div>
+        `;
+      }
+
+      // Add to page
+      document.body.appendChild(notification);
+
+      // Animate in
+      setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+      }, 100);
+
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 5000);
+    }
+
+    
+    // Generate PDF receipt
+    function generatePDFReceipt() {
+        // Add your PDF generation logic here
+        console.log("Generating PDF receipt");
+    }
+
+    // Setup event listener for enrollment ID input
+    function setupEnrollmentIdListener() {
+        const enrollmentIdInput = document.getElementById('enrollmentIdInput');
+        if (enrollmentIdInput) {
+            enrollmentIdInput.addEventListener('blur', function() {
+                const enrollmentId = this.value.trim();
+                if (enrollmentId) {
+                    // Show loading state
+                    showNotification("Fetching student data...", "info");
+
+                    // Call the backend function to get student data
+                    google.script.run
+                        .withSuccessHandler(function(studentData) {
+                            if (studentData && !studentData.error) {
+                                // Populate the form fields with retrieved data
+                                document.getElementById('studentNameInput').value = studentData.studentName || '';
+                                document.getElementById('courseNameInput').value = studentData.courseName || '';
+
+                                // Set exam fee based on course and branch
+                                setExamFeeFromCourse(studentData.courseName);
+
+                                showNotification("Student data loaded successfully!", "success");
+                                console.log("Student data loaded:", studentData);
+                            } else {
+                                showNotification("Enrollment ID not found or invalid", "error");
+                                console.error("Error fetching student data:", studentData);
+                            }
+                        })
+                        .withFailureHandler(function(error) {
+                            showNotification("Error fetching student data: " + error.message, "error");
+                            console.error("Error fetching student data:", error);
+                        })
+                        .getStudentDataByEnrollmentId(enrollmentId);
+                }
+            });
+        }
+    }
+
+    // Function to set exam fee based on course and branch
+    function setExamFeeFromCourse(courseName) {
+        if (!courseName) return;
+
+        // Map display course names to internal course keys
+        const courseKeyMap = {
+            "ANM Nursing Diploma Course": "anm_nursing",
+            "GNM Nursing Diploma Course": "gnm_nursing",
+            "DMLT Diploma Course": "dmlt",
+            "OT Technician": "ot_technician",
+            "General Nursing and Midwifery Assistant": "general_nursing"
+        };
+
+        const courseKey = courseKeyMap[courseName];
+
+        if (courseKey) {
+            // Get branch from session storage
+            const branch = sessionStorage.getItem("userBranch") || sessionStorage.getItem("branch") || "kurla";
+
+            // Get course data from getCourseDataByLocation function
+            // Since this is client-side, we need to call the server-side function
+            google.script.run
+                .withSuccessHandler(function(courseData) {
+                    const examFee = courseData[courseKey]?.exam_fee || 500; // Default to 500 if not found
+                    document.getElementById('totalAmount').value = examFee;
+                    console.log(`Set exam fee to ₹${examFee} for course: ${courseName}, branch: ${branch}`);
+                })
+                .withFailureHandler(function(error) {
+                    console.error("Error getting course data:", error);
+                    document.getElementById('totalAmount').value = 500; // Default fallback
+                })
+                .getCourseDataByLocation(branch);
+        } else {
+            console.warn("Course not found in mapping:", courseName);
+            document.getElementById('totalAmount').value = 500; // Default fallback
+        }
+    }
+function openexamfees() {
+    console.log("openexamfees() called - starting form setup");
+    hideAllSections();
+    const formShown = document.getElementById("feeReceiptForm").classList.remove("hidden");
+    console.log("Form shown:", formShown);
+
+    copyadmissionreceipt();
+    console.log("copyadmissionreceipt() completed");
+
+    loadexamfee();
+    console.log("loadexamfee() completed");
+
+    // Add event listener for enrollment ID input
+    setupEnrollmentIdListener();
+
+    // Auto-populate today's date in the date field - Format DD/MM/YYYY for display
+    console.log("About to set date in exam fees form...");
+
+    // Wait for all other functions to complete, then set the date
+    setTimeout(() => {
+        console.log("Setting date now...");
+        const dateInput = document.getElementById('receiptDate');
+        const isFormVisible = !document.getElementById("feeReceiptForm").classList.contains("hidden");
+
+        console.log("Date input found:", !!dateInput);
+        console.log("Form is visible:", isFormVisible);
+
+        if (dateInput && isFormVisible) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const displayDate = `${dd}/${mm}/${yyyy}`;
+
+            console.log("Setting value to:", displayDate);
+
+            // Set the hidden form field (for form submission)
+            dateInput.value = displayDate;
+
+            // Set the visible display field (what the user sees)
+            const displayField = document.getElementById('receiptDateDisplay');
+            if (displayField) {
+                displayField.textContent = displayDate;
+                console.log("Display field updated to:", displayDate);
+            } else {
+                console.log("Display field not found!");
+            }
+
+            console.log("Hidden input value set to:", dateInput.value);
+            console.log("Parent container hidden:", document.getElementById("feeReceiptForm").classList.contains("hidden"));
+        } else {
+            console.log("Date input not found or form not visible!");
+            console.log("Date input element:", dateInput);
+            console.log("Form visibility:", isFormVisible);
+        }
+    }, 500); // Increased delay to 500ms
+
+  //   // 1. Get the stored branch from the hidden input
+  //   const userBranch = document.getElementById("userBranch").value;
+
+  //   // 2. Get the branch input element in your inquiry form
+  //   const branchInput = document.getElementById("branch");
+
+  //   // 3. Set its value directly
+  //   if (userBranch) {
+  //       branchInput.value = userBranch;
+  //   } else {
+  //       branchInput.value = ""; // Or some default value
+  //   }
+
+  //   // ⭐ START: Add this section for Inquiry Taken By
+  //   // 4. Get the stored username from the hidden input (loggedInUserId)
+  //   const loggedInUser = document.getElementById("loggedInUserId").value; // Or document.getElementById("userName").value;
+
+  //   // 5. Get the Inquiry Taken By input element
+  //   const inquiryTakenByInput = document.getElementById("receivedBy");
+
+  //   // 6. Set its value directly
+  //   if (loggedInUser) {
+  //       inquiryTakenByInput.value = loggedInUser;
+  //   } else {
+  //       inquiryTakenByInput.value = ""; // Or some default value like "Anonymous"
+  //   }
+  }
+
+//   function examfeeTakenBy() {
+//     const inquiryTakenByInput = document.getElementById("receivedBy");
+//     const branchInput = document.getElementById("branch"); // Get the branch input
+
+//     // Get the logged-in username from the hidden input field that was set during login
+//     const loggedInUserFromHiddenInput = document.getElementById("loggedInUserId")?.value;
+//     // Get the logged-in branch from the hidden input field that was set during login
+//     const loggedInBranchFromHiddenInput = document.getElementById("userBranch")?.value;
+
+
+//     if (inquiryTakenByInput) {
+//         if (loggedInUserFromHiddenInput) {
+//             inquiryTakenByInput.value = loggedInUserFromHiddenInput;
+//             inquiryTakenByInput.readOnly = true; // Ensure it's readonly
+//         } else {
+//             inquiryTakenByInput.value = "N/A"; // Or handle anonymous users differently
+//             console.warn("Logged-in user ID not found in hidden input.");
+//         }
+//     }
+
+//     if (branchInput) {
+//         if (loggedInBranchFromHiddenInput) {
+//             branchInput.value = loggedInBranchFromHiddenInput;
+//             branchInput.readOnly = true; // Ensure it's readonly
+//         } else {
+//             branchInput.value = "N/A"; // Or some default
+//             console.warn("Logged-in user branch not found in hidden input.");
+//         }
+//     }
+// }
+
+function generateexamReceipt(formData = null) {
+    try {
+      const logoBase64 = "https://i.postimg.cc/15z0wxhX/cropped-circle-image-(1).png";
+
+        // Get values from formData parameter if provided, otherwise from form fields
+        const receiptNo = formData?.receiptNumber || document.getElementById('ExamReceiptNumber').value || "REC" + Math.floor(1000 + Math.random() * 9000);
+        const date = formData?.receiptDate || document.getElementById('receiptDate').value || new Date().toLocaleDateString('en-GB');
+        const studentName = formData?.studentName || document.getElementById('studentNameInput').value || "N/A";
+        const courseName = formData?.courseName || document.getElementById('courseNameInput').value || "N/A";
+        const totalAmount = parseFloat(formData?.totalAmount || document.getElementById('totalAmount').value) || 0;
+        // const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        // const balanceAmount = totalAmount - paidAmount;
+        // const receivedBy = document.getElementById('receivedBy').value || "Admin";
+        const paymentMode = formData?.paymentMode || document.getElementById('paymentModeInput').value || "Cash";
+        // const transactionDetails = document.getElementById('transactionDetails').value || "-";
+
+        // Format currency
+        const formatCurrency = (amount) => {
+            return '₹' + amount.toFixed(2);
+        };
+
+        // Prepare receipt data
+        // Get branch from session storage
+        const branch = sessionStorage.getItem("userBranch") || sessionStorage.getItem("branch") || "kurla";
+
+        const receiptData = {
+            receiptNo: receiptNo,
+            date: date,
+            studentName: studentName,
+            courseName: courseName,
+            totalAmount: formatCurrency(totalAmount),
+            // paidAmount: formatCurrency(paidAmount),
+            // balanceAmount: formatCurrency(balanceAmount),
+            paymentMode: paymentMode,
+            // transactionDetails: transactionDetails,
+            // receivedBy: receivedBy,
+            branch: branch
+        };
+
+        // Generate the receipt HTML
+        const receiptHTML = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Receipt</title>
+                <style>
+                    @page { size: A4; margin: 0.5in; }
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: white; }
+                    .page-container { width: 210mm; height: 297mm; display: flex; flex-direction: column; 
+                                    justify-content: space-between; padding: 10mm; box-sizing: border-box; }
+                    .receipt { width: 100%; height: 45%; border: 3px solid #000; border-radius: 15px; 
+                             padding: 15px; box-sizing: border-box; background: white; margin-bottom: 10mm; 
+                             page-break-inside: avoid; }
+                    .header { display: flex; align-items: center; margin-bottom: 15px; 
+                             border-bottom: 2px solid #000; padding-bottom: 10px; }
+                    .logo img { width: 65px; height: auto;}
+                    .institute-name { font-size: 28px; font-weight: bold; color: #000;
+                                    flex-grow: 1; letter-spacing: 1px; text-align: center; }
+                    .receipt-label { background: #333; color: white; padding: 5px 15px; 
+                                    border-radius: 20px; font-size: 14px; font-weight: bold; }
+                    .receipt-content { display: flex; flex-direction: column; height: calc(100% - 100px); }
+                    .receipt-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                    .receipt-no, .date { font-size: 16px; font-weight: bold; }
+                    .form-fields { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
+                    .field-row { display: flex; align-items: center; font-size: 14px; font-weight: bold; }
+                    .field-label { min-width: 140px; color: #000; }
+                    .field-value { flex-grow: 1; border-bottom: 1px solid #000; padding: 2px 5px; 
+                                 min-height: 20px; color: #0066cc; white-space: nowrap; 
+                                 overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 140px); }
+                    .amount-fields { display: flex; gap: 20px; }
+                    .amount-field { flex: 1; min-width: 30%; }
+                    .amount-fields .field-value { max-width: none; white-space: normal; word-break: break-all; flex-grow: 1; padding-left: 5px; }
+                    .amount-fields .field-label { min-width: 140px; }
+                    .footer { margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+                    .note { font-size: 16px; font-weight: bold; max-width: 60%; }
+                    .signature-area { text-align: center; min-width: 150px; }
+                    .signature-line { border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px; }
+                    .signature-label { font-size: 16px; font-weight: bold; }
+                    @media print { 
+                        .page-container { height: 297mm; padding: 0.5in; } 
+                        .receipt { margin-bottom: 5mm; } 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="page-container">
+                    <!-- First Receipt -->
+                    <div class="receipt">
+                        <div class="header">
+                            <div class="logo">
+                        <img src="${logoBase64}">
+                    </div> 
+                    
+                            <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                            <div class="receipt-label">RECEIPT</div>
+                        </div>
+                        <div class="receipt-content">
+                            <div class="receipt-info">
+                                <div class="receipt-no">Receipt No. ${receiptData.receiptNo}</div>
+                                 <div class="branch" style="font-weight: bold;">Branch: ${receiptData.branch}</div>
+                                <div class="date" style="font-weight: bold;">Date: ${receiptData.date}</div>
+                            </div>
+                            <div class="form-fields">
+                                <div class="field-row">
+                                    <div class="field-label">Student Name:</div>
+                                    <div class="field-value">${receiptData.studentName}</div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-label">Course Name:</div>
+                                    <div class="field-value">${receiptData.courseName}</div>
+                                </div>
+                                <div class="field-row amount-fields">
+                                    <div class="amount-field">
+                                        <div class="field-row">
+                                            <div class="field-label">Total Amount:</div>
+                                            <div class="field-value">${receiptData.totalAmount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-label">Payment Mode:</div>
+                                    <div class="field-value">${receiptData.paymentMode}</div>
+                                </div>
+
+
+                            </div>
+                            <div class="footer">
+                                <div class="note">• Fees once paid are non-refundable</div>
+                                <div class="signature-area">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-label">Authorized Signature</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr style="border: 2px dashed #000; margin: 25px 0;">
+                    <!-- Second Receipt (Duplicate) -->
+                    <div class="receipt">
+                        <div class="header">
+                           <div class="logo">
+                        <img src="${logoBase64}">
+                    </div> 
+                    
+                            <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                            <div class="receipt-label">RECEIPT</div>
+                        </div>
+                        <div class="receipt-content">
+                            <div class="receipt-info">
+                                <div class="receipt-no">Receipt No: ${receiptData.receiptNo}</div>
+                                <div class="branch" style="font-weight: bold;">Branch: ${receiptData.branch}</div>
+                                <div class="date" style="font-weight: bold;">Date: ${receiptData.date}</div>
+                            
+                            </div>
+                            <div class="form-fields"> 
+                                <div class="field-row">
+                                    <div class="field-label">Student Name:</div>
+                                    <div class="field-value">${receiptData.studentName}</div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-label">Course Name:</div>
+                                    <div class="field-value">${receiptData.courseName}</div>
+                                </div>
+                                <div class="field-row amount-fields">
+                                    <div class="amount-field">
+                                        <div class="field-row">
+                                            <div class="field-label">Total Amount:</div>
+                                            <div class="field-value">${receiptData.totalAmount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-label">Payment Mode:</div>
+                                    <div class="field-value">${receiptData.paymentMode}</div>
+                                </div>
+
+                                <div class="field-row">
+                                    <div class="field-label">Branch:</div>
+                                    <div class="field-value">${receiptData.branch}</div>
+                                </div>
+
+
+                            </div>
+                            <div class="footer">
+                                <div class="note">• Fees once paid are non-refundable</div>
+                                <div class="signature-area">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-label">Authorized Signature</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                    }, 500);
+                </scr` + `ipt>
+            </body>
+            </html>
+        `;
+
+        // Open a new tab and write the receipt
+        const printWindow = window.open('', '_blank', 'width=800,height=1000');
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
+        console.log("Student Name from form:", studentName);
+        console.log("Course Name from form:", courseName);
+
+
+    } catch (error) {
+        console.error("Error generating receipt:", error);
+        alert("Error generating receipt. Please check the console for details.");
+    }
+}
+
+
+function generateAndSaveReceipt() {
+  // First validate the form
+  const form = document.getElementById('examReceiptForm');
+  const formData = new FormData(form);
+
+  const receiptNumber = formData.get('receiptNumber');
+
+  // Validate that receipt number is loaded
+  if (!receiptNumber || receiptNumber === 'Generating...' || receiptNumber === '') {
+    showNotification("Please wait for the receipt number to load before proceeding.", "error");
+    return;
+  }
+
+  // Check if terms are agreed
+  if (!document.getElementById('agreeTerms').checked) {
+    const agreeError = document.getElementById('agreeError');
+    agreeError.textContent = "Please agree to the terms and conditions.";
+    agreeError.classList.add('opacity-100');
+    agreeError.classList.remove('opacity-0');
+    showNotification("Please agree to the terms and conditions.", "error");
+    return;
+  } else {
+    const agreeError = document.getElementById('agreeError');
+    agreeError.classList.add('opacity-0');
+    agreeError.classList.remove('opacity-100');
+  }
+
+  // Get current date in a format that Google Apps Script can handle
+  const now = new Date();
+  const dateString = (now.getMonth() + 1) + '/' + now.getDate() + '/' + now.getFullYear();
+
+  const data = {
+    receiptDate: dateString, // Current date as MM/DD/YYYY string
+    receiptNumber: receiptNumber,
+    enrollmentId: formData.get('enrollmentId'),
+    studentName: formData.get('studentName'),
+    courseName: formData.get('courseName'),
+    totalAmount: formData.get('totalAmount'),
+    paymentMode: formData.get('paymentMode'),
+    agreeTerms: formData.get('agreeTerms') ? 'Yes' : 'No'
+  };
+
+  // Show loading state
+  const btn = document.getElementById('generateReceiptBtn');
+  const originalHTML = btn.innerHTML;
+  btn.classList.add('loading');
+  btn.innerHTML = `
+    <span class="relative z-10 flex items-center justify-center gap-3">
+      <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Saving...
+    </span>
+    <div class="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+  `;
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success) {
+        // Success notification
+        showNotification(result.message || "Receipt saved successfully! Generating receipt...", "success");
+
+        // Store current form values before resetting
+        const currentFormData = {
+          receiptNumber: formData.get('receiptNumber'),
+          studentName: formData.get('studentName'),
+          courseName: formData.get('courseName'),
+          totalAmount: formData.get('totalAmount'),
+          paymentMode: formData.get('paymentMode'),
+          receiptDate: formData.get('receiptDate')
+        };
+
+        // Reset form but keep the date
+        form.reset();
+
+        // Generate the receipt immediately with stored values
+        try {
+          generateexamReceipt(currentFormData);
+
+          // Reset button state after receipt generation starts
+          setTimeout(() => {
+            resetGenerateButton(btn, originalHTML);
+          }, 500);
+
+          // Reload receipt number after a longer delay to avoid conflicts
+          setTimeout(() => {
+            loadexamfeeOnly();
+          }, 2000);
+
+        } catch (receiptError) {
+          console.error("Error generating receipt:", receiptError);
+          // Reset button state immediately on error
+          resetGenerateButton(btn, originalHTML);
+          showNotification("Error generating receipt. Please try again.", "error");
+        }
+
+      } else {
+        // Error notification
+        showNotification(result.message || "Failed to save receipt. Please try again.", "error");
+        // Reset button state
+        resetGenerateButton(btn, originalHTML);
+      }
+    })
+    .withFailureHandler(function(error) {
+      // Reset button state
+      resetGenerateButton(btn, originalHTML);
+
+      // Error notification
+      showNotification("Error saving receipt: " + error.message, "error");
+      console.error("Save receipt error:", error);
+    })
+    .saveReceiptData(data);
+}
+
+function resetGenerateButton(btn, originalHTML) {
+  btn.classList.remove('loading');
+  btn.innerHTML = originalHTML;
+  btn.disabled = false;
+}
+
+function loadexamfee(){
+  const receiptInput = document.getElementById("ExamReceiptNumber");
+  const submitBtn = document.getElementById("generateReceiptBtn");
+
+  if (!receiptInput) {
+    console.error("Receipt number input field not found!");
+    return;
+  }
+
+  // Store original button HTML
+  const originalBtnHTML = submitBtn.innerHTML;
+
+  // Disable submit button while loading and show loading state
+  submitBtn.classList.add('loading');
+  submitBtn.innerHTML = `
+    <span class="relative z-10 flex items-center justify-center gap-3">
+      <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Loading...
+    </span>
+    <div class="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+  `;
+  submitBtn.disabled = true;
+
+  // 1. Reset the input field's state each time the form is opened.
+  receiptInput.readOnly = false;
+  receiptInput.value = "Generating..."; // Show immediate feedback.
+
+  // 2. Clear any lingering timers from previous times the form was opened.
+  clearTimeout(receiptLockTimer);
+
+  // 3. Call the backend script to fetch the number.
+  google.script.run
+    .withSuccessHandler(function (newReceiptNumber) {
+      // 4. Populate the input field as soon as the number is received.
+      receiptInput.value = newReceiptNumber;
+      console.log(
+        `Populated receipt number: ${newReceiptNumber}. Field will lock in 5 seconds if not edited.`
+      );
+
+      // Reset button to original state
+      resetGenerateButton(submitBtn, originalBtnHTML);
+
+      // 5. Set a 5-second timer. If it completes, the field becomes read-only.
+      receiptLockTimer = setTimeout(() => {
+        receiptInput.readOnly = true;
+        console.log(`Receipt number ${newReceiptNumber} is now locked.`);
+      }, 5000); // 5000 milliseconds = 5 seconds
+
+      // 6. Listen for the *very first* input from the user.
+      // The { once: true } option automatically removes the listener after it runs once.
+      receiptInput.addEventListener(
+        "input",
+        () => {
+          console.log("User is typing. Cancelling the auto-lock timer.");
+          // If the user starts typing, cancel the timer that would have locked the field.
+          clearTimeout(receiptLockTimer);
+        },
+        { once: true }
+      );
+    })
+    .withFailureHandler(function (error) {
+      console.error("Error fetching receipt number: " + error.message);
+      receiptInput.value = "Error fetching number";
+
+      // Reset button to original state even on error
+      resetGenerateButton(submitBtn, originalBtnHTML);
+    })
+    .getNextReceiptNumberEF();
+}
+
+function loadexamfeeOnly(){
+  const receiptInput = document.getElementById("ExamReceiptNumber");
+  const submitBtn = document.getElementById("generateReceiptBtn");
+
+  if (!receiptInput) {
+    console.error("Receipt number input field not found!");
+    return;
+  }
+
+  // Store original button HTML
+  const originalBtnHTML = submitBtn.innerHTML;
+
+  // Disable submit button while loading and show loading state
+  submitBtn.classList.add('loading');
+  submitBtn.innerHTML = `
+    <span class="relative z-10 flex items-center justify-center gap-3">
+      <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Loading...
+    </span>
+    <div class="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+  `;
+  submitBtn.disabled = true;
+
+  // Clear any lingering timers
+  clearTimeout(receiptLockTimer);
+
+  // Set to generating state
+  receiptInput.readOnly = false;
+  receiptInput.value = "Generating...";
+
+  // Call the backend script to fetch the number
+  google.script.run
+    .withSuccessHandler(function (newReceiptNumber) {
+      // Populate the input field
+      receiptInput.value = newReceiptNumber;
+      console.log(`Loaded next receipt number: ${newReceiptNumber}`);
+
+      // Reset button to original state
+      resetGenerateButton(submitBtn, originalBtnHTML);
+
+      // Set a 5-second timer to lock the field
+      receiptLockTimer = setTimeout(() => {
+        receiptInput.readOnly = true;
+        console.log(`Receipt number ${newReceiptNumber} is now locked.`);
+      }, 5000);
+    })
+    .withFailureHandler(function (error) {
+      console.error("Error fetching receipt number: " + error.message);
+      receiptInput.value = "Error fetching number";
+
+      // Reset button to original state even on error
+      resetGenerateButton(submitBtn, originalBtnHTML);
+    })
+    .getNextReceiptNumberEF();
+}
+</script>

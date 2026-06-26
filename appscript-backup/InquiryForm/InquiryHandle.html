@@ -1,0 +1,489 @@
+<script>
+    // Define the form fields that need to be populated/cleared
+    const formFieldsToPopulate = [
+        'firstName', 'middleName', 'lastName', 'qualification', 'phoneNo', 'whatsappNo', 'parentsNo',
+        'email', 'age', 'addressLine1', 'addressLine2', 'addressLine3', 'pincode',
+        'interestedCourse', 'inquiryTakenBy', 'branch22', 'gender'
+    ];
+
+    let currentFoundRecord = null; // To store the record found from Aadhar lookup
+    let currentLoggedInUser = sessionStorage.getItem('loggedInUser') || ''; // Assuming this is set elsewhere
+
+    // Get references to DOM elements
+    const loginForm = document.getElementById('loginForm'); // Assuming a login form exists
+    const inquiryFormSection = document.getElementById('inquiryFormSection'); // Assuming a section for the inquiry form
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // Set today's date as default
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('date3334').value = `${yyyy}-${mm}-${dd}`;
+
+        // Add event listener for Aadhar number input
+        const aadharNumberInput = document.getElementById('aadharNumber');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Debounce function to limit how often checkAadharNumberInquiry is called
+        const debouncedCheckAadhar = debounce(function() {
+            const aadharNumber = this.value;
+            // Validate Aadhar number format
+            if (aadharNumber.length === 12 && /^\d{12}$/.test(aadharNumber)) {
+                loadingSpinner.style.display = 'inline-block'; // Show spinner
+                // Call Apps Script function to check Aadhar
+                google.script.run
+                    .withSuccessHandler(handleAadharCheckResponse)
+                    .withFailureHandler(handleError) // Ensure handleError hides spinner
+                    .checkAadharNumberInquiry(aadharNumber);
+            } else if (aadharNumber.length === 0) {
+                // If Aadhar field is cleared, also clear other fields and hide spinner
+                // clearInquiryFormFields(false); // Keep Aadhar field itself clear
+                loadingSpinner.style.display = 'none'; // Hide spinner
+            } else {
+                // If not 12 digits, don't show spinner, don't call server
+                loadingSpinner.style.display = 'none'; // Ensure spinner is hidden if input is invalid
+                // clearInquiryFormFields(true); // Clear if not valid
+            }
+        }, 500); // Wait for 500ms after typing stops
+
+        // Use 'input' event for real-time checking
+        aadharNumberInput.addEventListener('input', debouncedCheckAadhar);
+
+
+        // Initialize Branch field as read-only and set default if needed
+        document.getElementById('branch22').value = 'Mumbai'; // Set your default branch here
+
+        // Initialize UI visibility based on whether user is already logged in
+        // updateUI();
+    });
+
+    /**
+     * Debounce function to limit the rate at which a function can fire.
+     * @param {function} func The function to debounce.
+     * @param {number} delay The delay in milliseconds.
+     * @returns {function} A debounced version of the function.
+     */
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    function handleAadharCheckResponse(record) {
+        document.getElementById('loadingSpinner').style.display = 'none'; // *** Always hide spinner on success ***
+        if (record) {
+            currentFoundRecord = record; // Store the found record
+            showPopup(record);
+        } else {
+            currentFoundRecord = null;
+            // If Aadhar is new, clear other form fields to allow fresh entry
+            // clearInquiryFormFields(true); // Clear all fields except Aadhar
+        }
+    }
+
+    function handleError(error) {
+        document.getElementById('loadingSpinner').style.display = 'none'; // *** Hide spinner on error too ***
+        console.error("Apps Script Error:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: error.message || "An unexpected error occurred during Aadhar lookup.",
+            confirmButtonColor: "#1e3a8a",
+        });
+        clearInquiryFormFields(true); // Clear fields on error to avoid confusion
+    }
+
+    function showPopup(record) {
+        const popup = document.getElementById('dataPopup');
+        const popupContent = document.getElementById('popupContent');
+
+        // Construct HTML for the popup content with clean shadcn/ui inspired design
+        popupContent.innerHTML = `
+            <div class="space-y-3">
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Aadhar Number</span>
+                        <span class="text-sm text-gray-900 font-mono">${record.aadhaar}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Full Name</span>
+                        <span class="text-sm text-gray-900">${record.fullName}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Qualification</span>
+                        <span class="text-sm text-gray-900">${record.qualification || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Age</span>
+                        <span class="text-sm text-gray-900">${record.age || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Gender</span>
+                        <span class="text-sm text-gray-900">${record.gender || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Phone Number</span>
+                        <span class="text-sm text-gray-900 font-mono">${record.phoneNo || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">WhatsApp Number</span>
+                        <span class="text-sm text-gray-900 font-mono">${record.whatsappNo || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Parents Number</span>
+                        <span class="text-sm text-gray-900 font-mono">${record.parentsNo || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Email Address</span>
+                        <span class="text-sm text-gray-900 break-all">${record.email || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-start py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600 mr-4">Address</span>
+                        <div class="text-sm text-gray-900 text-right flex-1">
+                            <div>${record.addressLine1 || 'N/A'}</div>
+                            ${record.addressLine2 ? `<div>${record.addressLine2}</div>` : ''}
+                            ${record.addressLine3 ? `<div>${record.addressLine3}</div>` : ''}
+                            <div class="font-mono mt-1">${record.pincode || 'N/A'}</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Interested Course</span>
+                        <span class="text-sm text-gray-900">${record.interestedCourse || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-600">Inquiry Taken By</span>
+                        <span class="text-sm text-gray-900">${record.inquiryTakenBy || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-sm font-medium text-gray-600">Branch</span>
+                        <span class="text-sm text-gray-900">${record.branch || 'N/A'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Show the popup using Tailwind classes
+        popup.classList.remove('hidden');
+    }
+
+    function closePopup() {
+        document.getElementById('dataPopup').classList.add('hidden'); // Hide the popup
+    }
+
+    // function fillFormFromPopup() {
+    //     if (currentFoundRecord) {
+    //         // Populate Aadhar first, it's already in the input field, but good to be explicit
+    //         document.getElementById('aadharNumber').value = currentFoundRecord.aadhaar || '';
+    //          const currentBranch = document.getElementById('branch22').value;
+
+    //         // Split and populate name fields
+    //         const fullNameParts = currentFoundRecord.fullName ? currentFoundRecord.fullName.split(' ') : [];
+    //         document.getElementById('firstName').value = fullNameParts[0] || '';
+    //         document.getElementById('middleName').value = fullNameParts.length > 2 ? fullNameParts.slice(1, -1).join(' ') : '';
+    //         document.getElementById('lastName').value = fullNameParts.length > 1 ? fullNameParts[fullNameParts.length - 1] : '';
+
+
+    //         // Populate other fields using the stored record
+    //         formFieldsToPopulate.forEach(field => {
+    //             const inputElement = document.getElementById(field);
+    //             if (inputElement) {
+    //                 if (field === 'addressLine1' || field === 'addressLine2' || field === 'addressLine3' || field === 'pincode') {
+    //                     // These are handled separately by the parsing logic in checkAadharNumberInquiry's return
+    //                     // If record contains separate addressLine1, etc., assign them directly.
+    //                     // Otherwise, rely on the split logic from checkAadharNumberInquiry.
+    //                     inputElement.value = currentFoundRecord[field] || '';
+    //                 } else if (inputElement.type === 'date') {
+    //                     if (currentFoundRecord[field]) {
+    //                         const date = new Date(currentFoundRecord[field]);
+    //                         inputElement.value = date.toISOString().split('T')[0];
+    //                     } else {
+    //                         inputElement.value = '';
+    //                     }
+    //                 } else if (inputElement.tagName === 'SELECT') {
+    //                      let foundOption = false;
+    //                     for (let i = 0; i < inputElement.options.length; i++) {
+    //                         if (inputElement.options[i].value === currentFoundRecord[field]) {
+    //                             inputElement.value = currentFoundRecord[field];
+    //                             foundOption = true;
+    //                             break;
+    //                         }
+    //                     }
+                        
+    //                     if (!foundOption) {
+    //                         inputElement.value = '';
+    //                     }
+    //                 } else if (field !== 'firstName' && field !== 'middleName' && field !== 'lastName') { // Avoid re-assigning name fields
+    //                     inputElement.value = currentFoundRecord[field] || '';
+    //                 }
+    //             }
+    //         });
+    //         closePopup();
+    //     }
+    // }
+    function fillFormFromPopup() {
+    if (currentFoundRecord) {
+        // Populate Aadhar first, it's already in the input field, but good to be explicit
+        document.getElementById('aadharNumber').value = currentFoundRecord.aadhaar || '';
+        
+        // Save current branch value before populating other fields
+        const currentBranch = document.getElementById('branch22').value;
+
+        // Split and populate name fields
+        const fullNameParts = currentFoundRecord.fullName ? currentFoundRecord.fullName.split(' ') : [];
+        document.getElementById('firstName').value = fullNameParts[0] || '';
+        document.getElementById('middleName').value = fullNameParts.length > 2 ? fullNameParts.slice(1, -1).join(' ') : '';
+        document.getElementById('lastName').value = fullNameParts.length > 1 ? fullNameParts[fullNameParts.length - 1] : '';
+
+        // Populate other fields using the stored record
+        formFieldsToPopulate.forEach(field => {
+            const inputElement = document.getElementById(field);
+            if (inputElement) {
+                if (field === 'addressLine1' || field === 'addressLine2' || field === 'addressLine3' || field === 'pincode') {
+                    inputElement.value = currentFoundRecord[field] || '';
+                } else if (inputElement.type === 'date') {
+                    if (currentFoundRecord[field]) {
+                        const date = new Date(currentFoundRecord[field]);
+                        inputElement.value = date.toISOString().split('T')[0];
+                    } else {
+                        inputElement.value = '';
+                    }
+                } else if (inputElement.tagName === 'SELECT') {
+                    let foundOption = false;
+                    for (let i = 0; i < inputElement.options.length; i++) {
+                        if (inputElement.options[i].value === currentFoundRecord[field]) {
+                            inputElement.value = currentFoundRecord[field];
+                            foundOption = true;
+                            break;
+                        }
+                    }
+                    if (!foundOption) {
+                        inputElement.value = '';
+                    }
+                } else if (field !== 'firstName' && field !== 'middleName' && field !== 'lastName') {
+                    inputElement.value = currentFoundRecord[field] || '';
+                }
+            }
+        });
+
+        // Handle branch field separately - only update if record has a branch value
+        if (currentFoundRecord.branch) {
+            document.getElementById('branch22').value = currentFoundRecord.branch;
+        } else {
+            // Restore original branch value if no branch in record
+            document.getElementById('branch22').value = currentBranch;
+        }
+
+        closePopup();
+    }
+}
+
+    // This function clears the form fields, useful for new entries or after submission
+    function clearInquiryFormFields(keepAadhar = false) {
+        const form = document.getElementById('ifId');
+        if (form) {
+          const savedInquiryTakenBy = document.getElementById('inquiryTakenBy').value;
+        const savedBranch = document.getElementById('branch22').value;
+            formFieldsToPopulate.forEach(field => {
+               if (field !== 'inquiryTakenBy' && field !== 'branch22') {
+                const inputElement = document.getElementById(field);
+                if (inputElement) {
+                    if (inputElement.tagName === 'SELECT') {
+                        inputElement.value = ''; // Reset select to default option
+                    } else {
+                        inputElement.value = '';
+                    }
+                }
+                }
+            });
+            // Clear Aadhar unless specified not to
+            if (!keepAadhar) {
+                document.getElementById('aadharNumber').value = '';
+            }
+             // Restore inquiryTakenBy only if it's not "undefined"
+             if (savedInquiryTakenBy !== "undefined") {
+                 document.getElementById('inquiryTakenBy').value = savedInquiryTakenBy;
+             } else {
+                 document.getElementById('inquiryTakenBy').value = "";
+             }
+             // Restore branch only if it's not "undefined"
+             if (savedBranch !== "undefined") {
+                 document.getElementById('branch22').value = savedBranch;
+             } else {
+                 document.getElementById('branch22').value = "";
+             }
+
+            // Set today's date back
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('date3334').value = `${yyyy}-${mm}-${dd}`;
+        }
+    }
+
+    function InquiryFormHandle(e) {
+        e.preventDefault();
+
+        // Validate terms checkbox
+        const agreeCheckbox = document.getElementById("agree1");
+        if (!agreeCheckbox?.checked) {
+            document.getElementById("agreeError1").textContent =
+                "Please agree to the terms";
+            return;
+        } else {
+            document.getElementById("agreeError1").textContent = "";
+        }
+
+        const submitBtn = document.getElementById("submitButton2");
+        submitBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        submitBtn.disabled = true;
+
+        // Get logged-in user from hidden input or sessionStorage
+        const loggedInUser = document.getElementById("loggedInUserId")?.value || currentLoggedInUser || "Anonymous";
+
+        // Get inquiry taken by value, ensuring it's not "undefined" or empty
+        const inquiryTakenByValue = document.getElementById("inquiryTakenBy")?.value?.trim();
+        const finalInquiryTakenBy = (inquiryTakenByValue && inquiryTakenByValue !== "undefined") ? inquiryTakenByValue : loggedInUser;
+
+        // Collect form data with individual name and address fields
+        const formValues = {
+            date:
+                document.getElementById("date3334")?.value ||
+                new Date().toISOString().split("T")[0],
+            aadharNumber: document.getElementById("aadharNumber")?.value.trim() || "",
+            firstName: document.getElementById("firstName")?.value.trim() || "",
+            middleName: document.getElementById("middleName")?.value.trim() || "",
+            lastName: document.getElementById("lastName")?.value.trim() || "",
+            gender: document.getElementById("gender")?.value.trim() || "",
+            qualification: document.getElementById("qualification")?.value.trim() || "",
+            phoneNo: document.getElementById("phoneNo")?.value.trim() || "",
+            whatsappNo: document.getElementById("whatsappNo")?.value.trim() || "",
+            parentsNo: document.getElementById("parentsNo")?.value.trim() || "",
+            email: document.getElementById("email")?.value.trim() || "",
+            age: document.getElementById("age")?.value.trim() || "",
+            addressLine1: document.getElementById("addressLine1")?.value.trim() || "",
+            addressLine2: document.getElementById("addressLine2")?.value.trim() || "",
+            addressLine3: document.getElementById("addressLine3")?.value.trim() || "",
+            pincode: document.getElementById("pincode")?.value.trim() || "",
+            interestedCourse:
+                document.getElementById("interestedCourse")?.value.trim() || "",
+            inquiryTakenBy: finalInquiryTakenBy,
+            branch: document.getElementById("branch22")?.value.trim() || "",
+
+            loggedInUserId: loggedInUser
+        };
+
+        console.log("Form Values:", formValues);
+
+        // Send to Apps Script
+        google.script.run
+            .withSuccessHandler((response) => {
+                console.log("Server Response:", response);
+                if (response.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Success!",
+                        text: response.message,
+                        confirmButtonColor: "#1e3a8a",
+                    }).then(() => {
+                        document.getElementById("ifId")?.reset();
+                        clearInquiryFormFields(); // Call the explicit clear function
+                        currentFoundRecord = null; // Reset the stored record
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Validation Error",
+                        text: response.message,
+                        confirmButtonColor: "#1e3a8a",
+                    });
+                }
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit';
+                submitBtn.disabled = false;
+            })
+            .withFailureHandler((error) => {
+                console.error("Script Error:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Script Error",
+                    text: error.message || "An unexpected error occurred.",
+                    confirmButtonColor: "#1e3a8a",
+                });
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit';
+                submitBtn.disabled = false;
+            })
+            .InquiryProcessForm(formValues);
+    }
+
+    // Function to show custom alert modal (retained from original)
+    function showCustomAlert(title, message, isSuccess) {
+         if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: isSuccess ? 'success' : 'error',
+                title: title,
+                text: message,
+                confirmButtonColor: '#1e3a8a',
+            });
+        } else {
+            alert(`${title}: ${message}`);
+        }
+    }
+
+    // Function to update UI based on login status (retained from original)
+    function updateUI() {
+        if (loginForm && inquiryFormSection) {
+            if (currentLoggedInUser) {
+                loginForm.style.display = 'none';
+                inquiryFormSection.style.display = 'block';
+            } else {
+                loginForm.style.display = 'block';
+                inquiryFormSection.style.display = 'none';
+            }
+        }
+    }
+
+    function onPhoneBlur() {
+        const phoneNo = document.getElementById('phoneNo').value;
+        const whatsappNo = document.getElementById('whatsappNo');
+        if (whatsappNo.value === '') {
+            whatsappNo.value = phoneNo;
+        }
+    }
+
+
+
+    function copyInquiry() {
+        console.log('Copying inquiry data...');
+        const inquiryData = {
+            firstName: document.getElementById('firstName').value,
+            middleName: document.getElementById('middleName').value,
+            lastName: document.getElementById('lastName').value,
+            aadharNumber: document.getElementById('aadharNumber').value,
+            qualification: document.getElementById('qualification').value,
+            phoneNo: document.getElementById('phoneNo').value,
+            whatsappNo: document.getElementById('whatsappNo').value,
+            parentsNo: document.getElementById('parentsNo').value,
+            email: document.getElementById('email').value,
+            age: document.getElementById('age').value,
+            addressLine1: document.getElementById('addressLine1').value,
+            addressLine2: document.getElementById('addressLine2').value,
+            addressLine3: document.getElementById('addressLine3').value,
+            pincode: document.getElementById('pincode').value,
+            interestedCourse: document.getElementById('interestedCourse').value,
+            inquiryTakenBy: document.getElementById('inquiryTakenBy').value,
+            branch: document.getElementById('branch22').value,
+            gender: document.getElementById('gender').value
+        };
+        sessionStorage.setItem('inquiryDataForAdmission', JSON.stringify(inquiryData));
+    }
+
+    const dateInput = document.getElementById('date');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.value = today;
+
+</script>
