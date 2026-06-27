@@ -6,6 +6,19 @@ import {
   InquiryData
 } from "../lib/services/inquiryService";
 import { getAllCourses, Course } from "../lib/services/courseService";
+import {
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Contact,
+  Calendar,
+  Phone,
+  Send,
+  Sparkles,
+  X,
+  Plus
+} from "lucide-react";
 
 interface InquiryViewProps {
   userProfile: UserProfile | null;
@@ -169,31 +182,31 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
   };
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto bg-slate-950/60 border border-slate-900 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4">
+    <div className="relative w-full max-w-4xl mx-auto bg-slate-900/40 border border-slate-900/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4 glass-panel gpu-accelerated">
       {/* Glow Effects */}
       <div className="absolute top-0 right-0 -z-10 h-32 w-32 bg-teal-500/10 blur-2xl rounded-full" />
       <div className="absolute bottom-0 left-0 -z-10 h-32 w-32 bg-indigo-500/10 blur-2xl rounded-full" />
 
       {/* Header */}
       <div className="border-b border-slate-900 pb-4 mb-6 text-center">
-        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent flex items-center justify-center gap-3">
-          <i className="fas fa-file-signature text-teal-400"></i>INQUIRY FORM
+        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
+          <FileText className="h-7 w-7 text-teal-400" />INQUIRY FORM
         </h1>
-        <p className="text-xs text-slate-500 mt-1">Submit trainee inquiries or lookup existing records via Aadhar</p>
+        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Submit trainee inquiries or lookup existing records via Aadhar</p>
       </div>
 
       {/* Status Messages */}
       {successMsg && (
-        <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2 animate-pulse">
-          <i className="fas fa-check-circle"></i>
-          <span>{successMsg}</span>
+        <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2.5">
+          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+          <span className="font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2">
-          <i className="fas fa-exclamation-circle"></i>
-          <span>{errorMsg}</span>
+        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2.5">
+          <AlertCircle className="h-5 w-5 text-rose-450" />
+          <span className="font-semibold">{errorMsg}</span>
         </div>
       )}
 
@@ -201,11 +214,11 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Details Section */}
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Personal Information</h2>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2 mb-3">Personal Information</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Aadhar Number */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="aadharNumber" className="block text-xs font-semibold text-slate-400">
                 Aadhar Number (12 Digits)
               </label>
@@ -215,25 +228,25 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                   id="aadharNumber"
                   value={formData.aadharNumber}
                   onChange={handleAadharChange}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-wide"
+                  className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-750 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-wider"
                   placeholder="e.g. 123456789012"
                   maxLength={12}
                   required
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 flex items-center">
                   {lookupLoading ? (
-                    <i className="fas fa-spinner fa-spin text-teal-400"></i>
+                    <Loader2 className="h-4.5 w-4.5 animate-spin text-teal-400" />
                   ) : formData.aadharNumber.length === 12 ? (
-                    <i className="fas fa-check-circle text-emerald-400"></i>
+                    <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400" />
                   ) : (
-                    <i className="fas fa-id-card text-slate-600"></i>
+                    <Contact className="h-4.5 w-4.5 text-slate-600" />
                   )}
                 </div>
               </div>
             </div>
 
             {/* Date */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="date" className="block text-xs font-semibold text-slate-400">
                 Inquiry Date
               </label>
@@ -243,7 +256,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -251,7 +264,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Names */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="firstName" className="block text-xs font-semibold text-slate-400">First Name*</label>
               <input
                 type="text"
@@ -259,11 +272,11 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="middleName" className="block text-xs font-semibold text-slate-400">Middle Name</label>
               <input
                 type="text"
@@ -271,10 +284,10 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="middleName"
                 value={formData.middleName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="lastName" className="block text-xs font-semibold text-slate-400">Last Name*</label>
               <input
                 type="text"
@@ -282,7 +295,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -290,7 +303,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Qualification */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="qualification" className="block text-xs font-semibold text-slate-400">Qualification*</label>
               <input
                 type="text"
@@ -298,12 +311,12 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="qualification"
                 value={formData.qualification}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
             {/* Age */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="age" className="block text-xs font-semibold text-slate-400">Age*</label>
               <input
                 type="number"
@@ -311,20 +324,20 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="age"
                 value={formData.age || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
                 min={0}
               />
             </div>
             {/* Gender */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="gender" className="block text-xs font-semibold text-slate-400">Gender*</label>
               <select
                 id="gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Gender</option>
@@ -339,10 +352,10 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
         {/* Contact Info Section */}
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Contact Information</h2>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2 mb-3">Contact Information</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="phoneNo" className="block text-xs font-semibold text-slate-400">Phone*</label>
               <input
                 type="tel"
@@ -350,12 +363,12 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="phoneNo"
                 value={formData.phoneNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, phoneNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="whatsappNo" className="block text-xs font-semibold text-slate-400">WhatsApp*</label>
               <input
                 type="tel"
@@ -363,12 +376,12 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="whatsappNo"
                 value={formData.whatsappNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, whatsappNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="parentsNo" className="block text-xs font-semibold text-slate-400">Parents No*</label>
               <input
                 type="tel"
@@ -376,14 +389,14 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="parentsNo"
                 value={formData.parentsNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, parentsNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label htmlFor="email" className="block text-xs font-semibold text-slate-400">Email Address</label>
             <input
               type="email"
@@ -391,7 +404,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+              className="w-full bg-slate-955 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               placeholder="e.g. email@example.com"
             />
           </div>
@@ -399,10 +412,10 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
         {/* Address Section */}
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Address Information</h2>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2 mb-3">Address Information</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="addressLine1" className="block text-xs font-semibold text-slate-400">Address Line 1*</label>
               <input
                 type="text"
@@ -410,11 +423,11 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="addressLine1"
                 value={formData.addressLine1}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="addressLine2" className="block text-xs font-semibold text-slate-400">Address Line 2</label>
               <input
                 type="text"
@@ -422,10 +435,10 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="addressLine2"
                 value={formData.addressLine2}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="addressLine3" className="block text-xs font-semibold text-slate-400">Address Line 3</label>
               <input
                 type="text"
@@ -433,10 +446,10 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="addressLine3"
                 value={formData.addressLine3}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="pincode" className="block text-xs font-semibold text-slate-400">Pincode*</label>
               <input
                 type="text"
@@ -444,7 +457,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="pincode"
                 value={formData.pincode}
                 onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/[^\d]/g, "").slice(0, 6) }))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-widest"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-widest"
                 placeholder="6 digits"
                 required
               />
@@ -454,17 +467,17 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
         {/* Course & Metadata Section */}
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Course Selection & Details</h2>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2 mb-3">Course Selection & Details</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="interestedCourse" className="block text-xs font-semibold text-slate-400">Select Course*</label>
               <select
                 id="interestedCourse"
                 name="interestedCourse"
                 value={formData.interestedCourse}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Course</option>
@@ -479,7 +492,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 )}
               </select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="inquiryTakenBy" className="block text-xs font-semibold text-slate-400">Inquiry Taken By</label>
               <input
                 type="text"
@@ -487,18 +500,18 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="inquiryTakenBy"
                 value={formData.inquiryTakenBy}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="branch" className="block text-xs font-semibold text-slate-400">Branch</label>
               <input
                 type="text"
                 id="branch"
                 name="branch"
                 value={formData.branch}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed capitalize"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed capitalize font-semibold"
                 readOnly
               />
             </div>
@@ -508,33 +521,33 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
         {/* Footer Actions */}
         <div className="border-t border-slate-900 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <label className="inline-flex items-center cursor-pointer">
+            <label className="inline-flex items-center cursor-pointer select-none">
               <input
                 type="checkbox"
                 id="agree"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="h-4 w-4 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950"
+                className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950 cursor-pointer"
                 required
               />
-              <span className="ml-2 text-xs text-slate-400">I agree to the terms and conditions</span>
+              <span className="ml-2.5 text-xs text-slate-400 font-medium">I agree to the terms and conditions</span>
             </label>
           </div>
 
           <div className="flex justify-end gap-3 w-full sm:w-auto">
             <button
               type="submit"
-              className="px-6 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-indigo-400 hover:opacity-90 active:scale-95 transition-all rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2"
+              className="px-6 py-2.5 btn-primary text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wide"
             >
-              <i className="fas fa-paper-plane"></i>
+              <Send className="h-3.5 w-3.5" />
               Submit Inquiry
             </button>
             <button
               type="button"
               onClick={handleTakeAdmission}
-              className="px-6 py-2.5 text-xs font-bold text-slate-200 bg-slate-900 border border-slate-850 hover:bg-slate-800/80 active:scale-95 transition-all rounded-xl flex items-center justify-center gap-2"
+              className="px-6 py-2.5 btn-secondary text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer"
             >
-              <i className="fas fa-file-alt"></i>
+              <Plus className="h-4 w-4" />
               Take Admission
             </button>
           </div>
@@ -544,23 +557,23 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
       {/* Aadhaar Record Found Popup Modal */}
       {showPopup && aadharFound && (
         <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-300 scale-100">
+          <div className="bg-slate-950 border border-slate-850 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-300 scale-100 glass-panel">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-900 bg-gradient-to-r from-slate-950 to-slate-900 flex justify-between items-center">
+            <div className="p-6 border-b border-slate-900 bg-gradient-to-r from-slate-950 to-slate-900/50 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full flex items-center justify-center shadow-inner">
-                  <i className="fas fa-search text-sm"></i>
+                  <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-100">Existing Aadhar Found!</h3>
-                  <p className="text-[10px] text-slate-500">Record found in branch: <span className="capitalize text-teal-400">{aadharFound.branch}</span></p>
+                  <h3 className="text-sm font-bold text-slate-100">Existing Aadhar Found!</h3>
+                  <p className="text-[10px] text-slate-500">Record found in branch: <span className="capitalize text-teal-400 font-semibold">{aadharFound.branch}</span></p>
                 </div>
               </div>
               <button
                 onClick={() => setShowPopup(false)}
-                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-rose-500/10 text-slate-400 hover:text-rose-450 transition-colors flex items-center justify-center cursor-pointer"
               >
-                <i className="fas fa-times"></i>
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -585,7 +598,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 </div>
                 <div className="col-span-2">
                   <span className="text-slate-500 block">Interested Course</span>
-                  <span className="text-slate-200 font-semibold capitalize">{aadharFound.interestedCourse.replace("_", " ")}</span>
+                  <span className="text-slate-200 font-semibold capitalize">{(aadharFound.interestedCourse || "").replace(/_/g, " ")}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-slate-500 block">Admission Status</span>
@@ -608,15 +621,15 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
             <div className="p-6 border-t border-slate-900 bg-slate-950 flex items-center justify-end gap-3">
               <button
                 onClick={() => { setShowPopup(false); setAadharFound(null); }}
-                className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 rounded-xl transition-all"
+                className="px-4 py-2 btn-secondary text-xs rounded-xl cursor-pointer"
               >
                 Continue New
               </button>
               <button
                 onClick={fillFormFromPopup}
-                className="px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-indigo-400 hover:opacity-90 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2 btn-primary text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
               >
-                <i className="fas fa-magic"></i>
+                <Sparkles className="h-3.5 w-3.5" />
                 Fill Form data
               </button>
             </div>

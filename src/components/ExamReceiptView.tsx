@@ -6,6 +6,16 @@ import {
   getNextReceiptNumberEF,
   ExamReceiptData
 } from "../lib/services/paymentService";
+import { 
+  Receipt, 
+  Loader2, 
+  Search, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Info, 
+  Printer,
+  X
+} from "lucide-react";
 
 interface ExamReceiptViewProps {
   userProfile: UserProfile | null;
@@ -149,7 +159,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
               <div class="receipt">
                   <div class="header">
                       <div class="logo"><img src="${logoBase64}"></div> 
-                      <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                      <div class="institute-name">TRUSTCARE</div>
                       <div class="receipt-label">STUDENT COPY</div>
                   </div>
                   <div class="receipt-content">
@@ -192,7 +202,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
               <div class="receipt">
                   <div class="header">
                       <div class="logo"><img src="${logoBase64}"></div> 
-                      <div class="institute-name">SHELAR TRAINING INSTITUTE</div>
+                      <div class="institute-name">TRUSTCARE</div>
                       <div class="receipt-label">OFFICE COPY</div>
                   </div>
                   <div class="receipt-content">
@@ -307,24 +317,20 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto bg-slate-950/60 border border-slate-900 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4">
+    <div className="relative w-full max-w-2xl mx-auto bg-slate-900/40 border border-slate-900/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4 glass-panel gpu-accelerated">
       {/* Toast Notification */}
       {notification && (
         <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl shadow-lg border backdrop-blur-md transition-all duration-300 transform translate-y-0 ${
           notification.type === "success" 
             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
             : notification.type === "error"
-            ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+            ? "bg-rose-500/10 border-rose-500/20 text-rose-450"
             : "bg-teal-500/10 border-teal-500/20 text-teal-400"
         }`}>
           <div className="flex items-center gap-2.5">
-            <i className={`fas ${
-              notification.type === "success" 
-                ? "fa-check-circle" 
-                : notification.type === "error"
-                ? "fa-exclamation-triangle"
-                : "fa-info-circle"
-            }`}></i>
+            {notification.type === "success" && <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400" />}
+            {notification.type === "error" && <AlertTriangle className="h-4.5 w-4.5 text-rose-450" />}
+            {notification.type === "info" && <Info className="h-4.5 w-4.5 text-teal-400" />}
             <span className="text-xs font-semibold">{notification.message}</span>
           </div>
         </div>
@@ -336,16 +342,16 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
 
       {/* Header */}
       <div className="border-b border-slate-900 pb-4 mb-6 text-center">
-        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent flex items-center justify-center gap-3">
-          <i className="fas fa-receipt text-teal-400"></i>EXAM FEE RECEIPT
+        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
+          <Receipt className="h-7 w-7 text-teal-400" />EXAM FEE RECEIPT
         </h1>
-        <p className="text-xs text-slate-500 mt-1">Record exam fee payments and generate receipts</p>
+        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Record exam fee payments and generate receipts</p>
       </div>
 
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <i className="fas fa-circle-notch fa-spin text-teal-400 text-3xl"></i>
-          <span className="text-xs text-slate-500">Generating receipt code...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Generating receipt code...</span>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -363,11 +369,11 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 onChange={(e) => setEnrollmentId(e.target.value)}
                 onBlur={handleEnrollmentIdBlur}
                 placeholder="Enter Student Enrollment ID (e.g. ST001)"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-850 focus:border-teal-500/50 rounded-xl pl-4 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none transition-colors font-medium"
                 required
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500">
-                <i className="fas fa-search text-sm"></i>
+                <Search className="h-4 w-4 text-slate-600" />
               </div>
             </div>
           </div>
@@ -380,7 +386,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 type="text"
                 value={receiptDate}
                 readOnly
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-medium"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-semibold"
               />
             </div>
             <div className="space-y-1.5">
@@ -389,7 +395,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 type="text"
                 value={receiptNumber}
                 readOnly
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-medium"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-semibold"
               />
             </div>
           </div>
@@ -403,17 +409,17 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 value={studentName}
                 readOnly
                 placeholder="Lookup by Enrollment ID..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed placeholder-slate-600"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed placeholder-slate-700 font-semibold"
               />
             </div>
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-400">Course Name</label>
               <input
                 type="text"
-                value={courseName}
+                value={courseName ? courseName.replace(/_/g, " ").toUpperCase() : ""}
                 readOnly
                 placeholder="Lookup by Enrollment ID..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed placeholder-slate-600"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed placeholder-slate-700 font-semibold"
               />
             </div>
           </div>
@@ -437,7 +443,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 id="paymentMode"
                 value={paymentMode}
                 onChange={(e) => setPaymentMode(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 focus:border-teal-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none transition-colors font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Payment Mode</option>
@@ -457,10 +463,10 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="h-4 w-4 mt-0.5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950"
+                className="h-4.5 w-4.5 mt-0.5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950 cursor-pointer"
                 required
               />
-              <span className="ml-2.5 text-xs text-slate-400 leading-normal">
+              <span className="ml-2.5 text-xs text-slate-400 leading-normal font-medium">
                 I acknowledge and agree to the payment details above. Fees once paid are non-refundable.
               </span>
             </label>
@@ -472,7 +478,7 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
               <button
                 type="button"
                 onClick={onGoBack}
-                className="px-6 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 rounded-xl transition-all"
+                className="px-6 py-2.5 btn-secondary text-xs rounded-xl cursor-pointer"
               >
                 Back
               </button>
@@ -480,16 +486,16 @@ export default function ExamReceiptView({ userProfile, onGoBack }: ExamReceiptVi
             <button
               type="submit"
               disabled={submitting}
-              className="px-8 py-3 text-xs font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-indigo-400 hover:opacity-90 active:scale-95 transition-all rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2"
+              className="px-8 py-3 btn-primary text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wide"
             >
               {submitting ? (
                 <>
-                  <i className="fas fa-spinner fa-spin"></i>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-print"></i>
+                  <Printer className="h-4 w-4" />
                   Generate & Print Receipt
                 </>
               )}

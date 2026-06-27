@@ -6,9 +6,11 @@ import {
   loginUser,
   logoutUser,
   subscribeToAuth,
-  UserProfile
+  UserProfile,
+  loginWithGoogle
 } from "../lib/services/authService";
 import { InquiryData } from "../lib/services/inquiryService";
+import { Lock, User, Loader2, LogOut, Menu, X, Receipt, FileText, UserPlus, CircleDollarSign, GraduationCap, TrendingUp, BarChart3, Clock } from "lucide-react";
 
 // UI Components
 import Sidebar from "../components/Sidebar";
@@ -24,6 +26,7 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Dashboard routing states
   const [activeTab, setActiveTab] = useState("inquiry");
@@ -91,6 +94,21 @@ export default function Home() {
       setLoginError(error.message || "Invalid username or password.");
     } finally {
       setLoginLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    setLoginError("");
+    try {
+      const profile = await loginWithGoogle();
+      setUserProfile(profile);
+      setActiveTab("inquiry"); // Default starting tab
+    } catch (error: any) {
+      console.error("Google login failure:", error);
+      setLoginError(error.message || "Failed to sign in with Google. Make sure it is enabled in your Firebase console.");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -187,10 +205,10 @@ export default function Home() {
 
   // Sidebar elements definition for mobile fallback renderer
   const navItems = [
-    { id: "inquiry", label: "New Inquiry", icon: "fa-file-signature" },
-    { id: "admission", label: "New Admission", icon: "fa-user-plus" },
-    { id: "payment", label: "Course Payment", icon: "fa-hand-holding-usd" },
-    { id: "exam-receipt", label: "Exam Receipt", icon: "fa-receipt" }
+    { id: "inquiry", label: "New Inquiry", icon: FileText },
+    { id: "admission", label: "New Admission", icon: UserPlus },
+    { id: "payment", label: "Course Payment", icon: CircleDollarSign },
+    { id: "exam-receipt", label: "Exam Receipt", icon: Receipt }
   ];
 
   const adminItems = [
@@ -199,17 +217,17 @@ export default function Home() {
   ];
 
   const analyticsItems = [
-    { id: "fee-structure", label: "Fees Structure", icon: "fa-university" },
-    { id: "admission-analytics", label: "Admission Structure", icon: "fa-chart-line" },
-    { id: "inquiry-analytics", label: "Inquiry Structure", icon: "fa-chart-bar" },
-    { id: "due-fees", label: "Due Fees", icon: "fa-clock" }
+    { id: "fee-structure", label: "Fees Structure", icon: GraduationCap },
+    { id: "admission-analytics", label: "Admission Structure", icon: TrendingUp },
+    { id: "inquiry-analytics", label: "Inquiry Structure", icon: BarChart3 },
+    { id: "due-fees", label: "Due Fees", icon: Clock }
   ];
 
   // Auth Loading Screen
   if (authLoading) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 text-slate-100 gap-3">
-        <i className="fas fa-circle-notch fa-spin text-teal-400 text-4xl"></i>
+        <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
         <span className="text-sm font-semibold tracking-wider text-slate-400">Loading TrustCare Portal...</span>
       </div>
     );
@@ -240,14 +258,14 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944" />
                 </svg>
               </div>
-              <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent">TrustCare</span>
+              <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent">TrustCare</span>
             </div>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-400 hover:text-white p-2 rounded-lg border border-slate-900 bg-slate-900/30"
+              className="text-slate-400 hover:text-slate-100 p-2 rounded-lg border border-slate-900 bg-slate-900/30 cursor-pointer"
             >
-              <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-base`}></i>
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </header>
 
@@ -255,50 +273,42 @@ export default function Home() {
           {mobileMenuOpen && (
             <div className="md:hidden bg-slate-950/95 border-b border-slate-900 py-4 px-6 flex flex-col gap-2 sticky top-[65px] z-20 backdrop-blur-md animate-slide-up">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Navigation</p>
-              {navItems.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
-                    ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                    : "text-slate-400 hover:bg-slate-900/50"
-                    }`}
-                >
-                  <i className={`fas ${item.icon} text-sm`}></i>
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {navItems.map(item => {
+                const MobileIcon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
+                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                        : "text-slate-400 hover:bg-slate-900/50"
+                      }`}
+                  >
+                    <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
               {userProfile.role === "admin" && (
                 <>
-                  <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin</div>
-                  {adminItems.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
-                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        : "text-slate-400 hover:bg-slate-900/50"
-                        }`}
-                    >
-                      <i className={`fas ${item.icon} text-sm`}></i>
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
-                  {analyticsItems.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 ${activeTab === item.id
-                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        : "text-slate-400 hover:bg-slate-900/50"
-                        }`}
-                    >
-                      <i className={`fas ${item.icon} text-sm`}></i>
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
+                  <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
+                  {analyticsItems.map(item => {
+                    const MobileIcon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
+                            ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                            : "text-slate-400 hover:bg-slate-900/50"
+                          }`}
+                      >
+                        <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
                 </>
               )}
 
@@ -381,319 +391,130 @@ export default function Home() {
     );
   }
 
-  // PUBLIC LANDING PAGE (Logged Out)
+  // PUBLIC DIRECT SIGN IN PAGE (Logged Out)
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans flex flex-col items-center justify-center p-4">
 
       {/* Glow Backdrops */}
       <div className="absolute top-0 left-1/4 -z-10 h-[500px] w-[500px] rounded-full bg-teal-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 -z-10 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
 
-      {/* Header/Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-md border-b border-slate-900 bg-slate-950/80">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-400 to-indigo-500 shadow-lg shadow-teal-500/20">
-                <svg className="h-6 w-6 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9" />
-                </svg>
-              </div>
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent">
-                TrustCare
-              </span>
-              <span className="rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-semibold text-teal-400 border border-teal-500/20">
-                Portal
-              </span>
+      {/* Main Login Card */}
+      <div className="relative w-full max-w-md bg-slate-900/50 border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden glass-panel animate-card-fade-in transition-all hover:shadow-teal-500/5">
+
+        {/* Background blobs for card */}
+        <div className="absolute top-0 right-0 -z-10 h-24 w-24 bg-teal-500/5 blur-xl rounded-full" />
+        <div className="absolute bottom-0 left-0 -z-10 h-24 w-24 bg-indigo-500/5 blur-xl rounded-full" />
+
+        {/* Logo and Titles */}
+        <div className="text-center pb-4 mb-6 border-b border-slate-800/60">
+          <div className="flex justify-center mb-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-teal-400 to-indigo-500 shadow-lg shadow-teal-500/20">
+              <svg className="h-8 w-8 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9" />
+              </svg>
             </div>
+          </div>
+          <h2 className="text-xl font-black tracking-wider text-slate-100 uppercase">
+            TRUSTCARE
+          </h2>
+          <p className="text-[11px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">TrustCare Portal Access</p>
+        </div>
 
-            <nav className="hidden md:flex gap-8 text-sm font-medium text-slate-400">
-              <a href="#features" className="hover:text-teal-400 transition-colors">Features</a>
-              <a href="#dashboard" className="hover:text-teal-400 transition-colors">Platform</a>
-              <a href="#security" className="hover:text-teal-400 transition-colors">Security</a>
-              <a href="#support" className="hover:text-teal-400 transition-colors">Support</a>
-            </nav>
+        {loginError && (
+          <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs flex items-center gap-2.5">
+            <svg className="h-4 w-4 shrink-0 text-rose-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{loginError}</span>
+          </div>
+        )}
 
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowLogin(true)}
-                className="text-sm font-medium text-slate-300 hover:text-teal-400 transition-colors"
-              >
+        <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="username" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Username</label>
+            <div className="relative">
+              <input
+                type="text"
+                id="username"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                placeholder="e.g. admin or kurla_staff"
+                className="w-full bg-slate-950/80 border border-slate-850 focus:border-teal-500/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
+                required
+              />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="pass" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
+            <div className="relative">
+              <input
+                type="password"
+                id="pass"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter account password"
+                className="w-full bg-slate-950/80 border border-slate-850 focus:border-teal-500/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
+                required
+              />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loginLoading || googleLoading}
+            className="w-full mt-2 py-3 btn-primary text-xs uppercase tracking-wider flex items-center justify-center gap-2 rounded-xl cursor-pointer"
+          >
+            {loginLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              <>
+                <Lock className="h-3.5 w-3.5" />
                 Sign In
-              </button>
-              <button
-                onClick={() => setShowLogin(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-teal-400 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:opacity-95 active:scale-98 transition-all shadow-md shadow-teal-400/10 hover:shadow-teal-400/20"
-              >
-                Get Started
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <section className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-center">
-          <div className="lg:col-span-7 flex flex-col justify-center text-center lg:text-left">
-            <div className="inline-flex self-center lg:self-start items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/5 px-4 py-1.5 text-xs font-medium text-teal-300 mb-6">
-              <span className="flex h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
-              Empowering Your Health Journey
-            </div>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-white via-teal-100 to-indigo-200 bg-clip-text text-transparent">
-              Your Health. <br className="hidden sm:inline" />
-              Connected. Protected.
-            </h1>
-            <p className="mt-6 text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Experience the next generation of healthcare management. Securely access clinical records, message your care team instantly, and schedule telehealth visits on a certified, secure portal.
-            </p>
-
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <button
-                onClick={() => setShowLogin(true)}
-                className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-teal-400 px-8 py-4 text-base font-bold text-slate-950 hover:bg-teal-300 transition-colors shadow-lg shadow-teal-400/20 active:scale-98"
-              >
-                Launch Dashboard
-              </button>
-              <a
-                href="#features"
-                className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 hover:border-slate-700 px-8 py-4 text-base font-semibold text-slate-200 transition-all"
-              >
-                Learn More
-              </a>
-            </div>
-
-            <div className="mt-12 grid grid-cols-3 gap-6 border-t border-slate-900 pt-8 max-w-lg mx-auto lg:mx-0">
-              <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-teal-400">99.9%</p>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">Uptime SLA</p>
-              </div>
-              <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-indigo-400">256-bit</p>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">E2E Encryption</p>
-              </div>
-              <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-teal-400">HIPAA</p>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">Fully Compliant</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Card Mockup */}
-          <div id="dashboard" className="lg:col-span-5 relative mt-8 lg:mt-0">
-            <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-teal-400 to-indigo-500 opacity-20 blur-lg" />
-            <div className="relative rounded-2xl border border-slate-800/80 bg-slate-950/80 p-6 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-slate-900 pb-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center text-teal-400 font-semibold border border-slate-800">
-                    JD
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-200">John Doe</h3>
-                    <p className="text-xs text-slate-500">Patient ID: #TC-88219</p>
-                  </div>
-                </div>
-                <div className="rounded-full bg-teal-500/10 px-2.5 py-1 text-xs font-semibold text-teal-400 border border-teal-500/20">
-                  Active Vitals
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="rounded-xl border border-slate-900 bg-slate-900/30 p-4">
-                  <div className="flex items-center justify-between text-slate-500 mb-2">
-                    <span className="text-xs font-medium">Heart Rate</span>
-                    <i className="fas fa-heart text-rose-500 text-sm"></i>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-slate-200">72</span>
-                    <span className="text-xs text-slate-500">bpm</span>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-900 bg-slate-900/30 p-4">
-                  <div className="flex items-center justify-between text-slate-500 mb-2">
-                    <span className="text-xs font-medium">SpO2</span>
-                    <i className="fas fa-bolt text-teal-400 text-sm"></i>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-slate-200">98</span>
-                    <span className="text-xs text-slate-500">%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Upcoming Appointments</div>
-                <div className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900/50 p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20 animate-pulse">
-                      <i className="fas fa-calendar-alt"></i>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-200">Dr. Sarah Jenkins</h4>
-                      <p className="text-[10px] text-slate-500">Cardiology Consultation</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-teal-400 block">June 18</span>
-                    <span className="text-[10px] text-slate-500 block">10:30 AM</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Feature Sections */}
-        <section id="features" className="mt-32 sm:mt-48">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-slate-200">
-              Modern Portal Management Features
-            </h2>
-            <p className="mt-4 text-base text-slate-400 font-medium">
-              Explore user-friendly features for student admissions, course fee payments, tracking due metrics, and automated PDF receipt layouts.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="group relative rounded-2xl border border-slate-900 bg-slate-900/20 p-8 hover:bg-slate-900/40 hover:border-slate-800 transition-all duration-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-400/10 text-teal-400 border border-teal-400/20">
-                <i className="fas fa-file-signature text-lg"></i>
-              </div>
-              <h3 className="mt-6 text-lg font-bold text-slate-200">Inquiry Tracking</h3>
-              <p className="mt-3 text-sm text-slate-400 leading-relaxed font-medium">
-                Submit, search, and pre-fill details using student Aadhaar numbers instantly.
-              </p>
-            </div>
-            <div className="group relative rounded-2xl border border-slate-900 bg-slate-900/20 p-8 hover:bg-slate-900/40 hover:border-slate-800 transition-all duration-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-400/10 text-indigo-400 border border-indigo-400/20">
-                <i className="fas fa-user-plus text-lg"></i>
-              </div>
-              <h3 className="mt-6 text-lg font-bold text-slate-200">Admissions Manager</h3>
-              <p className="mt-3 text-sm text-slate-400 leading-relaxed font-medium">
-                Complete student enrollments, upload headshot photos, and track receipts.
-              </p>
-            </div>
-            <div className="group relative rounded-2xl border border-slate-900 bg-slate-900/20 p-8 hover:bg-slate-900/40 hover:border-slate-800 transition-all duration-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-400/10 text-teal-400 border border-teal-400/20">
-                <i className="fas fa-hand-holding-usd text-lg"></i>
-              </div>
-              <h3 className="mt-6 text-lg font-bold text-slate-200">Course Fee EMIs</h3>
-              <p className="mt-3 text-sm text-slate-400 leading-relaxed font-medium">
-                Generate installment schedules, calculate partial plans, and track payments.
-              </p>
-            </div>
-            <div className="group relative rounded-2xl border border-slate-900 bg-slate-900/20 p-8 hover:bg-slate-900/40 hover:border-slate-800 transition-all duration-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-400/10 text-indigo-400 border border-indigo-400/20">
-                <i className="fas fa-receipt text-lg"></i>
-              </div>
-              <h3 className="mt-6 text-lg font-bold text-slate-200">Exam Fee Receipts</h3>
-              <p className="mt-3 text-sm text-slate-400 leading-relaxed font-medium">
-                Generate, save, and print dual-receipt PDF copies for students and office audits.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Floating Glassmorphic Login Overlay Modal */}
-      {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-slate-950 border border-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden animate-slide-up">
-
-            {/* Background blobs for modal */}
-            <div className="absolute top-0 right-0 -z-10 h-24 w-24 bg-teal-500/10 blur-xl rounded-full" />
-            <div className="absolute bottom-0 left-0 -z-10 h-24 w-24 bg-indigo-500/10 blur-xl rounded-full" />
-
-            <button
-              onClick={() => { setShowLogin(false); setLoginError(""); }}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors flex items-center justify-center"
-            >
-              <i className="fas fa-times"></i>
-            </button>
-
-            <div className="text-center pb-4 mb-6 border-b border-slate-900">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent flex items-center justify-center gap-2">
-                <i className="fas fa-lock text-teal-400"></i>SIGN IN PORTAL
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">Authenticate to access the portal dashboard</p>
-            </div>
-
-            {loginError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs flex items-center gap-2">
-                <i className="fas fa-exclamation-circle text-sm"></i>
-                <span>{loginError}</span>
-              </div>
+              </>
             )}
+          </button>
+        </form>
 
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="username" className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Username</label>
-                <input
-                  type="text"
-                  id="username"
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  placeholder="e.g. admin or kurla_staff"
-                  className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label htmlFor="pass" className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Password</label>
-                <input
-                  type="password"
-                  id="pass"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Enter account password"
-                  className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none transition-colors"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loginLoading}
-                className="w-full mt-4 py-3 bg-gradient-to-r from-teal-400 to-indigo-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg hover:opacity-90 active:scale-98 transition-all flex items-center justify-center gap-2"
-              >
-                {loginLoading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-sign-in-alt"></i>
-                    Sign In
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 p-4 rounded-2xl bg-slate-900/30 border border-slate-900 text-[10px] text-slate-500 leading-normal space-y-1">
-              <p className="font-bold text-slate-400 uppercase tracking-wider mb-1">Demo Credentials:</p>
-              <p>• Admin: <span className="text-slate-300 font-semibold">admin</span> / Password: <span className="text-slate-300 font-semibold">Password123</span></p>
-              <p>• Kurla Staff: <span className="text-slate-300 font-semibold">kurla_staff</span> / Password: <span className="text-slate-300 font-semibold">Password123</span></p>
-              <p>• Karad Staff: <span className="text-slate-300 font-semibold">karad_staff</span> / Password: <span className="text-slate-300 font-semibold">Password123</span></p>
-            </div>
-
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800/80"></div>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
+            <span className="bg-slate-950 px-3 text-slate-500">Or authenticate via</span>
           </div>
         </div>
-      )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-12 mt-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-400">TrustCare Portal</span>
-          </div>
-          <div>&copy; {new Date().getFullYear()} TrustCare Inc. All rights reserved.</div>
-          <div className="flex gap-6">
-            <a href="#privacy" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
-            <a href="#terms" className="hover:text-slate-300 transition-colors">Terms of Service</a>
-          </div>
-        </div>
-      </footer>
+        {/* Google Sign In Button */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loginLoading || googleLoading}
+          className="w-full py-2.5 btn-google text-xs rounded-xl flex items-center justify-center gap-2.5 cursor-pointer"
+        >
+          {googleLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-teal-400" />
+          ) : (
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+            </svg>
+          )}
+          <span>Sign In with Google</span>
+        </button>
+
+      </div>
+
+
     </div>
   );
 }

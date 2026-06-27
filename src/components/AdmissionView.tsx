@@ -8,7 +8,18 @@ import {
 } from "../lib/services/admissionService";
 import { getCourse, getAllCourses, Course } from "../lib/services/courseService";
 import { db } from "../lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  FileText,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  Database,
+  Info
+} from "lucide-react";
 
 interface AdmissionViewProps {
   userProfile: UserProfile | null;
@@ -16,6 +27,86 @@ interface AdmissionViewProps {
   onGoBack: () => void;
   onAdmissionComplete: (enrollmentId: string, studentName: string, courseName: string, totalFees: number, branch: string, receiptNo: string) => void;
 }
+
+// Course configurations per branch location (fallback when Firestore is unavailable)
+const getCourseConfig = (branch: string, course: string) => {
+  const branchLower = (branch || "kurla").toLowerCase();
+
+  const kurlaData: any = {
+    anm_nursing: { duration: "1 Year", fees: 65000, admission_fee: 5000 },
+    gnm_nursing: { duration: "3 Years", fees: 100000, admission_fee: 5000 },
+    dmlt: { duration: "1 Year", fees: 70000, admission_fee: 5000 },
+    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
+    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
+  };
+
+  const karadData: any = {
+    anm_nursing: { duration: "1 Year", fees: 36000, admission_fee: 3000 },
+    gnm_nursing: { duration: "3 Years", fees: 95000, admission_fee: 5000 },
+    dmlt: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
+    ot_technician: { duration: "1 Year", fees: 36000, admission_fee: 3000 },
+    electrician: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
+    ac_refrigerator: { duration: "1 Year", fees: 24000, admission_fee: 2000 },
+    basic_parlour: { duration: "2 Months", fees: 5000, admission_fee: 1000 }
+  };
+
+  const nalasaporaData: any = {
+    anm_nursing: { duration: "1 Year", fees: 55000, admission_fee: 5000 },
+    gnm_nursing: { duration: "3 Years", fees: 90000, admission_fee: 5000 },
+    dmlt: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
+    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
+    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
+  };
+
+  const thaneData: any = {
+    anm_nursing: { duration: "1 Year", fees: 8500, admission_fee: 5000 },
+    gnm_nursing: { duration: "3 Years", fees: 100000, admission_fee: 5000 },
+    dmlt: { duration: "1 Year", fees: 700, admission_fee: 5000 },
+    ot_technician: { duration: "1 Year", fees: 30000, admission_fee: 5000 },
+    general_nursing: { duration: "1 Year", fees: 30000, admission_fee: 5000 }
+  };
+
+  let courseInfo = null;
+  if (branchLower === "karad") courseInfo = karadData[course];
+  else if (branchLower === "nalasapora") courseInfo = nalasaporaData[course];
+  else if (branchLower === "thane") courseInfo = thaneData[course];
+  else courseInfo = kurlaData[course]; // default to kurla
+
+  return courseInfo || { duration: "1 Year", fees: 30000, admission_fee: 5000 };
+};
+
+const coursesPerBranch: any = {
+  kurla: [
+    { value: "anm_nursing", label: "ANM Nursing" },
+    { value: "gnm_nursing", label: "GNM Nursing" },
+    { value: "dmlt", label: "DMLT" },
+    { value: "ot_technician", label: "OT Technician" },
+    { value: "general_nursing", label: "General Nursing" }
+  ],
+  karad: [
+    { value: "anm_nursing", label: "ANM Nursing" },
+    { value: "gnm_nursing", label: "GNM Nursing" },
+    { value: "dmlt", label: "DMLT" },
+    { value: "ot_technician", label: "OT Technician" },
+    { value: "electrician", label: "Electrician" },
+    { value: "ac_refrigerator", label: "AC & Refrigerator" },
+    { value: "basic_parlour", label: "Basic Parlour" }
+  ],
+  nalasapora: [
+    { value: "anm_nursing", label: "ANM Nursing" },
+    { value: "gnm_nursing", label: "GNM Nursing" },
+    { value: "dmlt", label: "DMLT" },
+    { value: "ot_technician", label: "OT Technician" },
+    { value: "general_nursing", label: "General Nursing" }
+  ],
+  thane: [
+    { value: "anm_nursing", label: "ANM Nursing" },
+    { value: "gnm_nursing", label: "GNM Nursing" },
+    { value: "dmlt", label: "DMLT" },
+    { value: "ot_technician", label: "OT Technician" },
+    { value: "general_nursing", label: "General Nursing" }
+  ]
+};
 
 export default function AdmissionView({
   userProfile,
@@ -32,6 +123,17 @@ export default function AdmissionView({
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
+  // Dynamic field states
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [branch, setBranch] = useState<string>(userProfile?.branch || "kurla");
+  const [course, setCourse] = useState("");
+
+  // List of active inquiries for dynamic loading
+  const [inquiriesList, setInquiriesList] = useState<InquiryData[]>([]);
+  const [selectedInquiryId, setSelectedInquiryId] = useState("");
+
   // Form inputs
   const [guardianRelation, setGuardianRelation] = useState("");
   const [guardianName, setGuardianName] = useState("");
@@ -39,8 +141,7 @@ export default function AdmissionView({
   const [agree, setAgree] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const branch = inquiryData?.branch || userProfile?.branch || "kurla";
-  const course = inquiryData?.interestedCourse || "";
+  // Use Firestore-based config with fallback to inline config
   const [config, setConfig] = useState({ duration: "1 Year", fees: 30000, admission_fee: 5000 });
 
   // Fetch course configuration dynamically from Firestore
@@ -65,14 +166,52 @@ export default function AdmissionView({
               fees: found.fees,
               admission_fee: found.admissionFee || 0
             });
+          } else {
+            // Fallback to inline config
+            setConfig(getCourseConfig(branch, course));
           }
         }
       } catch (err) {
-        console.warn("Failed to load course config from Firestore, using defaults:", err);
+        console.warn("Failed to load course config from Firestore, using inline defaults:", err);
+        setConfig(getCourseConfig(branch, course));
       }
     }
     loadCourseConfig();
-  }, [course]);
+  }, [course, branch]);
+
+  // Initialize field values from inquiryData prop
+  useEffect(() => {
+    if (inquiryData) {
+      setFirstName(inquiryData.firstName || "");
+      setMiddleName(inquiryData.middleName || "");
+      setLastName(inquiryData.lastName || "");
+      setBranch(inquiryData.branch || userProfile?.branch || "kurla");
+      setCourse(inquiryData.interestedCourse || "");
+    } else {
+      setBranch(userProfile?.branch || "kurla");
+    }
+  }, [inquiryData, userProfile]);
+
+  // Load inquiries lists for scratch creation option
+  useEffect(() => {
+    async function loadInquiries() {
+      try {
+        const q = query(
+          collection(db, "inquiries"),
+          where("admissionStatus", "==", "Not Admitted")
+        );
+        const querySnapshot = await getDocs(q);
+        const inqs: InquiryData[] = [];
+        querySnapshot.forEach((docSnap) => {
+          inqs.push({ id: docSnap.id, ...docSnap.data() } as InquiryData);
+        });
+        setInquiriesList(inqs);
+      } catch (err) {
+        console.warn("Error fetching inquiries:", err);
+      }
+    }
+    loadInquiries();
+  }, []);
 
   // Fetch next receipt number and enrollment ID on mount
   useEffect(() => {
@@ -124,14 +263,19 @@ export default function AdmissionView({
       setErrorMsg("Please select a payment mode.");
       return;
     }
+    if (!firstName || !lastName) {
+      setErrorMsg("First Name and Last Name are required.");
+      return;
+    }
+    if (!course) {
+      setErrorMsg("Please select a course.");
+      return;
+    }
 
     setSubmitting(true);
     setErrorMsg("");
 
-    const firstName = inquiryData?.firstName || "";
-    const middleName = inquiryData?.middleName || "";
-    const lastName = inquiryData?.lastName || "";
-    const studentName = inquiryData?.fullName || [firstName, middleName, lastName].filter(Boolean).join(" ");
+    const studentName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
     const admissionDoc: AdmissionData = {
       receiptNumber,
@@ -170,69 +314,99 @@ export default function AdmissionView({
     }
   };
 
-  if (!inquiryData) {
-    return (
-      <div className="w-full max-w-md mx-auto text-center p-8 bg-slate-950/60 border border-slate-900 rounded-3xl backdrop-blur-xl mt-8">
-        <i className="fas fa-exclamation-triangle text-rose-500 text-3xl mb-4"></i>
-        <h3 className="text-lg font-bold text-slate-200">No Inquiry Selected</h3>
-        <p className="text-sm text-slate-500 mt-2">Please search or submit an inquiry first, then click "Take Admission".</p>
-        <button
-          onClick={onGoBack}
-          className="mt-6 px-5 py-2.5 bg-slate-900 text-slate-300 hover:bg-slate-800 rounded-xl transition-all font-semibold text-xs border border-slate-800"
-        >
-          Go back to New Inquiry
-        </button>
-      </div>
-    );
-  }
+  const activeCourseOptions = coursesPerBranch[branch.toLowerCase()] || coursesPerBranch.kurla;
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto bg-slate-950/60 border border-slate-900 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4">
+    <div className="relative w-full max-w-4xl mx-auto bg-slate-900/40 border border-slate-900/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden mt-4 glass-panel gpu-accelerated">
       {/* Glow Effects */}
       <div className="absolute top-0 right-0 -z-10 h-32 w-32 bg-teal-500/10 blur-2xl rounded-full" />
       <div className="absolute bottom-0 left-0 -z-10 h-32 w-32 bg-indigo-500/10 blur-2xl rounded-full" />
 
       {/* Header */}
       <div className="border-b border-slate-900 pb-4 mb-6 text-center">
-        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-200 to-indigo-200 bg-clip-text text-transparent flex items-center justify-center gap-3">
-          <i className="fas fa-file-alt text-teal-400"></i>ADMISSION FORM
+        <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
+          <FileText className="h-7 w-7 text-teal-400" />ADMISSION FORM
         </h1>
-        <p className="text-xs text-slate-500 mt-1">Complete admission registration for selected trainee</p>
+        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Complete admission registration for selected trainee</p>
       </div>
 
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <i className="fas fa-circle-notch fa-spin text-teal-400 text-3xl"></i>
-          <span className="text-xs text-slate-500">Generating ID & Receipt codes...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Generating ID & Receipt codes...</span>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {errorMsg && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2">
-              <i className="fas fa-exclamation-circle"></i>
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs flex items-center gap-2.5">
+              <AlertCircle className="h-5 w-5 text-rose-450" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Loader Selection if no pre-defined Inquiry */}
+          {!inquiryData && inquiriesList.length > 0 && (
+            <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/40 border border-slate-900/60">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Load details from existing inquiry
+              </label>
+              <div className="flex gap-3">
+                <select
+                  value={selectedInquiryId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedInquiryId(id);
+                    const selected = inquiriesList.find(x => x.id === id);
+                    if (selected) {
+                      setFirstName(selected.firstName || "");
+                      setMiddleName(selected.middleName || "");
+                      setLastName(selected.lastName || "");
+                      setBranch(selected.branch || "kurla");
+                      setCourse(selected.interestedCourse || "");
+                    } else {
+                      setFirstName("");
+                      setMiddleName("");
+                      setLastName("");
+                      setBranch(userProfile?.branch || "kurla");
+                      setCourse("");
+                    }
+                  }}
+                  className="flex-1 bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 cursor-pointer"
+                >
+                  <option value="">-- Start New Admission from Scratch --</option>
+                  {inquiriesList.map(inq => (
+                    <option key={inq.id} value={inq.id}>
+                      {inq.fullName || `${inq.firstName} ${inq.lastName}`} ({inq.phoneNo}) - {(inq.interestedCourse || "").replace(/_/g, " ").toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[10px] text-slate-600 mt-1 flex items-center gap-1.5 font-medium">
+                <Info className="h-3 w-3" />
+                Selecting an inquiry will populate the student details below. Leave blank to write manually.
+              </p>
             </div>
           )}
 
           {/* Receipt Info */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Receipt Information</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Receipt Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-400">Receipt Number</label>
                 <input
                   type="text"
                   value={receiptNumber}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-semibold"
                   readOnly
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-400">Enrollment ID</label>
                 <input
                   type="text"
                   value={enrollmentId}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium tracking-wide"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed font-semibold tracking-wider"
                   readOnly
                 />
               </div>
@@ -241,33 +415,38 @@ export default function AdmissionView({
 
           {/* Student Info */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Student Information</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Student Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">First Name</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-400">First Name*</label>
                 <input
                   type="text"
-                  value={inquiryData.firstName}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed"
-                  readOnly
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className={`w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  readOnly={!!inquiryData}
+                  required
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-400">Middle Name</label>
                 <input
                   type="text"
-                  value={inquiryData.middleName || ""}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed"
-                  readOnly
+                  value={middleName}
+                  onChange={(e) => setMiddleName(e.target.value)}
+                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  readOnly={!!inquiryData}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">Last Name</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-400">Last Name*</label>
                 <input
                   type="text"
-                  value={inquiryData.lastName}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed"
-                  readOnly
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  readOnly={!!inquiryData}
+                  required
                 />
               </div>
             </div>
@@ -275,9 +454,9 @@ export default function AdmissionView({
 
           {/* Photo Upload */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Photo Upload</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Photo Upload</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label htmlFor="student_photo" className="block text-xs font-semibold text-slate-400">
                   Select Profile Photo
                 </label>
@@ -286,10 +465,10 @@ export default function AdmissionView({
                   id="student_photo"
                   accept="image/*"
                   onChange={handlePhotoChange}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-500/10 file:text-teal-400 hover:file:bg-teal-500/20 file:cursor-pointer transition-colors"
+                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-500/10 file:text-teal-400 hover:file:bg-teal-500/20 file:cursor-pointer transition-colors"
                 />
               </div>
-              <div className="flex items-center justify-center min-h-[140px] border-2 border-dashed border-slate-900 rounded-2xl p-2 bg-slate-950/40">
+              <div className="flex items-center justify-center min-h-[140px] border-2 border-dashed border-slate-800 rounded-2xl p-2 bg-slate-950/40">
                 {photoPreview ? (
                   <img
                     src={photoPreview}
@@ -297,7 +476,10 @@ export default function AdmissionView({
                     className="max-h-32 object-contain rounded-xl shadow-md border border-slate-900"
                   />
                 ) : (
-                  <span className="text-xs text-slate-600 font-medium">No Photo Selected</span>
+                  <span className="text-xs text-slate-600 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Camera className="h-4 w-4 text-slate-700" />
+                    No Photo Selected
+                  </span>
                 )}
               </div>
             </div>
@@ -305,57 +487,89 @@ export default function AdmissionView({
 
           {/* Course Details */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Course Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">Course Selected</label>
-                <input
-                  type="text"
-                  value={course.replace("_", " ").toUpperCase()}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium capitalize"
-                  readOnly
-                />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Course Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="branch_select" className="block text-xs font-semibold text-slate-400">Branch*</label>
+                <select
+                  id="branch_select"
+                  value={branch}
+                  onChange={(e) => {
+                    setBranch(e.target.value);
+                    setCourse(""); // reset course when branch changes
+                  }}
+                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  disabled={!!inquiryData}
+                  required
+                >
+                  <option value="kurla">Kurla</option>
+                  <option value="karad">Karad</option>
+                  <option value="nalasapora">Nalasapora</option>
+                  <option value="thane">Thane</option>
+                </select>
               </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">Course Duration</label>
-                <input
-                  type="text"
-                  value={config.duration}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium"
-                  readOnly
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">Total Course Fees</label>
-                <input
-                  type="text"
-                  value={`₹${config.fees.toLocaleString()}`}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-teal-400 cursor-not-allowed font-bold"
-                  readOnly
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-400">Admission Fee</label>
-                <input
-                  type="text"
-                  value={`₹${config.admission_fee.toLocaleString()}`}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-indigo-400 cursor-not-allowed font-bold"
-                  readOnly
-                />
+
+              <div className="space-y-1.5">
+                <label htmlFor="course_select" className="block text-xs font-semibold text-slate-400">Course Selected*</label>
+                <select
+                  id="course_select"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  disabled={!!inquiryData}
+                  required
+                >
+                  <option value="">Select Course</option>
+                  {activeCourseOptions.map((c: any) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
+
+            {course && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-400">Course Duration</label>
+                  <input
+                    type="text"
+                    value={config.duration}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium"
+                    readOnly
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-400">Total Course Fees</label>
+                  <input
+                    type="text"
+                    value={`₹${config.fees.toLocaleString()}`}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-teal-400 cursor-not-allowed font-bold"
+                    readOnly
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-400">Admission Fee</label>
+                  <input
+                    type="text"
+                    value={`₹${config.admission_fee.toLocaleString()}`}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-indigo-400 cursor-not-allowed font-bold"
+                    readOnly
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Payment Method */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Payment Details</h2>
-            <div className="space-y-1">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Payment Details</h2>
+            <div className="space-y-1.5">
               <label htmlFor="payment_mode" className="block text-xs font-semibold text-slate-400">Admission Payment Mode*</label>
               <select
                 id="payment_mode"
                 value={paymentMode}
                 onChange={(e) => setPaymentMode(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors"
+                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Mode</option>
@@ -369,27 +583,27 @@ export default function AdmissionView({
 
           {/* Guardian Info */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider border-l-2 border-teal-500 pl-2">Guardian Information</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-teal-500 pl-2">Guardian Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label htmlFor="guardian_relation" className="block text-xs font-semibold text-slate-400">Guardian Relation</label>
                 <input
                   type="text"
                   id="guardian_relation"
                   value={guardianRelation}
                   onChange={(e) => setGuardianRelation(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                  className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
                   placeholder="e.g. Father, Mother, Spouse"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label htmlFor="guardian_name" className="block text-xs font-semibold text-slate-400">Guardian Full Name</label>
                 <input
                   type="text"
                   id="guardian_name"
                   value={guardianName}
                   onChange={(e) => setGuardianName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors"
+                  className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
                   placeholder="Enter full name"
                 />
               </div>
@@ -399,15 +613,15 @@ export default function AdmissionView({
           {/* Bottom Actions */}
           <div className="border-t border-slate-900 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <label className="inline-flex items-center cursor-pointer">
+              <label className="inline-flex items-center cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={agree}
                   onChange={(e) => setAgree(e.target.checked)}
-                  className="h-4 w-4 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950"
+                  className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950 cursor-pointer"
                   required
                 />
-                <span className="ml-2 text-xs text-slate-400">I agree to terms, conditions and admission requirements</span>
+                <span className="ml-2.5 text-xs text-slate-400 font-medium">I agree to terms, conditions and admission requirements</span>
               </label>
             </div>
 
@@ -415,23 +629,23 @@ export default function AdmissionView({
               <button
                 type="button"
                 onClick={onGoBack}
-                className="px-6 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 rounded-xl transition-all"
+                className="px-6 py-2.5 btn-secondary text-xs rounded-xl cursor-pointer"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-indigo-400 hover:opacity-90 active:scale-95 transition-all rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-1.5"
+                className="px-6 py-2.5 btn-primary text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wide"
               >
                 {submitting ? (
                   <>
-                    <i className="fas fa-spinner fa-spin"></i>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-arrow-right"></i>
+                    <ArrowRight className="h-4 w-4" />
                     Next
                   </>
                 )}
