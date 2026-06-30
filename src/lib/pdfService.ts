@@ -1,6 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import QRCode from 'qrcode';
-import { createCanvas, loadImage as loadCanvasImage } from 'canvas';
 import { FieldLayout } from './pdfTemplates';
 
 export async function makeQrBuffer(text: string): Promise<Buffer> {
@@ -13,35 +12,6 @@ export async function makeQrBuffer(text: string): Promise<Buffer> {
       light: '#ffffff',
     },
   });
-}
-
-export async function loadAndResizePhoto(imageUrl: string, maxWidth = 200, maxHeight = 200): Promise<Buffer> {
-  try {
-    const image = await loadCanvasImage(imageUrl);
-    
-    let width = image.width;
-    let height = image.height;
-    
-    if (width > maxWidth) {
-      height = Math.round((height * maxWidth) / width);
-      width = maxWidth;
-    }
-    
-    if (height > maxHeight) {
-      width = Math.round((width * maxHeight) / height);
-      height = maxHeight;
-    }
-    
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-    
-    ctx.drawImage(image, 0, 0, width, height);
-    
-    return canvas.toBuffer('image/jpeg', { quality: 0.8 });
-  } catch (err) {
-    console.error("Error resizing image", err);
-    return await fetchImageAsBuffer(imageUrl);
-  }
 }
 
 export async function fetchImageAsBuffer(url: string): Promise<Buffer> {
@@ -79,7 +49,7 @@ export async function generatePdf(
     // If it's an image, create a new PDF and embed the image as background
     pdfDoc = await PDFDocument.create();
     page = pdfDoc.addPage([dimensions.width, dimensions.height]);
-    
+
     // Auto-detect image type (very basic, usually better to check magic numbers)
     // For now try JPEG then PNG
     let bgImage;
@@ -88,7 +58,7 @@ export async function generatePdf(
     } catch (e) {
       bgImage = await pdfDoc.embedPng(backgroundBuffer);
     }
-    
+
     page.drawImage(bgImage, {
       x: 0,
       y: 0,
@@ -110,15 +80,15 @@ export async function generatePdf(
   for (const field of fields) {
     const x = field.x * scaleX;
     // For text, the y coordinate usually refers to the baseline in pdf-lib, so we add fontSize
-    const y = pageHeight - (field.y * scaleY); 
-    
+    const y = pageHeight - (field.y * scaleY);
+
     if (field.type === 'text') {
       const fontSize = (field.fontSize || 16) * scaleY;
       const f = field.fontWeight === 'bold' ? boldFont : font;
-      
+
       let textValue = field.value?.toString() || '';
       const textWidth = f.widthOfTextAtSize(textValue, fontSize);
-      
+
       let drawX = x;
       if (field.align === 'center') {
         const fieldWidth = (field.width || 300) * scaleX;
@@ -127,7 +97,7 @@ export async function generatePdf(
         const fieldWidth = (field.width || 300) * scaleX;
         drawX = x + fieldWidth - textWidth;
       }
-      
+
       page.drawText(textValue, {
         x: drawX,
         y: y - fontSize, // Adjust for baseline
@@ -135,7 +105,7 @@ export async function generatePdf(
         font: f,
         color: hexToRgb(field.color || '#000000'),
       });
-      
+
     } else if (field.type === 'checkbox') {
       // Draw a checkmark using SVG path if value is true or "true"
       const isChecked = field.value === true || field.value === 'true' || field.value === '1';
@@ -168,10 +138,10 @@ export async function generatePdf(
             continue;
           }
         }
-        
+
         const imgWidth = (field.width || 100) * scaleX;
         const imgHeight = (field.height || 100) * scaleY;
-        
+
         page.drawImage(img, {
           x: x,
           y: y - imgHeight, // origin is bottom left, so we subtract height to draw downward

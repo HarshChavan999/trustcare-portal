@@ -12,6 +12,7 @@ import {
   Installment,
   PaymentSchedule
 } from "../lib/services/paymentService";
+import { openCoursePaymentReceipt } from "./CoursePaymentReceiptView";
 import {
   CircleDollarSign,
   CheckCircle2,
@@ -33,17 +34,22 @@ interface PaymentViewProps {
   initialCourseName: string | null;
   initialTotalFees: number | null;
   initialReceiptNo: string | null;
+  initialCourseDuration?: string;
   onGoBack: () => void;
   onProceedToReceipt: (receiptNo: string, enrollmentId: string) => void;
 }
 
 // Default course config (fallback)
-const DEFAULT_COURSE_CONFIG: { [course: string]: { duration: string; fees: number } } = {
-  anm_nursing: { duration: "1 year", fees: 65000 },
-  gnm_nursing: { duration: "3 years", fees: 100000 },
-  dmlt: { duration: "1 year", fees: 70000 },
-  ot_technician: { duration: "1 year", fees: 30000 },
-  general_nursing: { duration: "1 year", fees: 30000 }
+const DEFAULT_COURSE_CONFIG: { [course: string]: { duration: string; fees: number; admission_fee: number } } = {
+  anm_nursing: { duration: "1 year", fees: 65000, admission_fee: 5000 },
+  gnm_nursing: { duration: "3 years", fees: 100000, admission_fee: 5000 },
+  gnm: { duration: "3 years", fees: 100000, admission_fee: 5000 },
+  dmlt: { duration: "1 year", fees: 70000, admission_fee: 5000 },
+  ot_technician: { duration: "1 year", fees: 30000, admission_fee: 5000 },
+  general_nursing: { duration: "1 year", fees: 30000, admission_fee: 5000 },
+  electrician: { duration: "1 year", fees: 24000, admission_fee: 2000 },
+  ac_refrigerator: { duration: "1 year", fees: 24000, admission_fee: 2000 },
+  basic_parlour: { duration: "2 months", fees: 5000, admission_fee: 1000 }
 };
 
 export default function PaymentView({
@@ -53,6 +59,7 @@ export default function PaymentView({
   initialCourseName,
   initialTotalFees,
   initialReceiptNo,
+  initialCourseDuration,
   onGoBack,
   onProceedToReceipt
 }: PaymentViewProps) {
@@ -61,15 +68,21 @@ export default function PaymentView({
   const [enrollmentId, setEnrollmentId] = useState(initialEnrollmentId || "");
   const [courseName, setCourseName] = useState(initialCourseName || "");
 
+  const [dbCourseDuration, setDbCourseDuration] = useState("");
+  const [dbTotalFees, setDbTotalFees] = useState<number | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const config = DEFAULT_COURSE_CONFIG[courseName] || { duration: "1 year", fees: 30000 };
-  const years = config.duration.includes("year") || config.duration.includes("Year")
-    ? parseInt(config.duration.split(" ")[0]) || 1
+  const config = DEFAULT_COURSE_CONFIG[courseName] || { duration: "1 year", fees: 30000, admission_fee: 5000 };
+  
+  const duration = dbCourseDuration || initialCourseDuration || config.duration;
+  const years = duration.includes("year") || duration.includes("Year") || duration.includes("years") || duration.includes("Years")
+    ? parseInt(duration.split(" ")[0]) || 1
     : 1;
-  const totalFees = initialTotalFees || (years * config.fees);
+    
+  const totalFees = dbTotalFees || initialTotalFees || config.fees;
 
   const [paymentType, setPaymentType] = useState<"full" | "partial" | "emi" | "">("");
   const [discountRupees, setDiscountRupees] = useState(0);
@@ -129,6 +142,8 @@ export default function PaymentView({
         setCourseName(res.courseName);
         setReceiptNo(res.receiptNumber || "");
         setBranch(res.branch || "MAIN");
+        if (res.courseDuration) setDbCourseDuration(res.courseDuration);
+        if (res.totalCourseFees) setDbTotalFees(res.totalCourseFees);
         await checkExistingSchedule(enrollmentId.trim());
       } else {
         setErrorMsg("Enrollment ID not found in database.");
@@ -709,13 +724,31 @@ export default function PaymentView({
 
         {confirmed && (
           <button
-            onClick={() => onProceedToReceipt(receiptNo, enrollmentId)}
+            onClick={() => {
+              openCoursePaymentReceipt({
+                enrollmentId,
+                studentName,
+                courseName,
+                courseDuration: duration,
+                totalFees,
+                totalPayable: paymentType === "full" ? fullTotalPayable : paymentType === "partial" ? partialTotalPayable : emiTotalPayable,
+                discountRupees,
+                paymentType,
+                paymentMethod,
+                schedule: activeSchedule,
+                receiptNo,
+                branch,
+                admissionFee: config.admission_fee ?? 5000,
+              });
+              onProceedToReceipt(receiptNo, enrollmentId);
+            }}
             className="btn-primary px-6 py-2.5 text-xs rounded-xl cursor-pointer uppercase tracking-wide"
           >
-            Proceed to Admission Receipt
+            View / Print Course Receipt
           </button>
         )}
       </div>
+
       {printReceiptData && (
         <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 shadow-2xl relative animate-float-scale">

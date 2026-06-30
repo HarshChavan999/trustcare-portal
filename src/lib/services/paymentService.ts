@@ -86,7 +86,10 @@ export async function getStudentDataByEnrollmentId(enrollmentId: string) {
         courseName: data.courseName || "",
         receiptNumber: data.receiptNumber || "",
         studentName: data.studentName || `${data.firstName} ${data.middleName} ${data.lastName}`.trim(),
-        branch: data.branch || "kurla"
+        branch: data.branch || "kurla",
+        courseDuration: data.courseDuration || "",
+        totalCourseFees: data.totalCourseFees || 0,
+        admissionFee: data.admissionFee || 0
       };
     }
 

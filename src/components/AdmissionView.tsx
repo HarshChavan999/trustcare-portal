@@ -277,6 +277,8 @@ export default function AdmissionView({
 
     const studentName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
+    const calculatedTotalFees = config.fees;
+
     const admissionDoc: AdmissionData = {
       receiptNumber,
       enrollmentId,
@@ -286,7 +288,7 @@ export default function AdmissionView({
       studentName,
       courseName: course,
       courseDuration: config.duration,
-      totalCourseFees: config.fees,
+      totalCourseFees: calculatedTotalFees,
       admissionFee: config.admission_fee,
       paymentMode,
       guardianRelation,
@@ -305,9 +307,10 @@ export default function AdmissionView({
         enrollmentId,
         studentName,
         course,
-        config.fees,
+        calculatedTotalFees,
         branch,
-        receiptNumber
+        receiptNumber,
+        config.duration
       );
     } else {
       setErrorMsg(res.message);

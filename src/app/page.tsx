@@ -141,14 +141,16 @@ export default function Home() {
     courseName: string,
     totalFees: number,
     branch: string,
-    receiptNo: string
+    receiptNo: string,
+    courseDuration?: string
   ) => {
     setPaymentContext({
       enrollmentId,
       studentName,
       courseName,
       totalFees,
-      receiptNo
+      receiptNo,
+      courseDuration
     });
     setActiveTab("payment");
   };
@@ -158,14 +160,16 @@ export default function Home() {
     studentName: string,
     courseName: string,
     totalFees: number,
-    branch: string
+    receiptNo: string,
+    courseDuration?: string
   ) => {
     setPaymentContext({
       enrollmentId,
       studentName,
       courseName,
       totalFees,
-      receiptNo: ""
+      receiptNo,
+      courseDuration
     });
     setActiveTab("payment");
   };
@@ -356,6 +360,7 @@ export default function Home() {
                 initialCourseName={paymentContext.courseName}
                 initialTotalFees={paymentContext.totalFees}
                 initialReceiptNo={paymentContext.receiptNo}
+                initialCourseDuration={paymentContext.courseDuration}
                 onGoBack={handleGoBackFromPayment}
                 onProceedToReceipt={handleProceedToReceipt}
               />
