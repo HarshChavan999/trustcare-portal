@@ -12,7 +12,7 @@ import {
   Installment,
   PaymentSchedule
 } from "../lib/services/paymentService";
-import { openCoursePaymentReceipt } from "./CoursePaymentReceiptView";
+import { openCoursePaymentReceipt, openInstallmentReceipt } from "./CoursePaymentReceiptView";
 import {
   CircleDollarSign,
   CheckCircle2,
@@ -83,16 +83,15 @@ export default function PaymentView({
   const [successMsg, setSuccessMsg] = useState("");
 
   const config = DEFAULT_COURSE_CONFIG[courseName] || { duration: "1 year", fees: 30000, admission_fee: 5000 };
-  
+
   const duration = dbCourseDuration || initialCourseDuration || config.duration;
   const years = duration.includes("year") || duration.includes("Year") || duration.includes("years") || duration.includes("Years")
     ? parseInt(duration.split(" ")[0]) || 1
     : 1;
-    
+
   const totalFees = dbTotalFees || initialTotalFees || config.fees;
 
   const [paymentType, setPaymentType] = useState<"full" | "partial" | "emi" | "">("");
-  const [discountRupees, setDiscountRupees] = useState(0);
   const [partialInitial, setPartialInitial] = useState(0);
   const [partialTenure, setPartialTenure] = useState(6);
   const [emiDownPayment, setEmiDownPayment] = useState(0);
@@ -164,22 +163,17 @@ export default function PaymentView({
     }
   };
 
-  const fullDiscountPercent = totalFees > 0 ? ((discountRupees / totalFees) * 100).toFixed(1) : "0";
-  const fullTotalPayable = Math.max(0, totalFees - discountRupees);
-  const partialDiscountedTotal = Math.max(0, totalFees - discountRupees);
-  const partialRemaining = Math.max(0, partialDiscountedTotal - partialInitial);
+  const fullTotalPayable = totalFees;
+  const partialRemaining = Math.max(0, totalFees - partialInitial);
   const partialEMIAmount = partialRemaining > 0 ? Math.floor(partialRemaining / partialTenure) : 0;
   const partialRemainder = partialRemaining > 0 ? partialRemaining % partialTenure : 0;
   const partialTotalPayable = partialInitial + partialRemaining;
-  const partialDiscountPercent = totalFees > 0 ? ((discountRupees / totalFees) * 100).toFixed(1) : "0";
 
   // Calculations for EMI Payment
-  const emiDiscountedTotal = Math.max(0, totalFees - discountRupees);
-  const emiRemaining = Math.max(0, emiDiscountedTotal - emiDownPayment);
+  const emiRemaining = Math.max(0, totalFees - emiDownPayment);
   const emiEMIAmount = emiRemaining > 0 ? Math.floor(emiRemaining / emiTenure) : 0;
   const emiRemainder = emiRemaining > 0 ? emiRemaining % emiTenure : 0;
   const emiTotalPayable = emiDownPayment + emiRemaining;
-  const emiDiscountPercent = totalFees > 0 ? ((discountRupees / totalFees) * 100).toFixed(1) : "0";
 
   // Dynamic Installment Schedule Calculation (Derived State when not locked)
   const calculatedSchedule: Installment[] = React.useMemo(() => {
@@ -215,7 +209,7 @@ export default function PaymentView({
         let amount = 0;
         if (i === partialTenure) {
           const totalSoFar = partialInitial + (partialEMIAmount * (partialTenure - 1)) + partialRemainder;
-          amount = partialDiscountedTotal - totalSoFar;
+          amount = totalFees - totalSoFar;
         } else {
           amount = partialEMIAmount + (i <= partialRemainder ? 1 : 0);
         }
@@ -238,7 +232,7 @@ export default function PaymentView({
           type: "Installment 1"
         });
       }
-      let remaining = emiDiscountedTotal - emiDownPayment;
+      let remaining = totalFees - emiDownPayment;
       for (let i = 1; i <= emiTenure; i++) {
         const nextMonth = new Date(today.getFullYear(), today.getMonth() + i, 1);
         const maxDays = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
@@ -255,7 +249,7 @@ export default function PaymentView({
       }
     }
     return scheduleArray;
-  }, [paymentType, fullTotalPayable, partialInitial, partialTenure, partialEMIAmount, partialRemainder, partialDiscountedTotal, emiDownPayment, emiTenure, emiEMIAmount, emiDiscountedTotal]);
+  }, [paymentType, fullTotalPayable, partialInitial, partialTenure, partialEMIAmount, partialRemainder, totalFees, emiDownPayment, emiTenure, emiEMIAmount]);
 
   const activeSchedule = locked ? schedule : calculatedSchedule;
 
@@ -328,79 +322,31 @@ export default function PaymentView({
     finally { setProcessingPayment(null); }
   };
 
-  // Generate PDF receipt using Certificate Builder template
-  const handlePrintReceipt = async (inst: Installment) => {
-    setLoading(true);
-    try {
-      const docSnap = await getDoc(doc(db, "receipt_templates", "fee_receipt"));
-      if (docSnap.exists()) {
-        const templateData = docSnap.data();
+  // Generate receipt using appscript-style installment receipt format
+  const handlePrintReceipt = (inst: Installment) => {
+    const effectiveSchedule = schedule.length > 0 ? schedule : [];
+    const paidUpToNow = effectiveSchedule
+      .filter((s) => s.status === "Paid" && s.installmentNumber <= inst.installmentNumber)
+      .reduce((sum, s) => sum + s.amount, 0);
+    const allPaid = effectiveSchedule
+      .filter((s) => s.status === "Paid")
+      .reduce((sum, s) => sum + s.amount, 0);
+    const totalPayable = effectiveSchedule.reduce((sum, s) => sum + s.amount, 0) || totalFees;
+    const balanceDue = Math.max(0, totalPayable - allPaid);
 
-        // Calculate cumulative paid amount
-        const paidSoFar = schedule
-          .filter(s => s.status === "Paid" && s.installmentNumber <= inst.installmentNumber)
-          .reduce((acc, s) => acc + s.amount, 0);
-
-        const balanceAmt = Math.max(0, totalFees - paidSoFar);
-
-        // Map variables to layout values
-        const dataPayload = {
-          receiptNo: receiptNo || `IR-${enrollmentId}-${inst.installmentNumber}`,
-          date: new Date().toLocaleDateString("en-GB"),
-          studentName: studentName,
-          courseName: courseName.replace(/_/g, " ").toUpperCase(),
-          totalAmount: totalFees.toLocaleString(),
-          paidAmount: inst.amount.toLocaleString(),
-          balanceAmount: balanceAmt.toLocaleString(),
-          receivedBy: userProfile?.username || "Authorized Officer",
-          // Checkbox conditions (passed as strings that resolve to true/false in backend)
-          isAdmissionFee: inst.installmentNumber === 1 ? 'true' : 'false',
-          isCourseFee: inst.installmentNumber > 1 ? 'true' : 'false',
-          isExamFee: 'false',
-          isCash: paymentMethod === 'Cash' ? 'true' : 'false',
-          isOnline: (paymentMethod === 'UPI' || paymentMethod === 'Bank') ? 'true' : 'false',
-          isCheque: paymentMethod === 'Cheque' ? 'true' : 'false'
-        };
-
-        const response = await fetch('/api/certificates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'preview',
-            templateBase64: templateData.templateBase64,
-            isPdfTemplate: templateData.isPdfTemplate,
-            fields: templateData.fields,
-            dimensions: templateData.dimensions,
-            data: dataPayload
-          }),
-        });
-
-        if (!response.ok) throw new Error("Failed to generate receipt PDF");
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-      } else {
-        // Fallback to local receipt modal if template doesn't exist
-        const data = {
-          receiptNumber: `IR${Math.floor(1000 + Math.random() * 9000)}`,
-          date: new Date().toLocaleDateString("en-GB"),
-          studentName,
-          courseName: courseName.replace(/_/g, " ").toUpperCase(),
-          installmentNumber: inst.installmentNumber,
-          amountPaid: inst.amount,
-          paymentMode: paymentMethod,
-          receivedBy: userProfile?.username || "Authorized Officer",
-          branch: branch.toUpperCase()
-        };
-        setPrintReceiptData(data);
-      }
-    } catch (e: any) {
-      console.error(e);
-      alert("Error generating PDF receipt: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+    openInstallmentReceipt({
+      receiptNo: receiptNo || `IR-${enrollmentId}-${inst.installmentNumber}`,
+      date: new Date().toLocaleDateString("en-GB"),
+      studentName: studentName,
+      courseName: courseName.replace(/_/g, " ").toUpperCase(),
+      installmentNumber: inst.installmentNumber,
+      amountPaid: inst.amount,
+      paymentMode: paymentMethod,
+      receivedBy: userProfile?.username || "Authorized Officer",
+      branch: branch.toUpperCase(),
+      totalPaidSoFar: paidUpToNow,
+      balanceDue: balanceDue,
+    });
   };
 
   return (
@@ -518,10 +464,6 @@ export default function PaymentView({
               <p className="text-xs text-slate-500">Pay the entire amount upfront</p>
               <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-400"><span>Standard Fees:</span><span>₹{totalFees.toLocaleString()}</span></div>
-                <div className="flex justify-between items-center text-slate-400"><span>Discount (₹):</span>
-                  <input type="number" value={discountRupees || ""} onChange={(e) => setDiscountRupees(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))} disabled={locked} className="w-20 bg-slate-950 border border-slate-850 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40" placeholder="0" />
-                </div>
-                <div className="flex justify-between text-slate-400"><span>Discount (%):</span><span>{fullDiscountPercent}%</span></div>
                 <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{fullTotalPayable.toLocaleString()}</span></div>
               </div>
             </div>
@@ -544,10 +486,7 @@ export default function PaymentView({
               <p className="text-xs text-slate-500">Pay initial and the rest in installments</p>
               <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
                 <div className="flex justify-between items-center text-slate-400"><span>Initial Pay (₹):</span>
-                  <input type="number" value={partialInitial || ""} onChange={(e) => setPartialInitial(Math.min(partialDiscountedTotal, Math.max(0, parseInt(e.target.value) || 0)))} disabled={locked} className="w-20 bg-slate-950 border border-slate-850 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40" placeholder="0" />
-                </div>
-                <div className="flex justify-between items-center text-slate-400"><span>Discount (₹):</span>
-                  <input type="number" value={discountRupees || ""} onChange={(e) => setDiscountRupees(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))} disabled={locked} className="w-20 bg-slate-950 border border-slate-850 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40" placeholder="0" />
+                  <input type="number" value={partialInitial || ""} onChange={(e) => setPartialInitial(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))} disabled={locked} className="w-20 bg-slate-950 border border-slate-850 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40" placeholder="0" />
                 </div>
                 <div className="flex justify-between items-center text-slate-400">
                   <span>Installments:</span>
@@ -589,18 +528,7 @@ export default function PaymentView({
                   <input
                     type="number"
                     value={emiDownPayment || ""}
-                    onChange={(e) => setEmiDownPayment(Math.min(emiDiscountedTotal, Math.max(0, parseInt(e.target.value) || 0)))}
-                    disabled={locked}
-                    className="w-20 bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Discount (₹):</span>
-                  <input
-                    type="number"
-                    value={discountRupees || ""}
-                    onChange={(e) => setDiscountRupees(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))}
+                    onChange={(e) => setEmiDownPayment(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))}
                     disabled={locked}
                     className="w-20 bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40"
                     placeholder="0"
@@ -743,7 +671,6 @@ export default function PaymentView({
                 courseDuration: duration,
                 totalFees,
                 totalPayable: paymentType === "full" ? fullTotalPayable : paymentType === "partial" ? partialTotalPayable : emiTotalPayable,
-                discountRupees,
                 paymentType,
                 paymentMethod,
                 schedule: activeSchedule,

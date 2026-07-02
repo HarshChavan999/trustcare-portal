@@ -41,12 +41,18 @@ export default function Home() {
     courseName: string | null;
     totalFees: number | null;
     receiptNo: string | null;
+    courseDuration: string | null;
+    guardianName: string | null;
+    guardianRelation: string | null;
   }>({
     enrollmentId: null,
     studentName: null,
     courseName: null,
     totalFees: null,
-    receiptNo: null
+    receiptNo: null,
+    courseDuration: null,
+    guardianName: null,
+    guardianRelation: null
   });
 
   // Login form inputs
@@ -122,7 +128,10 @@ export default function Home() {
         studentName: null,
         courseName: null,
         totalFees: null,
-        receiptNo: null
+        receiptNo: null,
+        courseDuration: null,
+        guardianName: null,
+        guardianRelation: null
       });
     } catch (error) {
       console.error("Logout failure:", error);
@@ -152,9 +161,9 @@ export default function Home() {
       courseName,
       totalFees,
       receiptNo,
-      courseDuration,
-      guardianName,
-      guardianRelation
+      courseDuration: courseDuration ?? null,
+      guardianName: guardianName ?? null,
+      guardianRelation: guardianRelation ?? null
     });
     setActiveTab("payment");
   };
@@ -176,9 +185,9 @@ export default function Home() {
       courseName,
       totalFees,
       receiptNo: receiptNo || "",
-      courseDuration,
-      guardianName,
-      guardianRelation
+      courseDuration: courseDuration ?? null,
+      guardianName: guardianName ?? null,
+      guardianRelation: guardianRelation ?? null
     });
     setActiveTab("payment");
   };
@@ -194,7 +203,10 @@ export default function Home() {
       studentName: null,
       courseName: null,
       totalFees: null,
-      receiptNo: null
+      receiptNo: null,
+      courseDuration: null,
+      guardianName: null,
+      guardianRelation: null
     });
     setActiveTab("admission");
   };
@@ -211,7 +223,10 @@ export default function Home() {
       studentName: "",
       courseName: "",
       totalFees: null,
-      receiptNo: ""
+      receiptNo: "",
+      courseDuration: null,
+      guardianName: null,
+      guardianRelation: null
     });
     setActiveTab("payment");
   };
@@ -293,8 +308,8 @@ export default function Home() {
                     key={item.id}
                     onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
                     className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
-                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        : "text-slate-400 hover:bg-slate-900/50"
+                      ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                      : "text-slate-400 hover:bg-slate-900/50"
                       }`}
                   >
                     <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
@@ -313,8 +328,8 @@ export default function Home() {
                         key={item.id}
                         onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
                         className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
-                            ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                            : "text-slate-400 hover:bg-slate-900/50"
+                          ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                          : "text-slate-400 hover:bg-slate-900/50"
                           }`}
                       >
                         <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
@@ -369,9 +384,9 @@ export default function Home() {
                 initialCourseName={paymentContext.courseName}
                 initialTotalFees={paymentContext.totalFees}
                 initialReceiptNo={paymentContext.receiptNo}
-                initialCourseDuration={paymentContext.courseDuration}
-                initialGuardianName={paymentContext.guardianName}
-                initialGuardianRelation={paymentContext.guardianRelation}
+                initialCourseDuration={paymentContext.courseDuration ?? undefined}
+                initialGuardianName={paymentContext.guardianName ?? undefined}
+                initialGuardianRelation={paymentContext.guardianRelation ?? undefined}
                 onGoBack={handleGoBackFromPayment}
                 onProceedToReceipt={handleProceedToReceipt}
               />
