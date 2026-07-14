@@ -140,8 +140,6 @@ export default function PaymentView({
         if (pType === "emi" && saved.length > 0) {
            setEmiDownPayment(saved[0].amount);
            setEmiTenure(saved.length > 1 ? saved.length - 1 : 1);
-           setPartialInitial(saved[0].amount);
-           setPartialTenure(saved.length > 1 ? saved.length - 1 : 1);
         }
       }
     } catch (e) {

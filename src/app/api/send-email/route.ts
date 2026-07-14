@@ -419,6 +419,8 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   const blackColor = rgb(0, 0, 0);
   const grayColor = rgb(0.4, 0.4, 0.4);
   const lightGrayColor = rgb(0.95, 0.95, 0.95);
+  const tealColor = rgb(0.169, 0.714, 0.737); // #2bb6bc
+  const tealBlueColor = rgb(0.078, 0.314, 0.478); // #14507a
 
   const drawRupeeSymbol = (p: any, x: number, y: number, size = 10) => {
     if (rupeeFont) {
@@ -489,15 +491,14 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
 
   // Helper to draw border & layout
   const drawBasePageTemplate = async (targetPage: any) => {
-    // Outer border
+    // Outer border (Thick 14px Teal)
     targetPage.drawRectangle({
-      x: 25,
-      y: 25,
-      width: 545,
-      height: 792,
-      borderWidth: 2,
-      borderColor: blackColor,
-      color: rgb(1, 1, 1),
+      x: 10,
+      y: 10,
+      width: 575,
+      height: 822,
+      borderWidth: 12,
+      borderColor: tealColor,
       opacity: 0,
     });
 
@@ -509,18 +510,18 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
         const logoImage = await pdfDoc.embedPng(logoBytes);
         targetPage.drawImage(logoImage, {
           x: 45,
-          y: 730,
-          width: 70,
-          height: 65,
+          y: 720,
+          width: 85,
+          height: 85,
         });
 
-        // Watermark
+        // Watermark (Opacity 0.08, centered, 400x400)
         targetPage.drawImage(logoImage, {
-          x: 147.5,
-          y: 270,
-          width: 300,
-          height: 270,
-          opacity: 0.04,
+          x: 97.5,
+          y: 221,
+          width: 400,
+          height: 400,
+          opacity: 0.08,
         });
       }
     } catch (err) {
@@ -529,42 +530,35 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
 
     // Title text
     targetPage.drawText("TRUSTCARE INSTITUTE OF HEALTH SCIENCE", {
-      x: 130,
+      x: 140,
       y: 765,
-      size: 16,
+      size: 15,
       font: boldFont,
       color: darkGreen,
     });
 
     const contactLine = "Email: trustcareinstitute03@gmail.com   |   +91 9967340243   |   +91 9967288158";
     targetPage.drawText(contactLine, {
-      x: 130,
-      y: 748,
-      size: 8.5,
+      x: 140,
+      y: 745,
+      size: 7.5,
       font: boldFont,
       color: blackColor,
     });
 
-    // Address banner
-    targetPage.drawRectangle({
-      x: 45,
-      y: 702,
-      width: 505,
-      height: 16,
-      borderWidth: 1,
-      borderColor: blackColor,
-      color: rgb(1, 1, 1),
-      opacity: 0,
-    });
+    // Address banner with top/bottom double lines
+    targetPage.drawLine({ start: { x: 45, y: 706 }, end: { x: 550, y: 706 }, thickness: 1.5, color: blackColor });
 
     const addressText = "TRUSTCARE INSTITUTE OF HEALTH SCIENCE, 1ST FLOOR, SHIVSENA OFFICE, BHARAT NAGAR, MANKHURD, MUMBAI - 400 088.";
     targetPage.drawText(addressText, {
       x: 48,
-      y: 706,
-      size: 7,
+      y: 694,
+      size: 6.8,
       font: boldFont,
       color: blackColor,
     });
+
+    targetPage.drawLine({ start: { x: 45, y: 688 }, end: { x: 550, y: 688 }, thickness: 1.5, color: blackColor });
   };
 
   const drawBottomSection = (targetPage: any) => {
@@ -578,7 +572,7 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
     });
 
     // English declaration
-    const engDecl = `I Am Mr./Ms : ${guardianName}  Relation: ${guardianRelation}  of  ${studentName} — I Agree with Terms And Condition.`;
+    const engDecl = `I Am Mr./Ms : ${guardianName}  ${guardianRelation} of ${studentName} — I Agree with Terms And Condition.`;
     targetPage.drawText(engDecl, {
       x: 45,
       y: 122,
@@ -607,23 +601,23 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   // Build Page 1
   await drawBasePageTemplate(page);
 
-  // Draw Title Banner: ADMISSION FORM
+  // Draw Title Banner: ADMISSION FORM (Teal Blue #14507a)
   page.drawRectangle({
     x: (595 - 180) / 2,
-    y: 665,
+    y: 652,
     width: 180,
     height: 22,
-    color: darkGreen,
+    color: tealBlueColor,
   });
   page.drawText("ADMISSION FORM", {
-    x: (595 - boldFont.widthOfTextAtSize("ADMISSION FORM", 12)) / 2,
-    y: 672,
-    size: 12,
+    x: (595 - boldFont.widthOfTextAtSize("ADMISSION FORM", 11)) / 2,
+    y: 659,
+    size: 11,
     font: boldFont,
     color: rgb(1, 1, 1),
   });
 
-  // Photo embedding or placeholder
+  // Photo embedding or placeholder (Width 75pt / 100px, Height 90pt / 120px)
   let photoDrawn = false;
   if (photoUrl) {
     try {
@@ -635,17 +629,17 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
         photoImg = await pdfDoc.embedPng(photoBuffer);
       }
       page.drawImage(photoImg, {
-        x: 460,
-        y: 575,
-        width: 80,
-        height: 80,
+        x: 475,
+        y: 715,
+        width: 75,
+        height: 90,
       });
       page.drawRectangle({
-        x: 460,
-        y: 575,
-        width: 80,
-        height: 80,
-        borderWidth: 1,
+        x: 475,
+        y: 715,
+        width: 75,
+        height: 90,
+        borderWidth: 1.5,
         borderColor: blackColor,
         opacity: 0,
       });
@@ -656,100 +650,236 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   }
   if (!photoDrawn) {
     page.drawRectangle({
-      x: 460,
-      y: 575,
-      width: 80,
-      height: 80,
-      borderWidth: 1,
-      borderColor: grayColor,
+      x: 475,
+      y: 715,
+      width: 75,
+      height: 90,
+      borderWidth: 1.5,
+      borderColor: blackColor,
       color: lightGrayColor,
     });
-    page.drawText("PASTE", { x: 485, y: 620, size: 7, font: boldFont, color: grayColor });
-    page.drawText("PHOTO", { x: 485, y: 610, size: 7, font: boldFont, color: grayColor });
   }
 
   // Receipt No & Date
-  page.drawText(`Receipt No. ${receiptNo}`, { x: 45, y: 635, size: 10, font: boldFont });
-  page.drawText(`Date : ${date}`, { x: 330, y: 635, size: 10, font: boldFont });
+  page.drawText("Receipt No.", { x: 45, y: 625, size: 9.5, font: boldFont });
+  page.drawText(receiptNo, { x: 105, y: 625, size: 9.5, font: font });
+  page.drawLine({ start: { x: 103, y: 623 }, end: { x: 250, y: 623 }, thickness: 1, color: blackColor });
 
-  // Rows of details
-  const drawRowLine = (label: string, val: string, x: number, y: number, labelW: number, lineW: number) => {
-    page.drawText(label, { x, y, size: 10, font: boldFont, color: blackColor });
-    page.drawText(val, { x: x + labelW, y, size: 10, font: font, color: blackColor });
-    page.drawLine({ start: { x: x + labelW - 2, y: y - 2 }, end: { x: x + labelW + lineW, y: y - 2 }, thickness: 0.8, color: blackColor });
-  };
+  page.drawText("Date :", { x: 330, y: 625, size: 9.5, font: boldFont });
+  page.drawText(date, { x: 365, y: 625, size: 9.5, font: font });
+  page.drawLine({ start: { x: 363, y: 623 }, end: { x: 480, y: 623 }, thickness: 1, color: blackColor });
 
-  drawRowLine("Student Name :", studentName, 45, 600, 100, 300);
-  drawRowLine("Course Name  :", courseName, 45, 575, 100, 300);
+  // Rows of details (aligned nicely with lines)
+  page.drawText("Student Name", { x: 45, y: 600, size: 9.5, font: boldFont });
+  page.drawText(studentName, { x: 125, y: 600, size: 9.5, font: font });
+  page.drawLine({ start: { x: 123, y: 598 }, end: { x: 550, y: 598 }, thickness: 1, color: blackColor });
+
+  page.drawText("Course Name", { x: 45, y: 575, size: 9.5, font: boldFont });
+  page.drawText(courseName, { x: 125, y: 575, size: 9.5, font: font });
+  page.drawLine({ start: { x: 123, y: 573 }, end: { x: 550, y: 573 }, thickness: 1, color: blackColor });
   
   // Row 3
-  page.drawText("Course Duration :", { x: 45, y: 550, size: 10, font: boldFont });
-  page.drawText(courseDuration, { x: 145, y: 550, size: 10, font: font });
-  page.drawLine({ start: { x: 143, y: 548 }, end: { x: 280, y: 548 }, thickness: 0.8, color: blackColor });
+  page.drawText("Course Duration", { x: 45, y: 550, size: 9.5, font: boldFont });
+  page.drawText(courseDuration, { x: 135, y: 550, size: 9.5, font: font });
+  page.drawLine({ start: { x: 133, y: 548 }, end: { x: 280, y: 548 }, thickness: 1, color: blackColor });
 
-  page.drawText("Admission Fees :", { x: 295, y: 550, size: 10, font: boldFont });
-  drawRupeeSymbol(page, 395, 550);
-  page.drawText(admissionFee.toLocaleString('en-IN'), { x: 407, y: 550, size: 10, font: font });
-  page.drawLine({ start: { x: 392, y: 548 }, end: { x: 550, y: 548 }, thickness: 0.8, color: blackColor });
+  page.drawText("Admission Fees", { x: 295, y: 550, size: 9.5, font: boldFont });
+  drawRupeeSymbol(page, 390, 550, 9.5);
+  page.drawText(admissionFee.toLocaleString('en-IN'), { x: 400, y: 550, size: 9.5, font: font });
+  page.drawLine({ start: { x: 388, y: 548 }, end: { x: 550, y: 548 }, thickness: 1, color: blackColor });
 
   // Row 4
-  page.drawText("Course Fees :", { x: 45, y: 525, size: 10, font: boldFont });
-  drawRupeeSymbol(page, 125, 525);
-  page.drawText(perYearFee.toLocaleString('en-IN'), { x: 137, y: 525, size: 10, font: font });
-  page.drawLine({ start: { x: 122, y: 523 }, end: { x: 215, y: 523 }, thickness: 0.8, color: blackColor });
+  page.drawText("Course Fees", { x: 45, y: 525, size: 9.5, font: boldFont });
+  drawRupeeSymbol(page, 120, 525, 9.5);
+  page.drawText(perYearFee.toLocaleString('en-IN'), { x: 130, y: 525, size: 9.5, font: font });
+  page.drawLine({ start: { x: 118, y: 523 }, end: { x: 215, y: 523 }, thickness: 1, color: blackColor });
 
-  page.drawText("x", { x: 225, y: 525, size: 10, font: font });
-  page.drawText(`${years} Year${years > 1 ? 's' : ''}`, { x: 245, y: 525, size: 10, font: font });
-  page.drawLine({ start: { x: 240, y: 523 }, end: { x: 300, y: 523 }, thickness: 0.8, color: blackColor });
+  page.drawText("x", { x: 225, y: 525, size: 9.5, font: font });
+  page.drawText(`${years} Year${years > 1 ? 's' : ''}`, { x: 245, y: 525, size: 9.5, font: font });
+  page.drawLine({ start: { x: 240, y: 523 }, end: { x: 300, y: 523 }, thickness: 1, color: blackColor });
 
-  page.drawText("=", { x: 310, y: 525, size: 10, font: font });
-  drawRupeeSymbol(page, 330, 525);
-  page.drawText(totalFees.toLocaleString('en-IN'), { x: 342, y: 525, size: 10, font: font });
-  page.drawLine({ start: { x: 327, y: 523 }, end: { x: 430, y: 523 }, thickness: 0.8, color: blackColor });
-  page.drawText("Total", { x: 440, y: 525, size: 10, font: boldFont });
+  page.drawText("=", { x: 310, y: 525, size: 9.5, font: font });
+  drawRupeeSymbol(page, 330, 525, 9.5);
+  page.drawText(totalFees.toLocaleString('en-IN'), { x: 340, y: 525, size: 9.5, font: font });
+  page.drawLine({ start: { x: 328, y: 523 }, end: { x: 430, y: 523 }, thickness: 1, color: blackColor });
+  page.drawText("Total", { x: 440, y: 525, size: 9.5, font: boldFont });
 
   // Row 5: Exam Fees
-  page.drawText("Exam Fees :", { x: 45, y: 500, size: 10, font: boldFont });
-  page.drawLine({ start: { x: 122, y: 498 }, end: { x: 550, y: 498 }, thickness: 0.8, color: blackColor });
+  page.drawText("Exam Fees", { x: 45, y: 500, size: 9.5, font: boldFont });
+  page.drawText("As Applicable", { x: 125, y: 500, size: 9.5, font: font });
+  page.drawLine({ start: { x: 123, y: 498 }, end: { x: 550, y: 498 }, thickness: 1, color: blackColor });
 
-  // Draw Installment Table
+  // Draw Horizontal 12-Month Calendar grid
   let tableEndY = 455;
   if (schedule.length > 0) {
-    let tblY = 475;
-    page.drawRectangle({ x: 45, y: tblY, width: 505, height: 16, color: lightGrayColor });
-    page.drawText("Installment", { x: 50, y: tblY + 4, size: 8, font: boldFont });
-    page.drawText("Due Date", { x: 200, y: tblY + 4, size: 8, font: boldFont });
-    page.drawText("Amount", { x: 350, y: tblY + 4, size: 8, font: boldFont });
-    page.drawText("Status", { x: 480, y: tblY + 4, size: 8, font: boldFont });
-    
-    page.drawLine({ start: { x: 45, y: tblY }, end: { x: 550, y: tblY }, thickness: 0.8, color: blackColor });
+    const firstInstDate = schedule[0]?.dueDate ? new Date(schedule[0].dueDate) : new Date();
+    const startYear = firstInstDate.getFullYear();
+    const startMonth = firstInstDate.getMonth();
+    const defaultDay = firstInstDate.getDate();
 
-    for (let i = 0; i < schedule.length; i++) {
-      const inst = schedule[i];
-      tblY -= 15;
-      
-      const instLabel = `Installment ${inst.installmentNumber} (${inst.label || `Installment ${inst.installmentNumber}`})`;
-      const dueDate = inst.dueDate ? new Date(inst.dueDate).toLocaleDateString('en-GB') : 'N/A';
-      const amount = inst.amount || 0;
-      const status = inst.status || 'Pending';
-      
-      page.drawText(instLabel, { x: 50, y: tblY + 3, size: 8, font: font });
-      page.drawText(dueDate, { x: 200, y: tblY + 3, size: 8, font: font });
-      
-      drawRupeeSymbol(page, 345, tblY + 3, 8);
-      page.drawText(amount.toLocaleString('en-IN'), { x: 357, y: tblY + 3, size: 8, font: font });
-      page.drawText(status, { x: 480, y: tblY + 3, size: 8, font: boldFont, color: status === 'Paid' ? rgb(0, 0.5, 0) : rgb(0.8, 0, 0) });
-      
-      page.drawLine({ start: { x: 45, y: tblY }, end: { x: 550, y: tblY }, thickness: 0.5, color: rgb(0.8, 0.8, 0.8) });
+    const getDaySuffix = (n: number) => {
+      if (n >= 11 && n <= 13) return "th";
+      switch (n % 10) {
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+      }
+    };
+
+    const suffix = (n: number) => (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
+
+    const getDaysInMonth = (year: number, monthIndex: number) => {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    };
+
+    const getValidDayForMonth = (year: number, monthIndex: number, targetDay: number) => {
+      const maxDays = getDaysInMonth(year, monthIndex);
+      return Math.min(targetDay, maxDays);
+    };
+
+    const mappedInstallments = schedule.map((inst: any, idx: number) => {
+      const due = inst.dueDate ? new Date(inst.dueDate) : new Date(startYear, startMonth + idx, 1);
+      const globalMonthIndex = (due.getFullYear() - startYear) * 12 + due.getMonth();
+      const yearIndex = Math.floor(globalMonthIndex / 12);
+      const monthIndex = due.getMonth();
+      const day = due.getDate();
+      return { yearIndex, monthIndex, amount: inst.amount, status: inst.status, day, fullDate: due };
+    });
+
+    const maxYearIndex = Math.max(...mappedInstallments.map((m: any) => m.yearIndex), years - 1);
+    const totalYears = Math.max(maxYearIndex + 1, years);
+
+    let currentTblY = 475;
+
+    for (let y = 0; y < totalYears; y++) {
+      const yearInsts = mappedInstallments.filter((m: any) => m.yearIndex === y);
+      const grid: (typeof yearInsts[0] | null)[] = Array(12).fill(null);
+      for (const inst of yearInsts) {
+        grid[inst.monthIndex] = inst;
+      }
+
+      // Title above the table
+      const tableTitle = `${y + 1}${suffix(y + 1)} Year Fee's`;
+      page.drawText(tableTitle, {
+        x: 45,
+        y: currentTblY + 4,
+        size: 9,
+        font: boldFont,
+        color: blackColor,
+      });
+
+      currentTblY -= 16; // Start table header
+
+      const colWidth = 505 / 12; // 42.08
+      const row1Height = 16;
+      const row2Height = 24;
+
+      // Draw header background rectangle
+      page.drawRectangle({
+        x: 45,
+        y: currentTblY,
+        width: 505,
+        height: row1Height,
+        color: lightGrayColor,
+      });
+
+      // Draw cells
+      const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept.", "Oct.", "Nov.", "Dec."];
+      for (let mi = 0; mi < 12; mi++) {
+        const inst = grid[mi];
+        const targetYear = startYear + y + (mi < startMonth ? 1 : 0);
+        const day = inst ? inst.day : defaultDay;
+        const validDay = getValidDayForMonth(targetYear, mi, day);
+        const dateLabel = `${validDay}${getDaySuffix(validDay)} ${monthLabels[mi]}`;
+
+        const cellX = 45 + mi * colWidth;
+
+        // Draw date text centered in header cell
+        const dateTextWidth = font.widthOfTextAtSize(dateLabel, 6);
+        page.drawText(dateLabel, {
+          x: cellX + (colWidth - dateTextWidth) / 2,
+          y: currentTblY + 5,
+          size: 6,
+          font: boldFont,
+          color: blackColor,
+        });
+
+        // Draw vertical column line for header
+        if (mi > 0) {
+          page.drawLine({
+            start: { x: cellX, y: currentTblY },
+            end: { x: cellX, y: currentTblY + row1Height },
+            thickness: 0.8,
+            color: blackColor,
+          });
+        }
+      }
+
+      // Draw header bottom line
+      page.drawLine({
+        start: { x: 45, y: currentTblY },
+        end: { x: 550, y: currentTblY },
+        thickness: 1.5,
+        color: blackColor,
+      });
+
+      currentTblY -= row2Height; // Amount row start
+
+      // Draw amount cells
+      for (let mi = 0; mi < 12; mi++) {
+        const inst = grid[mi];
+        const cellX = 45 + mi * colWidth;
+
+        if (inst) {
+          const amtStr = `${inst.amount.toLocaleString("en-IN")}`;
+          const amtTextWidth = font.widthOfTextAtSize(amtStr, 7.5);
+          
+          // Draw Rupee symbol and amount centered
+          const totalWidth = 6 + amtTextWidth;
+          const startDrawX = cellX + (colWidth - totalWidth) / 2;
+          
+          drawRupeeSymbol(page, startDrawX, currentTblY + 8, 7.5);
+          page.drawText(amtStr, {
+            x: startDrawX + 7,
+            y: currentTblY + 8,
+            size: 7.5,
+            font: boldFont,
+            color: blackColor,
+          });
+        }
+
+        // Draw vertical column line for amount
+        if (mi > 0) {
+          page.drawLine({
+            start: { x: cellX, y: currentTblY },
+            end: { x: cellX, y: currentTblY + row2Height },
+            thickness: 0.8,
+            color: blackColor,
+          });
+        }
+      }
+
+      // Draw outer table borders
+      page.drawRectangle({
+        x: 45,
+        y: currentTblY,
+        width: 505,
+        height: row1Height + row2Height,
+        borderWidth: 1.5,
+        borderColor: blackColor,
+        opacity: 0,
+      });
+
+      currentTblY -= 14; // Space below table
     }
-    page.drawLine({ start: { x: 45, y: tblY }, end: { x: 550, y: tblY }, thickness: 0.8, color: blackColor });
-    tableEndY = tblY;
+    tableEndY = currentTblY;
   }
 
   // Draw Total Payable
-  const totalPayableY = Math.max(160, tableEndY - 20);
-  page.drawText("Total Payable :", { x: 350, y: totalPayableY, size: 10, font: boldFont });
-  drawRupeeSymbol(page, 435, totalPayableY, 10);
+  const totalPayableY = Math.max(160, tableEndY - 10);
+  page.drawText("Total Payable :", { x: 350, y: totalPayableY, size: 11, font: boldFont });
+  drawRupeeSymbol(page, 435, totalPayableY, 11);
   page.drawText(totalPayable.toLocaleString('en-IN'), { x: 447, y: totalPayableY, size: 12, font: boldFont });
   page.drawLine({ start: { x: 350, y: totalPayableY - 4 }, end: { x: 550, y: totalPayableY - 4 }, thickness: 1.5, color: blackColor });
 
@@ -760,18 +890,18 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   // Build Page 2: Undertaking / हमी पत्र
   await drawBasePageTemplate(page2);
 
-  // Draw Title Banner: हमी पत्र / UNDER TAKING
+  // Draw Title Banner: हमी पत्र / UNDER TAKING (Teal Blue #14507a)
   page2.drawRectangle({
     x: (595 - 200) / 2,
-    y: 665,
+    y: 652,
     width: 200,
     height: 22,
-    color: darkGreen,
+    color: tealBlueColor,
   });
   
-  drawMixedText(page2, "हमी पत्र / UNDER TAKING", (595 - 130) / 2, 672, 10, { color: rgb(1, 1, 1) });
+  drawMixedText(page2, "हमी पत्र / UNDER TAKING", (595 - 130) / 2, 659, 10, { color: rgb(1, 1, 1) });
 
-  let page2Y = 660;
+  let page2Y = 645;
 
   // Marathi Points
   const mrPoints = [
@@ -790,16 +920,28 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   ];
 
   for (let i = 0; i < mrPoints.length; i++) {
-    const origText = `${i + 1}. ${mrPoints[i]}`;
-    const wrappedLines = wrapMixedText(origText, 500, 7.5, devanagariFont, boldFont);
-    for (const wl of wrappedLines) {
-      page2Y -= 11;
-      drawMixedText(page2, wl, 45, page2Y, 7.5, { color: blackColor });
+    const text = mrPoints[i];
+    const wrappedLines = wrapMixedText(text, 487, 8, devanagariFont, boldFont);
+    for (let j = 0; j < wrappedLines.length; j++) {
+      page2Y -= 12;
+      if (j === 0) {
+        // Draw blue index
+        page2.drawText(`${i + 1}.`, {
+          x: 45,
+          y: page2Y,
+          size: 8,
+          font: boldFont,
+          color: tealBlueColor,
+        });
+      }
+      // Draw text
+      drawMixedText(page2, wrappedLines[j], 63, page2Y, 8, { color: blackColor });
     }
+    page2Y -= 2;
   }
 
   // Dashed separator line
-  page2Y -= 12;
+  page2Y -= 8;
   page2.drawLine({
     start: { x: 45, y: page2Y },
     end: { x: 550, y: page2Y },
@@ -807,6 +949,7 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
     color: grayColor,
     dashArray: [3, 3]
   });
+  page2Y -= 4;
 
   // English Points
   const enPoints = [
@@ -826,12 +969,30 @@ async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer> {
   ];
 
   for (let i = 0; i < enPoints.length; i++) {
-    const origText = `${i + 1}. ${enPoints[i]}`;
-    const wrappedLines = wrapMixedText(origText, 500, 7.5, devanagariFont, boldFont);
-    for (const wl of wrappedLines) {
-      page2Y -= 11;
-      page2.drawText(wl, { x: 45, y: page2Y, size: 7.5, font: boldFont, color: blackColor });
+    const text = enPoints[i];
+    const wrappedLines = wrapMixedText(text, 487, 8, devanagariFont, boldFont);
+    for (let j = 0; j < wrappedLines.length; j++) {
+      page2Y -= 12;
+      if (j === 0) {
+        // Draw blue index
+        page2.drawText(`${i + 1}.`, {
+          x: 45,
+          y: page2Y,
+          size: 8,
+          font: boldFont,
+          color: tealBlueColor,
+        });
+      }
+      // Draw text
+      page2.drawText(wrappedLines[j], {
+        x: 63,
+        y: page2Y,
+        size: 8,
+        font: boldFont,
+        color: blackColor,
+      });
     }
+    page2Y -= 2;
   }
 
   // Draw Bottom Section on Page 2
