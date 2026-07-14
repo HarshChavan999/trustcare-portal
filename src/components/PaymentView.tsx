@@ -72,6 +72,7 @@ export default function PaymentView({
   const [enrollmentId, setEnrollmentId] = useState(initialEnrollmentId || "");
   const [courseName, setCourseName] = useState(initialCourseName || "");
   const [courseFullName, setCourseFullName] = useState(initialCourseName || "");
+  const [courseExamFee, setCourseExamFee] = useState(0);
 
   const [guardianName, setGuardianName] = useState(initialGuardianName || "");
   const [guardianRelation, setGuardianRelation] = useState(initialGuardianRelation || "");
@@ -175,7 +176,10 @@ export default function PaymentView({
         try {
           const { getCourse } = await import("../lib/services/courseService");
           const c = await getCourse(res.courseName);
-          if (c) setCourseFullName(c.courseName);
+          if (c) {
+            setCourseFullName(c.courseName);
+            if (c.examFee) setCourseExamFee(c.examFee);
+          }
         } catch (e) {}
       } else {
         setErrorMsg("Enrollment ID not found in database.");
@@ -797,7 +801,7 @@ export default function PaymentView({
                 openCoursePaymentReceipt({
                   enrollmentId,
                   studentName,
-                  courseName,
+                  courseName: courseFullName,
                   courseDuration: duration,
                   totalFees,
                   totalPayable: paymentType === "full" ? fullTotalPayable : emiTotalPayable,
@@ -807,6 +811,7 @@ export default function PaymentView({
                   receiptNo,
                   branch,
                   admissionFee: config.admission_fee ?? 5000,
+                  examFee: courseExamFee,
                   guardianName,
                   guardianRelation,
                   photoUrl,
