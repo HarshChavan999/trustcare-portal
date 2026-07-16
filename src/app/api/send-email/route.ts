@@ -502,7 +502,7 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
   const photoUrl = data.photoUrl || '';
   const email = data.email || 'N/A';
   const schedule = data.schedule || [];
-  const totalPayable = data.totalPayable || totalFees;
+  const totalPayable = data.totalPayable ? (data.totalPayable > totalFees ? totalFees : data.totalPayable) : totalFees;
   const paymentType = data.paymentType || '';
 
   const relationMap: Record<string, string> = {
@@ -528,13 +528,23 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
     }
     return val;
   };
+  let startingYearFee = data.startingYearFee || 0;
+  if (!startingYearFee && schedule && schedule.length > 0) {
+    const annualInst = schedule.find((inst: any) => (inst.type || "").toLowerCase().includes("annual year fee"));
+    if (annualInst) {
+      startingYearFee = annualInst.amount;
+    }
+  }
+  const hasStartingYearFee = startingYearFee > 0;
   let totalMonths = 12;
   if (paymentType === "emi" && schedule && schedule.length > 0) {
     totalMonths = schedule.length;
   } else {
     totalMonths = getDurationInMonths(courseDuration);
   }
-  const monthlyFee = totalMonths > 0 ? Math.round(totalFees / totalMonths) : totalFees;
+  const emiMonths = hasStartingYearFee ? Math.max(0, totalMonths - years) : totalMonths;
+  const regularPool = hasStartingYearFee ? Math.max(0, totalFees - (startingYearFee * years)) : totalFees;
+  const monthlyFee = emiMonths > 0 ? Math.round(regularPool / emiMonths) : totalFees;
 
   const darkGreen = rgb(0.004, 0.196, 0.125); // #013220
   const blackColor = rgb(0, 0, 0);
@@ -947,7 +957,7 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
 
   page.drawText("Admission Fees", { x: 285, y: 550, size: 10.5, font: boldFont });
   drawRupeeSymbol(page, 380, 550, 10.5);
-  const formattedAdmissionFee = admissionFee.toLocaleString('en-IN');
+  const formattedAdmissionFee = admissionFee.toLocaleString('en-IN') + " (Paid)";
   page.drawText(formattedAdmissionFee, { x: 390, y: 550, size: 10.5, font: boldFont });
   const admissionFeeWidth = boldFont.widthOfTextAtSize(formattedAdmissionFee, 10.5);
   const admissionFeeUnderlineLength = admissionFeeWidth * 1.5;
@@ -970,27 +980,60 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
   const monthlyFeeUnderlineLength = monthlyFeeWidth * 1.5;
   let monthlyFeeUnderlineEnd = currentX + monthlyFeeUnderlineLength;
   page.drawLine({ start: { x: monthlyFeeUnderlineStart, y: 523 }, end: { x: monthlyFeeUnderlineEnd, y: 523 }, thickness: 1, color: blackColor });
-  currentX = monthlyFeeUnderlineEnd + 10;
+  currentX = monthlyFeeUnderlineEnd + 8;
 
   // Multiply sign
   page.drawText("×", { x: currentX, y: 525, size: 10.5, font: boldFont });
   let timesWidth = boldFont.widthOfTextAtSize("×", 10.5);
-  currentX += timesWidth + 10;
+  currentX += timesWidth + 8;
 
   // Months group
   let monthsUnderlineStart = currentX - 2;
-  const monthsText = `${totalMonths} Month${totalMonths > 1 ? 's' : ''}`;
+  const monthsText = `${emiMonths} Month${emiMonths > 1 ? 's' : ''}`;
   page.drawText(monthsText, { x: currentX, y: 525, size: 10.5, font: boldFont });
   const monthsWidth = boldFont.widthOfTextAtSize(monthsText, 10.5);
   const monthsUnderlineLength = monthsWidth * 1.5;
   let monthsUnderlineEnd = currentX + monthsUnderlineLength;
   page.drawLine({ start: { x: monthsUnderlineStart, y: 523 }, end: { x: monthsUnderlineEnd, y: 523 }, thickness: 1, color: blackColor });
-  currentX = monthsUnderlineEnd + 10;
+  currentX = monthsUnderlineEnd + 8;
+
+  if (hasStartingYearFee) {
+    // Plus sign
+    page.drawText("+", { x: currentX, y: 525, size: 10.5, font: boldFont });
+    let plusWidth = boldFont.widthOfTextAtSize("+", 10.5);
+    currentX += plusWidth + 8;
+
+    // Starting year fee group
+    let syFeeUnderlineStart = currentX - 2;
+    drawRupeeSymbol(page, currentX, 525, 10.5);
+    currentX += rupeeWidth + 2;
+    const formattedSyFee = startingYearFee.toLocaleString('en-IN');
+    page.drawText(formattedSyFee, { x: currentX, y: 525, size: 10.5, font: boldFont });
+    const syFeeWidth = boldFont.widthOfTextAtSize(formattedSyFee, 10.5);
+    const syFeeUnderlineLength = syFeeWidth * 1.5;
+    let syFeeUnderlineEnd = currentX + syFeeUnderlineLength;
+    page.drawLine({ start: { x: syFeeUnderlineStart, y: 523 }, end: { x: syFeeUnderlineEnd, y: 523 }, thickness: 1, color: blackColor });
+    currentX = syFeeUnderlineEnd + 8;
+
+    // Multiply sign
+    page.drawText("×", { x: currentX, y: 525, size: 10.5, font: boldFont });
+    currentX += timesWidth + 8;
+
+    // Years group
+    let yearsUnderlineStart = currentX - 2;
+    const yearsText = `${years} Year${years > 1 ? 's' : ''}`;
+    page.drawText(yearsText, { x: currentX, y: 525, size: 10.5, font: boldFont });
+    const yearsWidth = boldFont.widthOfTextAtSize(yearsText, 10.5);
+    const yearsUnderlineLength = yearsWidth * 1.5;
+    let yearsUnderlineEnd = currentX + yearsUnderlineLength;
+    page.drawLine({ start: { x: yearsUnderlineStart, y: 523 }, end: { x: yearsUnderlineEnd, y: 523 }, thickness: 1, color: blackColor });
+    currentX = yearsUnderlineEnd + 8;
+  }
 
   // Equals sign
   page.drawText("=", { x: currentX, y: 525, size: 10.5, font: boldFont });
   let equalsWidth = boldFont.widthOfTextAtSize("=", 10.5);
-  currentX += equalsWidth + 10;
+  currentX += equalsWidth + 8;
 
   // Total fees group
   let totalFeesUnderlineStart = currentX - 2;
@@ -1002,7 +1045,7 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
   const totalFeesUnderlineLength = totalFeesWidth * 1.5;
   let totalFeesUnderlineEnd = currentX + totalFeesUnderlineLength;
   page.drawLine({ start: { x: totalFeesUnderlineStart, y: 523 }, end: { x: totalFeesUnderlineEnd, y: 523 }, thickness: 1, color: blackColor });
-  currentX = totalFeesUnderlineEnd + 10;
+  currentX = totalFeesUnderlineEnd + 8;
 
   // Total label
   page.drawText("Total", { x: currentX, y: 525, size: 10.5, font: boldFont });

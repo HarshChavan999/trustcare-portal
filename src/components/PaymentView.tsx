@@ -94,9 +94,18 @@ export default function PaymentView({
   const config = DEFAULT_COURSE_CONFIG[courseName] || { duration: "1 year", fees: 30000, admission_fee: 5000 };
 
   const duration = dbCourseDuration || initialCourseDuration || config.duration;
-  const years = duration.includes("year") || duration.includes("Year") || duration.includes("years") || duration.includes("Years")
-    ? parseInt(duration.split(" ")[0]) || 1
-    : 1;
+  const getDurationInMonths = (durationStr: string): number => {
+    if (!durationStr) return 12;
+    const parts = durationStr.trim().split(/\s+/);
+    const val = parseFloat(parts[0]) || 1;
+    const unit = parts[1] ? parts[1].toLowerCase() : "year";
+    if (unit.startsWith("year")) {
+      return Math.round(val * 12);
+    }
+    return Math.round(val);
+  };
+  const maxMonths = getDurationInMonths(duration);
+  const years = Math.ceil(maxMonths / 12);
 
   const totalFees = dbTotalFees || initialTotalFees || config.fees;
   const admissionFee = dbAdmissionFee !== null ? dbAdmissionFee : (initialAdmissionFee || config.admission_fee);
@@ -212,8 +221,9 @@ export default function PaymentView({
 
   const fullTotalPayable = totalFees;
 
-  // Total annual fees across all years (starting year fee × number of years)
-  const totalAnnualFees = startingYearFee > 0 ? startingYearFee * years : 0;
+  // Calculate how many annual fees to charge based on the selected EMI tenure and course duration
+  const allowedYears = paymentType === "full" ? years : Math.min(years, Math.ceil(emiTenure / 12));
+  const totalAnnualFees = startingYearFee > 0 ? startingYearFee * allowedYears : 0;
 
   // Calculations for EMI Payment
   // Annual fee rows are carved out, so remaining is what goes into regular EMI months
@@ -261,57 +271,52 @@ export default function PaymentView({
         });
       }
 
-      // Build a month-by-month timeline for the course duration
-      // For each year (1..years), insert Annual Year Fee on the start cycle of year month
-      // and spread regular EMI across remaining months
+      // Build a month-by-month timeline dynamically sized to emiTenure regular EMIs and allowedYears annual fees
+      let annualFeesAdded = 0;
+      let regularEMIsAdded = 0;
+      let mo = 0;
 
-      // Determine how many regular EMI months we have
-      // (total course months = years * 12, minus start cycle months)
-      const totalCourseMonths = years * 12;
-      const regularMonthCount = totalCourseMonths - years; // one start cycle month per year
+      const regularPool = Math.max(0, totalFees - emiDownPayment - totalAnnualFees);
+      const baseEmi = emiTenure > 0 ? Math.floor(regularPool / emiTenure) : 0;
+      const regularRemainder = emiTenure > 0 ? regularPool % emiTenure : 0;
 
-      const annualFeeTotal = startingYearFee * years;
-      const regularPool = Math.max(0, totalFees - emiDownPayment - annualFeeTotal);
-      const baseEmi = regularMonthCount > 0 ? Math.floor(regularPool / regularMonthCount) : 0;
-      let regularRemainder = regularMonthCount > 0 ? regularPool % regularMonthCount : 0;
+      while (annualFeesAdded < allowedYears || regularEMIsAdded < emiTenure) {
+        const targetYear = today.getFullYear() + Math.floor((admissionMonth + mo) / 12);
+        const targetMonth = (admissionMonth + mo) % 12;
+        const validDay = getValidDay(targetYear, targetMonth, admissionDay);
+        const dueDate = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
 
-      let regularMonthsUsed = 0;
-
-      for (let yr = 0; yr < years; yr++) {
-        for (let mo = 0; mo < 12; mo++) {
-          const targetYear = today.getFullYear() + yr + (admissionMonth + mo >= 12 ? Math.floor((admissionMonth + mo) / 12) : 0);
-          const targetMonth = (admissionMonth + mo) % 12;
-          const validDay = getValidDay(targetYear, targetMonth, admissionDay);
-          const dueDate = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
-
-          if (mo === 0 && startingYearFee > 0) {
-            // Start cycle of year month: Annual Year Fee
-            scheduleArray.push({
-              installmentNumber: counter++,
-              amount: startingYearFee,
-              dueDate,
-              status: "Pending",
-              type: `Annual Year Fee – Year ${yr + 1}`
-            });
-          } else {
-            // Regular EMI month
-            const emiAmt = baseEmi + (regularMonthsUsed < regularRemainder ? 1 : 0);
-            regularMonthsUsed++;
+        if (mo % 12 === 0 && startingYearFee > 0 && annualFeesAdded < allowedYears) {
+          // Annual Year Fee
+          scheduleArray.push({
+            installmentNumber: counter++,
+            amount: startingYearFee,
+            dueDate,
+            status: "Pending",
+            type: `Annual Year Fee – Year ${annualFeesAdded + 1}`
+          });
+          annualFeesAdded++;
+        } else {
+          // Regular EMI month
+          if (regularEMIsAdded < emiTenure) {
+            const emiAmt = baseEmi + (regularEMIsAdded < regularRemainder ? 1 : 0);
             if (emiAmt > 0) {
               scheduleArray.push({
                 installmentNumber: counter++,
                 amount: emiAmt,
                 dueDate,
                 status: "Pending",
-                type: `Installment ${counter - 1}`
+                type: `Installment ${regularEMIsAdded + 1}`
               });
             }
+            regularEMIsAdded++;
           }
         }
+        mo++;
       }
     }
     return scheduleArray;
-  }, [paymentType, fullTotalPayable, totalFees, emiDownPayment, emiTenure, emiEMIAmount, startingYearFee, years]);
+  }, [paymentType, fullTotalPayable, totalFees, emiDownPayment, emiTenure, emiEMIAmount, startingYearFee, years, totalAnnualFees, allowedYears]);
 
   const activeSchedule = locked ? schedule : calculatedSchedule;
 
@@ -499,6 +504,7 @@ export default function PaymentView({
             paymentType,
             examFee: courseExamFee,
             totalPayable: paymentType === "full" ? fullTotalPayable : emiTotalPayable,
+            startingYearFee: startingYearFee,
           }
         })
       });
@@ -759,7 +765,7 @@ export default function PaymentView({
                     disabled={locked}
                     className="bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
                   >
-                    {Array.from({ length: 36 }, (_, i) => i + 1).map(n => (
+                    {Array.from({ length: maxMonths }, (_, i) => i + 1).map(n => (
                       <option key={n} value={n}>{n}</option>
                     ))}
                   </select>

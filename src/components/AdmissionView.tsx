@@ -143,6 +143,8 @@ export default function AdmissionView({
   const [branch] = useState<string>(userProfile?.branch || "main");
   const [course, setCourse] = useState("");
   const [email, setEmail] = useState("");
+  const [editableFees, setEditableFees] = useState<number>(0);
+  const [editableAdmissionFee, setEditableAdmissionFee] = useState<number>(0);
 
   // List of active inquiries for dynamic loading
   const [inquiriesList, setInquiriesList] = useState<InquiryData[]>([]);
@@ -183,6 +185,8 @@ export default function AdmissionView({
             exam_fee: courseData.examFee || 0,
             starting_year_fee: courseData.startingYearFee || 0
           });
+          setEditableFees(courseData.fees || 0);
+          setEditableAdmissionFee(courseData.admissionFee || 0);
         } else {
           // Fallback: try searching all courses
           const allCourses = await getAllCourses();
@@ -195,6 +199,8 @@ export default function AdmissionView({
               exam_fee: found.examFee || 0,
               starting_year_fee: found.startingYearFee || 0
             });
+            setEditableFees(found.fees || 0);
+            setEditableAdmissionFee(found.admissionFee || 0);
           } else {
             // Fallback to inline config
             const fallback = getCourseConfig(branch, course);
@@ -205,6 +211,8 @@ export default function AdmissionView({
               exam_fee: (fallback as any).exam_fee || 0,
               starting_year_fee: 0
             });
+            setEditableFees(fallback.fees || 0);
+            setEditableAdmissionFee(fallback.admission_fee || 0);
           }
         }
       } catch (err) {
@@ -217,6 +225,8 @@ export default function AdmissionView({
           exam_fee: (fallback as any).exam_fee || 0,
           starting_year_fee: 0
         });
+        setEditableFees(fallback.fees || 0);
+        setEditableAdmissionFee(fallback.admission_fee || 0);
       }
     }
     loadCourseConfig();
@@ -320,7 +330,7 @@ export default function AdmissionView({
 
     const studentName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
-    const calculatedTotalFees = config.fees;
+    const calculatedTotalFees = editableFees;
 
     const admissionDoc: AdmissionData = {
       receiptNumber,
@@ -332,7 +342,7 @@ export default function AdmissionView({
       courseName: course,
       courseDuration: config.duration,
       totalCourseFees: calculatedTotalFees,
-      admissionFee: config.admission_fee,
+      admissionFee: editableAdmissionFee,
       examFee: config.exam_fee || 0,
       startingYearFee: config.starting_year_fee || 0,
       paymentMode,
@@ -366,7 +376,7 @@ export default function AdmissionView({
                 studentName: studentName,
                 courseName: fullCourseName,
                 courseDuration: config.duration,
-                amountPaid: config.admission_fee,
+                amountPaid: editableAdmissionFee,
                 paymentMode: paymentMode,
                 receivedBy: userProfile?.username || "Admin",
                 branch: branch.toUpperCase()
@@ -384,12 +394,12 @@ export default function AdmissionView({
         studentName: studentName,
         courseName: fullCourseName,
         installmentNumber: 1,
-        amountPaid: config.admission_fee,
+        amountPaid: editableAdmissionFee,
         paymentMode: paymentMode,
         receivedBy: userProfile?.username || "Admin",
         branch: branch.toUpperCase(),
-        totalFees: config.admission_fee,
-        totalPaidSoFar: config.admission_fee,
+        totalFees: editableAdmissionFee,
+        totalPaidSoFar: editableAdmissionFee,
         balanceDue: 0,
         isAdmission: true
       });
@@ -404,7 +414,7 @@ export default function AdmissionView({
         config.duration,
         guardianName,
         guardianRelation,
-        config.admission_fee,
+        editableAdmissionFee,
         config.starting_year_fee || 0
       );
     } else {
@@ -642,22 +652,32 @@ export default function AdmissionView({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-400">Course Fees</label>
-                  <input
-                    type="text"
-                    value={`₹${config.fees.toLocaleString()}`}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-teal-400 cursor-not-allowed font-bold"
-                    readOnly
-                  />
+                  <label htmlFor="course_fees_input" className="block text-xs font-semibold text-slate-400">Course Fees*</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-teal-400 font-bold select-none">₹</span>
+                    <input
+                      id="course_fees_input"
+                      type="number"
+                      value={editableFees || ""}
+                      onChange={(e) => setEditableFees(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-full bg-slate-950/80 border border-slate-855 rounded-xl pl-8 pr-4 py-2.5 text-sm text-teal-400 focus:outline-none focus:border-teal-500/50 font-bold"
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-400">Admission Fee</label>
-                  <input
-                    type="text"
-                    value={`₹${config.admission_fee.toLocaleString()}`}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-indigo-400 cursor-not-allowed font-bold"
-                    readOnly
-                  />
+                  <label htmlFor="admission_fee_input" className="block text-xs font-semibold text-slate-400">Admission Fee*</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-indigo-400 font-bold select-none">₹</span>
+                    <input
+                      id="admission_fee_input"
+                      type="number"
+                      value={editableAdmissionFee || ""}
+                      onChange={(e) => setEditableAdmissionFee(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-full bg-slate-950/80 border border-slate-855 rounded-xl pl-8 pr-4 py-2.5 text-sm text-indigo-400 focus:outline-none focus:border-indigo-500/50 font-bold"
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-400">Exam Fee</label>
