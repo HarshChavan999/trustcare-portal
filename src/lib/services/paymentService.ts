@@ -320,17 +320,57 @@ export async function saveInstallmentPayment(data: {
       await setDoc(paymentRef, updatedHistory);
     }
 
-    // Update schedule status to Paid
+    // Update schedule status to Paid and Re-amortize future installments
     const scheduleRef = doc(db, "installmentSchedules", data.enrollmentId);
     const scheduleDoc = await getDoc(scheduleRef);
     if (scheduleDoc.exists()) {
       const scheduleData = scheduleDoc.data() as PaymentSchedule;
-      const installments = (scheduleData.installments || []).map(inst => {
+      let installments = [...(scheduleData.installments || [])];
+
+      // 1. Mark current as Paid and update its actual paid amount
+      installments = installments.map(inst => {
         if (inst.installmentNumber === data.installmentNumber) {
-          return { ...inst, status: "Paid" as const };
+          return { ...inst, amount: data.installmentAmount, status: "Paid" as const };
         }
         return inst;
       });
+
+      // 2. Recalculation logic (Re-amortization)
+      const totalPayable = scheduleData.totalFee; // Original total course fee
+      const totalPaid = installments
+        .filter(inst => inst.status === "Paid")
+        .reduce((sum, inst) => sum + inst.amount, 0);
+
+      const remainingBalance = Math.max(0, totalPayable - totalPaid);
+      
+      const pendingInstallments = installments.filter(inst => inst.status === "Pending");
+      const pendingCount = pendingInstallments.length;
+
+      if (pendingCount > 0) {
+        const baseNewAmount = Math.floor(remainingBalance / pendingCount);
+        const remainder = remainingBalance % pendingCount;
+
+        let currentPendingIndex = 0;
+        installments = installments.map(inst => {
+          if (inst.status === "Pending") {
+            let amountForThis = baseNewAmount;
+            // Add remainder to the last pending installment to ensure total is exact
+            if (currentPendingIndex === pendingCount - 1) {
+              amountForThis += remainder;
+            }
+            currentPendingIndex++;
+            
+            // If balance is 0 or less, auto-mark remaining as Paid (with 0 amount)
+            if (remainingBalance <= 0) {
+              return { ...inst, amount: 0, status: "Paid" as const };
+            }
+            
+            return { ...inst, amount: amountForThis };
+          }
+          return inst;
+        });
+      }
+
       await updateDoc(scheduleRef, { installments });
     }
 

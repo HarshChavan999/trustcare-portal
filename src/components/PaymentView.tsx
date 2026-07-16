@@ -117,6 +117,11 @@ export default function PaymentView({
   const [modalError, setModalError] = useState("");
   const [modalSuccess, setModalSuccess] = useState(false);
 
+  // Custom Payment Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [activePaymentInst, setActivePaymentInst] = useState<Installment | null>(null);
+  const [customAmount, setCustomAmount] = useState<number | "">("");
+
   useEffect(() => {
     if (initialEnrollmentId) {
       setEnrollmentId(initialEnrollmentId);
@@ -254,6 +259,14 @@ export default function PaymentView({
 
   const activeSchedule = locked ? schedule : calculatedSchedule;
 
+  const displayEmiAmount = React.useMemo(() => {
+    if (locked && activeSchedule.length > 0) {
+      const pendingInst = activeSchedule.find(s => s.status === "Pending");
+      return pendingInst ? pendingInst.amount : 0;
+    }
+    return emiEMIAmount;
+  }, [locked, activeSchedule, emiEMIAmount]);
+
   // Confirm plan & save schedule
   const handleConfirmPlan = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!paymentType) { alert("Please select a payment card options first."); e.target.checked = false; return; }
@@ -299,31 +312,46 @@ export default function PaymentView({
     finally { setLoading(false); }
   };
 
-  const handleMarkAsPaid = async (inst: Installment) => {
-    const amountStr = `₹${inst.amount.toLocaleString()}`;
-    const confirmedPay = window.confirm(
-      `Are you sure the payment has been completed?\n\nInstallment: ${inst.installmentNumber}\nAmount: ${amountStr}`
-    );
-
-    if (!confirmedPay) return;
-
+  const handleConfirmCustomPayment = async () => {
+    if (!activePaymentInst || customAmount === "" || Number(customAmount) < 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+    
     if (!enrollmentId || !enrollmentId.trim()) {
-      setErrorMsg("Enrollment ID is missing. Please search for a valid student enrollment first.");
+      setErrorMsg("Enrollment ID is missing.");
       return;
     }
 
-    setProcessingPayment(inst.installmentNumber);
+    setShowPaymentModal(false);
+    setProcessingPayment(activePaymentInst.installmentNumber);
     setErrorMsg("");
 
     try {
-      const res = await saveInstallmentPayment({ enrollmentId, studentName, courseName, installmentNumber: inst.installmentNumber, installmentAmount: inst.amount, paymentMethod, paymentDate: new Date().toISOString().split("T")[0], loggedInUser: userProfile?.username || "Admin" });
+      const res = await saveInstallmentPayment({ 
+        enrollmentId, 
+        studentName, 
+        courseName, 
+        installmentNumber: activePaymentInst.installmentNumber, 
+        installmentAmount: Number(customAmount), 
+        paymentMethod, 
+        paymentDate: new Date().toISOString().split("T")[0], 
+        loggedInUser: userProfile?.username || "Admin" 
+      });
+      
       if (res.success) {
-        setSuccessMsg(`Installment ${inst.installmentNumber} recorded successfully!`);
+        setSuccessMsg(`Installment ${activePaymentInst.installmentNumber} recorded successfully! Schedule updated.`);
         await checkExistingSchedule(enrollmentId);
+      } else {
+        setErrorMsg(res.message || "Failed to record payment.");
       }
-      else setErrorMsg(res.message || "Failed to record payment.");
-    } catch (err: any) { setErrorMsg(err.message || "Error saving payment."); }
-    finally { setProcessingPayment(null); }
+    } catch (err: any) { 
+      setErrorMsg(err.message || "Error saving payment."); 
+    } finally { 
+      setProcessingPayment(null); 
+      setActivePaymentInst(null); 
+      setCustomAmount(""); 
+    }
   };
 
   const handleSendAdmissionEmail = async () => {
@@ -680,7 +708,7 @@ export default function PaymentView({
                     ))}
                   </select>
                 </div>
-                <div className="flex justify-between text-slate-400"><span>EMI Amount:</span><span>₹{emiEMIAmount.toLocaleString()}</span></div>
+                <div className="flex justify-between text-slate-400"><span>EMI Amount:</span><span>₹{displayEmiAmount.toLocaleString()}</span></div>
                 <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{emiTotalPayable.toLocaleString()}</span></div>
               </div>
             </div>
@@ -759,13 +787,23 @@ export default function PaymentView({
                       </span>
                     </td>
                     <td className="px-5 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={inst.status === "Paid"}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!confirmed || processingPayment === inst.installmentNumber || inst.status === "Paid") return;
+                          setActivePaymentInst(inst);
+                          setCustomAmount(inst.amount);
+                          setShowPaymentModal(true);
+                        }}
                         disabled={!confirmed || inst.status === "Paid" || processingPayment === inst.installmentNumber}
-                        onChange={() => handleMarkAsPaid(inst)}
-                        className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
+                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${
+                          inst.status === "Paid" 
+                            ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                            : "bg-teal-500 text-white hover:bg-teal-400 shadow-lg shadow-teal-500/20 cursor-pointer"
+                        }`}
+                      >
+                        {inst.status === "Paid" ? "Paid" : "Pay"}
+                      </button>
                     </td>
                     <td className="px-5 py-3 text-center">
                       {inst.status === "Paid" ? (
@@ -1081,6 +1119,49 @@ export default function PaymentView({
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {/* Custom Payment Amount Modal */}
+      {showPaymentModal && activePaymentInst && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-bold text-white mb-1">Record Payment</h2>
+            <p className="text-xs text-slate-400 mb-5">Installment {activePaymentInst.installmentNumber}</p>
+            
+            <div className="space-y-4">
+              <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex justify-between items-center">
+                <span className="text-xs text-slate-400 font-medium">Expected Amount</span>
+                <span className="text-sm font-bold text-slate-200">₹{activePaymentInst.amount.toLocaleString()}</span>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Actual Amount Received (₹)</label>
+                <input
+                  type="number"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-2.5 text-lg text-teal-400 font-extrabold focus:outline-none focus:border-teal-500 focus:bg-slate-950 shadow-inner transition-colors"
+                  placeholder="e.g. 2500"
+                  autoFocus
+                />
+                <p className="text-[10px] text-teal-400/70 mt-2 font-medium leading-relaxed">
+                  Note: If you enter an amount higher or lower than expected, future installments will automatically recalculate.
+                </p>
+              </div>
+              
+              <button
+                onClick={handleConfirmCustomPayment}
+                className="w-full mt-2 py-2.5 bg-teal-500 hover:bg-teal-400 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Confirm Payment
+              </button>
+            </div>
           </div>
         </div>
       )}
