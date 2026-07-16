@@ -36,7 +36,8 @@ interface AdmissionViewProps {
     courseDuration?: string,
     guardianName?: string,
     guardianRelation?: string,
-    admissionFee?: number
+    admissionFee?: number,
+    startingYearFee?: number
   ) => void;
 }
 
@@ -155,7 +156,7 @@ export default function AdmissionView({
   const [errorMsg, setErrorMsg] = useState("");
 
   // Use Firestore-based config with fallback to inline config
-  const [config, setConfig] = useState({ duration: "1 Year", fees: 30000, admission_fee: 5000, exam_fee: 0 });
+  const [config, setConfig] = useState({ duration: "1 Year", fees: 30000, admission_fee: 5000, exam_fee: 0, starting_year_fee: 0 });
   const [courseList, setCourseList] = useState<Course[]>([]);
 
   // Fetch courses dynamically for dropdown
@@ -179,7 +180,8 @@ export default function AdmissionView({
             duration: courseData.duration,
             fees: courseData.fees,
             admission_fee: courseData.admissionFee || 0,
-            exam_fee: courseData.examFee || 0
+            exam_fee: courseData.examFee || 0,
+            starting_year_fee: courseData.startingYearFee || 0
           });
         } else {
           // Fallback: try searching all courses
@@ -190,7 +192,8 @@ export default function AdmissionView({
               duration: found.duration,
               fees: found.fees,
               admission_fee: found.admissionFee || 0,
-              exam_fee: found.examFee || 0
+              exam_fee: found.examFee || 0,
+              starting_year_fee: found.startingYearFee || 0
             });
           } else {
             // Fallback to inline config
@@ -199,7 +202,8 @@ export default function AdmissionView({
               duration: fallback.duration,
               fees: fallback.fees,
               admission_fee: fallback.admission_fee,
-              exam_fee: (fallback as any).exam_fee || 0
+              exam_fee: (fallback as any).exam_fee || 0,
+              starting_year_fee: 0
             });
           }
         }
@@ -210,7 +214,8 @@ export default function AdmissionView({
           duration: fallback.duration,
           fees: fallback.fees,
           admission_fee: fallback.admission_fee,
-          exam_fee: (fallback as any).exam_fee || 0
+          exam_fee: (fallback as any).exam_fee || 0,
+          starting_year_fee: 0
         });
       }
     }
@@ -329,6 +334,7 @@ export default function AdmissionView({
       totalCourseFees: calculatedTotalFees,
       admissionFee: config.admission_fee,
       examFee: config.exam_fee || 0,
+      startingYearFee: config.starting_year_fee || 0,
       paymentMode,
       guardianRelation,
       guardianName,
@@ -398,7 +404,8 @@ export default function AdmissionView({
         config.duration,
         guardianName,
         guardianRelation,
-        config.admission_fee
+        config.admission_fee,
+        config.starting_year_fee || 0
       );
     } else {
       setErrorMsg(res.message);

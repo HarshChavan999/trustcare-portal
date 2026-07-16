@@ -37,6 +37,7 @@ export interface AdmissionData {
   branch: string;
   email?: string;
   examFee?: number;
+  startingYearFee?: number;
 }
 
 // Generate the next receipt number (e.g. AR-0001, AR-0024)

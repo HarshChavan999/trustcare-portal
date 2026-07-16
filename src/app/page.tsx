@@ -46,6 +46,7 @@ export default function Home() {
     guardianName: string | null;
     guardianRelation: string | null;
     admissionFee?: number | null;
+    startingYearFee?: number | null;
   }>({
     enrollmentId: null,
     studentName: null,
@@ -55,7 +56,8 @@ export default function Home() {
     courseDuration: null,
     guardianName: null,
     guardianRelation: null,
-    admissionFee: null
+    admissionFee: null,
+    startingYearFee: null
   });
 
   // Login form inputs
@@ -157,7 +159,8 @@ export default function Home() {
     courseDuration?: string,
     guardianName?: string,
     guardianRelation?: string,
-    admissionFee?: number
+    admissionFee?: number,
+    startingYearFee?: number
   ) => {
     setPaymentContext({
       enrollmentId,
@@ -168,7 +171,8 @@ export default function Home() {
       courseDuration: courseDuration ?? null,
       guardianName: guardianName ?? null,
       guardianRelation: guardianRelation ?? null,
-      admissionFee: admissionFee ?? null
+      admissionFee: admissionFee ?? null,
+      startingYearFee: startingYearFee ?? null
     });
     setActiveTab("payment");
   };
@@ -397,6 +401,7 @@ export default function Home() {
                 initialGuardianName={paymentContext.guardianName ?? undefined}
                 initialGuardianRelation={paymentContext.guardianRelation ?? undefined}
                 initialAdmissionFee={paymentContext.admissionFee ?? undefined}
+                initialStartingYearFee={paymentContext.startingYearFee ?? undefined}
                 onGoBack={handleGoBackFromPayment}
                 onProceedToReceipt={handleProceedToReceipt}
               />

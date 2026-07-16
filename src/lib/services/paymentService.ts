@@ -92,6 +92,7 @@ export async function getStudentDataByEnrollmentId(enrollmentId: string) {
         totalCourseFees: data.totalCourseFees || 0,
         admissionFee: data.admissionFee || 0,
         examFee: data.examFee || 0,
+        startingYearFee: data.startingYearFee || 0,
         guardianName: data.guardianName || "",
         guardianRelation: data.guardianRelation || "",
         email: data.email || "",

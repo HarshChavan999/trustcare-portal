@@ -18,6 +18,7 @@ interface ReceiptData {
   photoUrl?: string;
   receivedBy?: string;
   examFee?: number;
+  startingYearFee?: number;
 }
 
 const mrPoints = [
@@ -621,6 +622,7 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
     const startYear = firstInstDate.getFullYear();
     const startMonth = firstInstDate.getMonth();
     const defaultDay = firstInstDate.getDate();
+    const syFee = data.startingYearFee || 0;
 
     const getDaySuffix = (n: number) => {
       if (n >= 11 && n <= 13) return "th";
@@ -647,7 +649,8 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
       const yearIndex = Math.floor(globalMonthIndex / 12);
       const monthIndex = due.getMonth();
       const day = due.getDate();
-      return { yearIndex, monthIndex, amount: inst.amount, status: inst.status, day, fullDate: due };
+      const isAnnualFee = (inst.type || "").toLowerCase().includes("annual year fee");
+      return { yearIndex, monthIndex, amount: inst.amount, status: inst.status, day, fullDate: due, isAnnualFee };
     });
 
     const maxYearIndex = Math.max(...mappedInstallments.map((m) => m.yearIndex), years - 1);
@@ -657,10 +660,16 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
 
     for (let y = 0; y < totalYears; y++) {
       const yearInsts = mappedInstallments.filter((m) => m.yearIndex === y);
+      // Regular installments for the month grid
+      const regularInsts = yearInsts.filter((m) => !m.isAnnualFee);
       const grid: (typeof yearInsts[0] | null)[] = Array(12).fill(null);
-      for (const inst of yearInsts) {
+      for (const inst of regularInsts) {
         grid[inst.monthIndex] = inst;
       }
+
+      // Determine the start cycle month for this year (same month as first admission)
+      const anniversaryMonth = startMonth;
+      const anniversaryYear = startYear + y + (anniversaryMonth < startMonth ? 1 : 0);
 
       const headerCells = monthLabels
         .map((lbl, mi) => {
@@ -683,6 +692,25 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
         })
         .join("");
 
+      // Annual Year Fee row — shown on the start cycle month column
+      const annualFeeRow = syFee > 0 ? (() => {
+        const annualFeeCells = monthLabels.map((_, mi) => {
+          if (mi === anniversaryMonth) {
+            return `<td style="border:1.5px solid #000;height:22px;text-align:center;font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;">₹${syFee.toLocaleString("en-IN")}</td>`;
+          }
+          return `<td style="border:1.5px solid #000;height:22px;background:#fef3c7;"></td>`;
+        }).join("");
+        return `
+          <tr>
+            <td colspan="12" style="border:none;padding:2px 0 1px 0;">
+              <span style="font-size:9px;font-weight:900;color:#92400e;letter-spacing:0.5px;">
+                &#9733; Annual Year Fee – Year ${y + 1} : ₹${syFee.toLocaleString("en-IN")}
+              </span>
+            </td>
+          </tr>
+          <tr>${annualFeeCells}</tr>`;
+      })() : "";
+
       tablesHtml += `
         <div style="margin-top:10px;">
           <div style="font-weight:bold;font-size:13px;margin-bottom:4px;color:#000;font-family:'Times New Roman', Times, serif;">
@@ -694,6 +722,7 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
             </thead>
             <tbody>
               <tr>${amountCells}</tr>
+              ${annualFeeRow}
             </tbody>
           </table>
         </div>`;
@@ -900,6 +929,18 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
         <span class="field-line">&nbsp;${formattedTotalFees}</span>
         <span style="white-space:nowrap;">Total</span>
       </div>
+
+      <!-- Starting Year Fee -->
+      ${(data.startingYearFee && data.startingYearFee > 0) ? `
+      <div class="field-row">
+        <span style="white-space:nowrap;">Starting Year Fee</span>
+        <span class="field-line" style="max-width:120px;">&nbsp;${formatCurrency(data.startingYearFee)}</span>
+        <span style="white-space:nowrap;">&times;</span>
+        <span class="field-line" style="max-width:100px;text-align:center;">&nbsp;${years} Year${years > 1 ? "s" : ""}</span>
+        <span style="white-space:nowrap;">=</span>
+        <span class="field-line" style="color:#92400e;font-weight:900;">&nbsp;${formatCurrency(data.startingYearFee * years)}</span>
+        <span style="white-space:nowrap;font-size:10px;color:#92400e;">(included in course fee)</span>
+      </div>` : ''}
 
       <!-- Exam Fees -->
       <div class="field-row">

@@ -808,12 +808,6 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
     });
 
     // Signatures
-    targetPage.drawLine({ start: { x: 35, y: 55 }, end: { x: 170, y: 55 }, thickness: 1.1, color: blackColor });
-    targetPage.drawText("Parent's Sign.", { x: 72, y: 42, size: 9, font: boldFont });
-
-    targetPage.drawLine({ start: { x: 220, y: 55 }, end: { x: 350, y: 55 }, thickness: 1.1, color: blackColor });
-    targetPage.drawText("Student Sign.", { x: 255, y: 42, size: 9, font: boldFont });
-
     targetPage.drawText("Authorised Sign./Stamp", { x: 420, y: 42, size: 9, font: boldFont });
 
     // Add signature and stamp images here
@@ -1413,7 +1407,7 @@ function generateEmailTemplate(type: string, data: any, logoBase64: string = "")
     <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0;">
       <!-- Top Bar -->
       <div style="background: #2bb6bc; border-bottom: 2px solid #14507a; padding: 24px; text-align: center;">
-        ${logoBase64 ? `<img src="cid:trustcare_logo" alt="TrustCare Logo" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 12px;" />` : ''}
+        ${logoBase64 ? `<img src="cid:trustcare_logo" alt="TrustCare Logo" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 12px;" />` : ''}
         <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px; color: #ffffff;">TRUSTCARE</h1>
         <p style="margin: 4px 0 0 0; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #e0f2fe;">Institute of Health Science</p>
         <div style="margin-top: 16px; display: inline-block; background: rgba(0, 0, 0, 0.2); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 16px; border-radius: 99px; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">

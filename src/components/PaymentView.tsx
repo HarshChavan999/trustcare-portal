@@ -38,6 +38,7 @@ interface PaymentViewProps {
   initialGuardianName?: string;
   initialGuardianRelation?: string;
   initialAdmissionFee?: number;
+  initialStartingYearFee?: number;
   onGoBack: () => void;
   onProceedToReceipt: (receiptNo: string, enrollmentId: string) => void;
 }
@@ -66,6 +67,7 @@ export default function PaymentView({
   initialGuardianName,
   initialGuardianRelation,
   initialAdmissionFee,
+  initialStartingYearFee,
   onGoBack,
   onProceedToReceipt
 }: PaymentViewProps) {
@@ -82,6 +84,7 @@ export default function PaymentView({
   const [dbCourseDuration, setDbCourseDuration] = useState("");
   const [dbTotalFees, setDbTotalFees] = useState<number | null>(null);
   const [dbAdmissionFee, setDbAdmissionFee] = useState<number | null>(null);
+  const [dbStartingYearFee, setDbStartingYearFee] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -97,6 +100,7 @@ export default function PaymentView({
 
   const totalFees = dbTotalFees || initialTotalFees || config.fees;
   const admissionFee = dbAdmissionFee !== null ? dbAdmissionFee : (initialAdmissionFee || config.admission_fee);
+  const startingYearFee = dbStartingYearFee !== null ? dbStartingYearFee : (initialStartingYearFee || 0);
 
   const [paymentType, setPaymentType] = useState<"full" | "partial" | "emi" | "">("");
   const [emiDownPayment, setEmiDownPayment] = useState(0);
@@ -144,6 +148,7 @@ export default function PaymentView({
           setPhotoUrl(firstDoc.photoUrl || "");
           if (firstDoc.admissionFee) setDbAdmissionFee(firstDoc.admissionFee);
           if (firstDoc.examFee) setCourseExamFee(firstDoc.examFee);
+          if (typeof firstDoc.startingYearFee === "number") setDbStartingYearFee(firstDoc.startingYearFee);
           const hist = await getInstallmentPaymentsForStudent(id);
           if (hist) setPaymentMethod(hist.paymentMethod || "Cash");
         }
@@ -182,6 +187,7 @@ export default function PaymentView({
         if (res.totalCourseFees) setDbTotalFees(res.totalCourseFees);
         if (res.admissionFee) setDbAdmissionFee(res.admissionFee);
         if (res.examFee) setCourseExamFee(res.examFee);
+        if (typeof res.startingYearFee === "number") setDbStartingYearFee(res.startingYearFee);
         if (res.guardianName) setGuardianName(res.guardianName);
         if (res.guardianRelation) setGuardianRelation(res.guardianRelation);
         await checkExistingSchedule(searchId.trim());
@@ -191,6 +197,7 @@ export default function PaymentView({
           if (c) {
             setCourseFullName(c.courseName);
             if (c.examFee) setCourseExamFee(c.examFee);
+            if (typeof c.startingYearFee === "number") setDbStartingYearFee(c.startingYearFee);
           }
         } catch (e) {}
       } else {
@@ -205,11 +212,16 @@ export default function PaymentView({
 
   const fullTotalPayable = totalFees;
 
+  // Total annual fees across all years (starting year fee × number of years)
+  const totalAnnualFees = startingYearFee > 0 ? startingYearFee * years : 0;
+
   // Calculations for EMI Payment
-  const emiRemaining = Math.max(0, totalFees - emiDownPayment);
-  const emiEMIAmount = emiRemaining > 0 ? Math.floor(emiRemaining / emiTenure) : 0;
-  const emiRemainder = emiRemaining > 0 ? emiRemaining % emiTenure : 0;
-  const emiTotalPayable = emiDownPayment + emiRemaining;
+  // Annual fee rows are carved out, so remaining is what goes into regular EMI months
+  const emiRemaining = Math.max(0, totalFees - emiDownPayment - totalAnnualFees);
+  // Regular EMI months = emiTenure (annual fee months are extra rows, not counted in tenure)
+  const emiEMIAmount = emiRemaining > 0 && emiTenure > 0 ? Math.floor(emiRemaining / emiTenure) : 0;
+  const emiRemainder = emiRemaining > 0 && emiTenure > 0 ? emiRemaining % emiTenure : 0;
+  const emiTotalPayable = emiDownPayment + emiRemaining + totalAnnualFees;
 
   // Dynamic Installment Schedule Calculation (Derived State when not locked)
   const calculatedSchedule: Installment[] = React.useMemo(() => {
@@ -218,6 +230,8 @@ export default function PaymentView({
     const scheduleArray: Installment[] = [];
     const todayStr = new Date().toISOString().split("T")[0];
     const today = new Date();
+    const admissionMonth = today.getMonth();   // 0-indexed month of admission
+    const admissionDay = today.getDate();
 
     if (paymentType === "full") {
       scheduleArray.push({
@@ -229,33 +243,75 @@ export default function PaymentView({
       });
     } else if (paymentType === "emi") {
       let counter = 1;
+
+      // Helper: get valid day for month/year
+      const getValidDay = (yr: number, mo: number, day: number) => {
+        const maxDays = new Date(yr, mo + 1, 0).getDate();
+        return Math.min(day, maxDays);
+      };
+
+      // Down payment (today)
       if (emiDownPayment > 0) {
         scheduleArray.push({
           installmentNumber: counter++,
           amount: emiDownPayment,
           dueDate: todayStr,
           status: "Pending",
-          type: "Installment 1"
+          type: "Down Payment"
         });
       }
-      let remaining = totalFees - emiDownPayment;
-      for (let i = 1; i <= emiTenure; i++) {
-        const nextMonth = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const maxDays = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
-        nextMonth.setDate(Math.min(today.getDate(), maxDays));
-        const amount = i === emiTenure ? remaining : emiEMIAmount;
-        remaining -= amount;
-        scheduleArray.push({
-          installmentNumber: counter++,
-          amount,
-          dueDate: nextMonth.toISOString().split("T")[0],
-          status: "Pending",
-          type: `Installment ${counter - 1}`
-        });
+
+      // Build a month-by-month timeline for the course duration
+      // For each year (1..years), insert Annual Year Fee on the start cycle of year month
+      // and spread regular EMI across remaining months
+
+      // Determine how many regular EMI months we have
+      // (total course months = years * 12, minus start cycle months)
+      const totalCourseMonths = years * 12;
+      const regularMonthCount = totalCourseMonths - years; // one start cycle month per year
+
+      const annualFeeTotal = startingYearFee * years;
+      const regularPool = Math.max(0, totalFees - emiDownPayment - annualFeeTotal);
+      const baseEmi = regularMonthCount > 0 ? Math.floor(regularPool / regularMonthCount) : 0;
+      let regularRemainder = regularMonthCount > 0 ? regularPool % regularMonthCount : 0;
+
+      let regularMonthsUsed = 0;
+
+      for (let yr = 0; yr < years; yr++) {
+        for (let mo = 0; mo < 12; mo++) {
+          const targetYear = today.getFullYear() + yr + (admissionMonth + mo >= 12 ? Math.floor((admissionMonth + mo) / 12) : 0);
+          const targetMonth = (admissionMonth + mo) % 12;
+          const validDay = getValidDay(targetYear, targetMonth, admissionDay);
+          const dueDate = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
+
+          if (mo === 0 && startingYearFee > 0) {
+            // Start cycle of year month: Annual Year Fee
+            scheduleArray.push({
+              installmentNumber: counter++,
+              amount: startingYearFee,
+              dueDate,
+              status: "Pending",
+              type: `Annual Year Fee – Year ${yr + 1}`
+            });
+          } else {
+            // Regular EMI month
+            const emiAmt = baseEmi + (regularMonthsUsed < regularRemainder ? 1 : 0);
+            regularMonthsUsed++;
+            if (emiAmt > 0) {
+              scheduleArray.push({
+                installmentNumber: counter++,
+                amount: emiAmt,
+                dueDate,
+                status: "Pending",
+                type: `Installment ${counter - 1}`
+              });
+            }
+          }
+        }
       }
     }
     return scheduleArray;
-  }, [paymentType, fullTotalPayable, totalFees, emiDownPayment, emiTenure, emiEMIAmount]);
+  }, [paymentType, fullTotalPayable, totalFees, emiDownPayment, emiTenure, emiEMIAmount, startingYearFee, years]);
 
   const activeSchedule = locked ? schedule : calculatedSchedule;
 
@@ -862,6 +918,7 @@ export default function PaymentView({
                   guardianName,
                   guardianRelation,
                   photoUrl,
+                  startingYearFee: startingYearFee,
                 });
               }}
               className="btn-secondary px-4 py-2.5 text-xs rounded-xl cursor-pointer uppercase tracking-wide"
@@ -1097,6 +1154,7 @@ export default function PaymentView({
                         guardianName,
                         guardianRelation,
                         photoUrl,
+                        startingYearFee: startingYearFee,
                       });
                     }}
                     className="flex-1 px-4 py-2.5 text-xs font-bold text-slate-350 bg-slate-800 hover:bg-slate-750 transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"

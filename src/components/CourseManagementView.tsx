@@ -19,7 +19,8 @@ const emptyForm = {
     duration: "",
     fees: 0,
     admissionFee: 0,
-    examFee: 0
+    examFee: 0,
+    startingYearFee: 0
 };
 
 function formatDate(ts: any): string {
@@ -96,7 +97,8 @@ export default function CourseManagementView({ userProfile }: CourseManagementVi
             duration: course.duration,
             fees: course.fees,
             admissionFee: course.admissionFee || 0,
-            examFee: course.examFee || 0
+            examFee: course.examFee || 0,
+            startingYearFee: course.startingYearFee || 0
         });
         setEditingId(course.courseId);
         setShowForm(true);
@@ -127,6 +129,7 @@ export default function CourseManagementView({ userProfile }: CourseManagementVi
                 fees: form.fees,
                 admissionFee: form.admissionFee,
                 examFee: form.examFee,
+                startingYearFee: (form as any).startingYearFee || 0,
                 createdBy: userProfile?.username || "Admin"
             });
 
@@ -274,6 +277,12 @@ export default function CourseManagementView({ userProfile }: CourseManagementVi
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 transition-colors"
                                     placeholder="e.g. 6000" min="0" />
                             </div>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-semibold text-slate-400">Starting Year Fee (₹) <span className="text-slate-500 font-normal">(charged at every start cycle of year)</span></label>
+                                <input type="number" value={(form as any).startingYearFee || ""} onChange={(e) => handleFormChange("startingYearFee", Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 transition-colors"
+                                    placeholder="e.g. 20000" min="0" />
+                            </div>
                             <div className="space-y-1 md:col-span-2">
                                 <label className="block text-xs font-semibold text-slate-400">Course Fees (₹) *</label>
                                 <input type="number" value={form.fees || ""} onChange={(e) => handleFormChange("fees", Math.max(0, parseInt(e.target.value) || 0))}
@@ -314,6 +323,7 @@ export default function CourseManagementView({ userProfile }: CourseManagementVi
                                 <th className="px-5 py-3 text-right">Admission Fee (₹)</th>
                                 <th className="px-5 py-3 text-right">Exam Fee (₹)</th>
                                 <th className="px-5 py-3 text-right">Course Fee (₹)</th>
+                                <th className="px-5 py-3 text-right">Yr. Start Fee (₹)</th>
                                 <th className="px-5 py-3 text-right">Total (₹)</th>
                                 <th className="px-5 py-3 text-center">Created On</th>
                                 <th className="px-5 py-3 text-center">Status</th>
@@ -329,7 +339,8 @@ export default function CourseManagementView({ userProfile }: CourseManagementVi
                                     <td className="px-5 py-3 text-right font-bold text-indigo-400">₹{(course.admissionFee || 0).toLocaleString()}</td>
                                     <td className="px-5 py-3 text-right font-bold text-amber-400">₹{(course.examFee || 0).toLocaleString()}</td>
                                     <td className="px-5 py-3 text-right font-bold text-teal-400">₹{course.fees.toLocaleString()}</td>
-                                    <td className="px-5 py-3 text-right font-bold text-slate-200">₹{((course.admissionFee || 0) + (course.examFee || 0) + course.fees).toLocaleString()}</td>
+                                    <td className="px-5 py-3 text-right font-bold text-purple-400">₹{(course.startingYearFee || 0).toLocaleString()}</td>
+                                    <td className="px-5 py-3 text-right font-bold text-slate-200">₹{((course.admissionFee || 0) + (course.examFee || 0) + course.fees + (course.startingYearFee || 0)).toLocaleString()}</td>
                                     <td className="px-5 py-3 text-center text-slate-400">{formatDate(course.createdAt)}</td>
                                     <td className="px-5 py-3 text-center">
                                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${course.active !== false
