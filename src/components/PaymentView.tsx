@@ -280,13 +280,15 @@ export default function PaymentView({
       const baseEmi = emiTenure > 0 ? Math.floor(regularPool / emiTenure) : 0;
       const regularRemainder = emiTenure > 0 ? regularPool % emiTenure : 0;
 
-      while (annualFeesAdded < allowedYears || regularEMIsAdded < emiTenure) {
+      const targetAnnualFees = startingYearFee > 0 ? allowedYears : 0;
+
+      while ((annualFeesAdded < targetAnnualFees || regularEMIsAdded < emiTenure) && mo < 360) {
         const targetYear = today.getFullYear() + Math.floor((admissionMonth + mo) / 12);
         const targetMonth = (admissionMonth + mo) % 12;
         const validDay = getValidDay(targetYear, targetMonth, admissionDay);
         const dueDate = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
 
-        if (mo % 12 === 0 && startingYearFee > 0 && annualFeesAdded < allowedYears) {
+        if (mo % 12 === 0 && startingYearFee > 0 && annualFeesAdded < targetAnnualFees) {
           // Annual Year Fee
           scheduleArray.push({
             installmentNumber: counter++,
@@ -644,7 +646,7 @@ export default function PaymentView({
         </div>
       )}
 
-      {/* Student Lookup if not passed */}
+      {/* Student Lookup Card */}
       <div className="bg-slate-950/40 p-4 border border-slate-900 rounded-2xl mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div className="md:col-span-2 space-y-1.5">
           <label className="block text-xs font-semibold text-slate-400">Search Enrollment ID</label>
@@ -653,15 +655,15 @@ export default function PaymentView({
               type="text"
               value={enrollmentId}
               onChange={(e) => setEnrollmentId(e.target.value)}
-              className="flex-1 bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 font-medium"
-              placeholder="e.g. TCHS001"
+              className="flex-1 bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 font-medium"
+              placeholder="e.g. TCIHS035"
               disabled={locked}
             />
             {!locked && (
               <button
                 type="button"
                 onClick={handleEnrollmentSearch}
-                className="px-4 py-2 btn-secondary text-xs rounded-xl cursor-pointer"
+                className="px-4 py-2.5 btn-secondary text-xs rounded-xl cursor-pointer"
               >
                 Search
               </button>
@@ -673,7 +675,7 @@ export default function PaymentView({
           <input
             type="text"
             value={studentName}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-400 cursor-not-allowed font-medium"
+            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium truncate"
             readOnly
           />
         </div>
@@ -682,136 +684,188 @@ export default function PaymentView({
           <input
             type="text"
             value={receiptNo}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-400 cursor-not-allowed font-medium"
+            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-medium truncate"
             readOnly
           />
         </div>
       </div>
+
+      {/* Course Overview Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-slate-900/20 border border-slate-900 p-4 rounded-2xl flex flex-col justify-center">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Selected Course</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">SELECTED COURSE</span>
           <span className="text-sm font-bold text-slate-350 capitalize mt-1">
             {courseFullName ? courseFullName : "Not selected"}
           </span>
         </div>
         <div className="bg-slate-900/20 border border-slate-900 p-4 rounded-2xl flex flex-col justify-center">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tenure / Duration</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">TENURE / DURATION</span>
           <span className="text-sm font-bold text-slate-350 mt-1">{duration || "-"}</span>
         </div>
         <div className="bg-slate-900/20 border border-slate-900 p-4 rounded-2xl flex flex-col justify-center">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Payable Course Fee</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">TOTAL PAYABLE COURSE FEE</span>
           <span className="text-sm font-extrabold text-teal-400 mt-1">₹{totalFees.toLocaleString()}</span>
         </div>
       </div>
-      {/* Payment Options - simplified but keep same structure */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-450 uppercase tracking-widest">Select Payment Plan</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(!locked || paymentType === "full") && (
-            <div onClick={() => !locked && setPaymentType("full")}
-              className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${paymentType === "full" ? "bg-teal-500/5 border-teal-500/40 shadow-lg shadow-teal-500/5" : "bg-slate-950/30 border-slate-900 hover:border-slate-800"}`}>
-              <div className="flex items-center gap-2.5 mb-2">
-                <input
-                  type="radio"
-                  id="full"
-                  name="plan"
-                  checked={paymentType === "full"}
-                  onChange={() => !locked && setPaymentType("full")}
-                  disabled={locked}
-                  className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 focus:ring-teal-500/20 focus:ring-offset-slate-950 cursor-pointer"
-                />
-                <label htmlFor="full" className="font-bold text-sm text-slate-200 cursor-pointer">Full Payment</label>
-              </div>
-              <p className="text-xs text-slate-500">Pay the entire amount upfront</p>
-              <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400"><span>Standard Fees:</span><span>₹{totalFees.toLocaleString()}</span></div>
-                <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{fullTotalPayable.toLocaleString()}</span></div>
-              </div>
-            </div>
-          )}
-          {(!locked || paymentType === "emi") && (
-            <div onClick={() => !locked && setPaymentType("emi")}
-              className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${paymentType === "emi" ? "bg-teal-500/5 border-teal-500/40 shadow-lg shadow-teal-500/5" : "bg-slate-950/30 border-slate-900 hover:border-slate-800"}`}>
-              <div className="flex items-center gap-2.5 mb-2">
-                <input
-                  type="radio"
-                  id="emi"
-                  name="plan"
-                  checked={paymentType === "emi"}
-                  onChange={() => !locked && setPaymentType("emi")}
-                  disabled={locked}
-                  className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 focus:ring-teal-500/20 focus:ring-offset-slate-950 cursor-pointer"
-                />
-                <label htmlFor="emi" className="font-bold text-sm text-slate-200 cursor-pointer">EMI Plan</label>
-              </div>
-              <p className="text-xs text-slate-500">Pay in easy monthly installments</p>
-              <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Down Pay (₹):</span>
-                  <input
-                    type="number"
-                    value={emiDownPayment || ""}
-                    onChange={(e) => setEmiDownPayment(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))}
-                    disabled={locked}
-                    className="w-20 bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Tenure (Months):</span>
-                  <select
-                    value={emiTenure}
-                    onChange={(e) => setEmiTenure(parseInt(e.target.value))}
-                    disabled={locked}
-                    className="bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
-                  >
-                    {Array.from({ length: maxMonths }, (_, i) => i + 1).map(n => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex justify-between text-slate-400"><span>EMI Amount:</span><span>₹{displayEmiAmount.toLocaleString()}</span></div>
-                <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{emiTotalPayable.toLocaleString()}</span></div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Payment Method Option */}
-      <div className="mt-6 space-y-1.5">
-        <label htmlFor="payMethod" className="block text-xs font-semibold text-slate-400">Payment Method*</label>
-        <select
-          id="payMethod"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          disabled={false}
-          className="w-full max-w-xs bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
-          required
-        >
-          <option value="">Select Method</option>
-          <option value="Cash">Cash</option>
-          <option value="Bank">Bank Transfer</option>
-          <option value="UPI">UPI</option>
-          <option value="Cheque">Bank Check / Cheque</option>
-        </select>
-      </div>
-      {!confirmed && (
-        <div className="mt-6 p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl">
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              id="confirmLock"
-              onChange={handleConfirmPlan}
-              className="h-5 w-5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950 cursor-pointer"
-            />
-            <span className="text-xs font-semibold text-slate-300">
-              I confirm my payment option selection and agree to proceed with the payment plan.
+      {/* Payment Plan Summary (When Locked & Confirmed) */}
+      {confirmed && locked ? (
+        <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-5 mb-6">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-900">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              PAYMENT PLAN SUMMARY
+            </h3>
+            <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-semibold uppercase tracking-wider rounded-full flex items-center gap-1.5">
+              LOCKED & CONFIRMED
             </span>
-          </label>
-          <p className="mt-1 text-[10px] text-slate-500 ml-8 font-medium">
-            Checking this box will lock your payment selection and generate the installment schedule.
-          </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PAYMENT PLAN</span>
+              <span className="text-sm font-bold text-slate-200 mt-0.5 block">
+                {paymentType === "emi" ? "EMI PLAN" : paymentType === "full" ? "FULL PAYMENT" : "-"}
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">DOWN PAYMENT</span>
+              <span className="text-sm font-bold text-slate-200 mt-0.5 block">
+                {paymentType === "emi" ? `₹${emiDownPayment.toLocaleString()}` : "₹0"}
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">EMI MONTHS TENURE</span>
+              <span className="text-sm font-bold text-slate-200 mt-0.5 block">
+                {paymentType === "emi" ? `${emiTenure} Months` : "N/A"}
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">MONTHLY EMI AMOUNT</span>
+              <span className="text-sm font-extrabold text-teal-400 mt-0.5 block">
+                {paymentType === "emi" ? `₹${displayEmiAmount.toLocaleString()}` : "N/A"}
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL COURSE FEE</span>
+              <span className="text-sm font-extrabold text-teal-400 mt-0.5 block">
+                ₹{(paymentType === "full" ? fullTotalPayable : emiTotalPayable).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Payment Options when not locked yet */
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-widest">Select Payment Plan</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                onClick={() => setPaymentType("full")}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${paymentType === "full" ? "bg-teal-500/5 border-teal-500/40 shadow-lg shadow-teal-500/5" : "bg-slate-950/30 border-slate-900 hover:border-slate-800"}`}
+              >
+                <div className="flex items-center gap-2.5 mb-2">
+                  <input
+                    type="radio"
+                    id="full"
+                    name="plan"
+                    checked={paymentType === "full"}
+                    onChange={() => setPaymentType("full")}
+                    className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 focus:ring-teal-500/20 focus:ring-offset-slate-950 cursor-pointer"
+                  />
+                  <label htmlFor="full" className="font-bold text-sm text-slate-200 cursor-pointer">Full Payment</label>
+                </div>
+                <p className="text-xs text-slate-500">Pay the entire amount upfront</p>
+                <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-400"><span>Standard Fees:</span><span>₹{totalFees.toLocaleString()}</span></div>
+                  <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{fullTotalPayable.toLocaleString()}</span></div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setPaymentType("emi")}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${paymentType === "emi" ? "bg-teal-500/5 border-teal-500/40 shadow-lg shadow-teal-500/5" : "bg-slate-950/30 border-slate-900 hover:border-slate-800"}`}
+              >
+                <div className="flex items-center gap-2.5 mb-2">
+                  <input
+                    type="radio"
+                    id="emi"
+                    name="plan"
+                    checked={paymentType === "emi"}
+                    onChange={() => setPaymentType("emi")}
+                    className="h-4.5 w-4.5 text-teal-500 border-slate-800 bg-slate-950 focus:ring-teal-500/20 focus:ring-offset-slate-950 cursor-pointer"
+                  />
+                  <label htmlFor="emi" className="font-bold text-sm text-slate-200 cursor-pointer">EMI Plan</label>
+                </div>
+                <p className="text-xs text-slate-500">Pay in easy monthly installments</p>
+                <div className="mt-4 pt-3 border-t border-slate-900 space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span>Down Pay (₹):</span>
+                    <input
+                      type="number"
+                      value={emiDownPayment || ""}
+                      onChange={(e) => setEmiDownPayment(Math.min(totalFees, Math.max(0, parseInt(e.target.value) || 0)))}
+                      className="w-20 bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-right text-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-500/40"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span>Tenure (Months):</span>
+                    <select
+                      value={emiTenure}
+                      onChange={(e) => setEmiTenure(parseInt(e.target.value))}
+                      className="bg-slate-950 border border-slate-855 rounded-lg px-2 py-1 text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
+                    >
+                      {Array.from({ length: maxMonths }, (_, i) => i + 1).map(n => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-between text-slate-400"><span>EMI Amount:</span><span>₹{displayEmiAmount.toLocaleString()}</span></div>
+                  <div className="flex justify-between font-bold text-slate-200 border-t border-slate-900 pt-2 mt-1"><span>Total Payable:</span><span className="text-teal-400">₹{emiTotalPayable.toLocaleString()}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Option */}
+          <div className="space-y-1.5">
+            <label htmlFor="payMethod" className="block text-xs font-semibold text-slate-400">Payment Method*</label>
+            <select
+              id="payMethod"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full max-w-xs bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
+              required
+            >
+              <option value="">Select Method</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank Transfer</option>
+              <option value="UPI">UPI</option>
+              <option value="Cheque">Bank Check / Cheque</option>
+            </select>
+          </div>
+
+          {/* Confirmation Checkbox */}
+          <div className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="confirmLock"
+                onChange={handleConfirmPlan}
+                className="h-5 w-5 text-teal-500 border-slate-800 bg-slate-950 rounded focus:ring-teal-500/30 focus:ring-offset-slate-950 cursor-pointer"
+              />
+              <span className="text-xs font-semibold text-slate-300">
+                I confirm my payment option selection and agree to proceed with the payment plan.
+              </span>
+            </label>
+            <p className="mt-1 text-[10px] text-slate-500 ml-8 font-medium">
+              Checking this box will lock your payment selection and generate the installment schedule.
+            </p>
+          </div>
         </div>
       )}
 

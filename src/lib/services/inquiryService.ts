@@ -113,9 +113,11 @@ export async function submitInquiryData(formData: InquiryData): Promise<{ succes
 // Get inquiry analytics and records
 export async function getInquiryAnalytics(branchFilter?: string) {
   try {
-    let q = query(collection(db, "inquiries"), orderBy("timestamp", "desc"));
+    let q;
     if (branchFilter && branchFilter !== "all") {
-      q = query(collection(db, "inquiries"), where("branch", "==", branchFilter), orderBy("timestamp", "desc"));
+      q = query(collection(db, "inquiries"), where("branch", "==", branchFilter));
+    } else {
+      q = collection(db, "inquiries");
     }
 
     const querySnapshot = await getDocs(q);
@@ -131,6 +133,13 @@ export async function getInquiryAnalytics(branchFilter?: string) {
       if (course) {
         courseCounts[course] = (courseCounts[course] || 0) + 1;
       }
+    });
+
+    // Sort in memory safely
+    data.sort((a, b) => {
+      const tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.date ? new Date(a.date).getTime() : 0));
+      const tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.date ? new Date(b.date).getTime() : 0));
+      return tB - tA;
     });
 
     let topCourse = "-";

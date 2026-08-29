@@ -675,8 +675,11 @@ export function openCoursePaymentReceipt(data: ReceiptData) {
       const headerCells = monthLabels
         .map((lbl, mi) => {
           const inst = grid[mi];
+          if (!inst) {
+            return `<td style="border:1.5px solid #000;padding:5px 1px;text-align:center;font-size:9.5px;font-weight:bold;background:#fff;width:8.33%;"></td>`;
+          }
           const targetYear = startYear + y + (mi < startMonth ? 1 : 0);
-          const day = inst ? inst.day : defaultDay;
+          const day = inst.day;
           const validDay = getValidDayForMonth(targetYear, mi, day);
           const dateLabel = `${validDay}<sup>${getDaySuffix(validDay)}</sup> ${lbl}`;
           const isAnniv = mi === anniversaryMonth;

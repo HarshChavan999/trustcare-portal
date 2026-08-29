@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { UserProfile } from "../lib/services/authService";
+import { db } from "../lib/firebase";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import {
   checkAadharNumberInquiry,
   submitInquiryData,
+  getInquiryAnalytics,
   InquiryData
 } from "../lib/services/inquiryService";
 import { getAllCourses, Course } from "../lib/services/courseService";
@@ -56,6 +59,13 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
   const [errorMsg, setErrorMsg] = useState("");
 
   const [courseList, setCourseList] = useState<Course[]>([]);
+  const [inquiriesList, setInquiriesList] = useState<InquiryData[]>([]);
+  const [isAadharDropdownOpen, setIsAadharDropdownOpen] = useState(false);
+  const [highlightedAadharIndex, setHighlightedAadharIndex] = useState(-1);
+
+  const aadharContainerRef = useRef<HTMLDivElement>(null);
+  const aadharInputRef = useRef<HTMLInputElement>(null);
+  const aadharListRef = useRef<HTMLDivElement>(null);
 
   // Fetch courses dynamically
   useEffect(() => {
@@ -64,6 +74,30 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
     }).catch(() => {
       setCourseList([]);
     });
+  }, []);
+
+  // Real-time synchronization with inquiries collection for autocomplete suggestions
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "inquiries"),
+      (snapshot) => {
+        const inqs: InquiryData[] = [];
+        snapshot.forEach((docSnap) => {
+          inqs.push({ ...docSnap.data(), id: docSnap.id } as InquiryData);
+        });
+        setInquiriesList(inqs);
+      },
+      (err) => {
+        console.warn("Realtime inquiries listener error, falling back to getDocs:", err);
+        getDocs(collection(db, "inquiries")).then((snap) => {
+          const inqs: InquiryData[] = [];
+          snap.forEach((d) => inqs.push({ ...d.data(), id: d.id } as InquiryData));
+          setInquiriesList(inqs);
+        });
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   // Update branch and inquiry taken by when userProfile changes
@@ -77,10 +111,117 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
     }
   }, [userProfile]);
 
+  // Filter inquiries matching the typed Aadhaar number from the first digit
+  const aadharSuggestions = useMemo(() => {
+    const rawQ = formData.aadharNumber.trim();
+    if (!rawQ || rawQ.length < 1) return [];
+
+    const qDigits = rawQ.replace(/\D/g, "");
+    const qLower = rawQ.toLowerCase();
+
+    const startsWithMatches: InquiryData[] = [];
+    const containsMatches: InquiryData[] = [];
+    const seen = new Set<string>();
+
+    for (const inq of inquiriesList) {
+      const aadharStr = String(inq.aadharNumber || "").replace(/\D/g, "");
+      const phoneStr = String(inq.phoneNo || inq.whatsappNo || "").replace(/\D/g, "");
+      const nameStr = (inq.fullName || `${inq.firstName || ""} ${inq.middleName || ""} ${inq.lastName || ""}`).toLowerCase();
+
+      const key = inq.id || (aadharStr + "_" + nameStr);
+      if (seen.has(key)) continue;
+
+      if (qDigits && aadharStr.startsWith(qDigits)) {
+        seen.add(key);
+        startsWithMatches.push(inq);
+      } else if (
+        (qDigits && aadharStr.includes(qDigits)) ||
+        (qDigits && phoneStr.includes(qDigits)) ||
+        (qLower && nameStr.includes(qLower))
+      ) {
+        seen.add(key);
+        containsMatches.push(inq);
+      }
+    }
+
+    return [...startsWithMatches, ...containsMatches].slice(0, 8);
+  }, [formData.aadharNumber, inquiriesList]);
+
+  // Reset highlight index when suggestions change
+  useEffect(() => {
+    if (aadharSuggestions.length > 0) {
+      setHighlightedAadharIndex(0);
+    } else {
+      setHighlightedAadharIndex(-1);
+    }
+  }, [aadharSuggestions]);
+
+  // Auto-scroll highlighted suggestion into view
+  useEffect(() => {
+    if (highlightedAadharIndex >= 0 && aadharListRef.current) {
+      const activeEl = aadharListRef.current.children[highlightedAadharIndex] as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [highlightedAadharIndex]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (aadharContainerRef.current && !aadharContainerRef.current.contains(e.target as Node)) {
+        setIsAadharDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectAadharSuggestion = (record: InquiryData) => {
+    setIsAadharDropdownOpen(false);
+    setFormData(prev => ({
+      ...prev,
+      ...record,
+      date: prev.date,
+      aadharNumber: record.aadharNumber || prev.aadharNumber,
+      branch: userProfile?.branch || record.branch || prev.branch,
+      inquiryTakenBy: userProfile?.username || record.inquiryTakenBy || prev.inquiryTakenBy
+    }));
+  };
+
+  const handleAadharKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isAadharDropdownOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      if (aadharSuggestions.length > 0) {
+        setIsAadharDropdownOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (aadharSuggestions.length > 0) {
+        setHighlightedAadharIndex((prev) => (prev < aadharSuggestions.length - 1 ? prev + 1 : 0));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (aadharSuggestions.length > 0) {
+        setHighlightedAadharIndex((prev) => (prev > 0 ? prev - 1 : aadharSuggestions.length - 1));
+      }
+    } else if (e.key === "Enter") {
+      if (isAadharDropdownOpen && highlightedAadharIndex >= 0 && highlightedAadharIndex < aadharSuggestions.length) {
+        e.preventDefault();
+        handleSelectAadharSuggestion(aadharSuggestions[highlightedAadharIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setIsAadharDropdownOpen(false);
+    }
+  };
+
   // Aadhaar checking logic
   const handleAadharChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^\d]/g, "").slice(0, 12);
     setFormData(prev => ({ ...prev, aadharNumber: val }));
+    setIsAadharDropdownOpen(val.length >= 1);
 
     if (val.length === 12) {
       setLookupLoading(true);
@@ -218,19 +359,27 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Aadhar Number */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" ref={aadharContainerRef}>
               <label htmlFor="aadharNumber" className="block text-xs font-semibold text-slate-400">
                 Aadhar Number (12 Digits)
               </label>
               <div className="relative">
                 <input
+                  ref={aadharInputRef}
                   type="text"
                   id="aadharNumber"
                   value={formData.aadharNumber}
                   onChange={handleAadharChange}
-                  className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-750 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-wider"
+                  onFocus={() => {
+                    if (formData.aadharNumber.trim().length >= 1) {
+                      setIsAadharDropdownOpen(true);
+                    }
+                  }}
+                  onKeyDown={handleAadharKeyDown}
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-wider"
                   placeholder="e.g. 123456789012"
                   maxLength={12}
+                  autoComplete="off"
                   required
                 />
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 flex items-center">
@@ -242,6 +391,47 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                     <Contact className="h-4.5 w-4.5 text-slate-600" />
                   )}
                 </div>
+
+                {/* Suggestion Dropdown — constrained to Aadhar bar width */}
+                {isAadharDropdownOpen && aadharSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-60 overflow-y-auto bg-white border border-gray-200 shadow-md rounded-lg">
+                    <div ref={aadharListRef}>
+                      {aadharSuggestions.map((item, index) => {
+                        const isHighlighted = highlightedAadharIndex === index;
+                        const fullName = (item.fullName || `${item.firstName || ""} ${item.middleName || ""} ${item.lastName || ""}`).trim();
+                        const isAdmission = item.admissionStatus === "Admitted";
+
+                        return (
+                          <div
+                            key={item.id || index}
+                            onClick={() => handleSelectAadharSuggestion(item)}
+                            onMouseEnter={() => setHighlightedAadharIndex(index)}
+                            className={`px-4 py-2.5 cursor-pointer select-none border-b border-gray-100 last:border-0 transition-colors ${
+                              isHighlighted ? "bg-gray-50" : ""
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[13px] font-bold text-gray-900 leading-snug truncate">
+                                {fullName || "Unnamed"}
+                              </p>
+                              <span className="shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                                Inquiry
+                              </span>
+                            </div>
+                            <p className="text-[11px] font-semibold text-teal-600 mt-0.5">
+                              {item.aadharNumber}
+                            </p>
+                            {item.interestedCourse && (
+                              <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                                {item.interestedCourse.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -256,7 +446,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -272,7 +462,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -284,7 +474,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="middleName"
                 value={formData.middleName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               />
             </div>
             <div className="space-y-1.5">
@@ -295,7 +485,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -311,7 +501,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="qualification"
                 value={formData.qualification}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -324,7 +514,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="age"
                 value={formData.age || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
                 min={0}
               />
@@ -337,7 +527,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Gender</option>
@@ -356,7 +546,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="interestedCourse"
                 value={formData.interestedCourse}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50 transition-colors font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Course</option>
@@ -379,7 +569,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="inquiryTakenBy"
                 value={formData.inquiryTakenBy}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -390,7 +580,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 id="branch"
                 name="branch"
                 value={formData.branch}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed capitalize font-semibold"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed capitalize font-semibold"
                 readOnly
               />
             </div>
@@ -409,7 +599,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="phoneNo"
                 value={formData.phoneNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, phoneNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
@@ -422,7 +612,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="whatsappNo"
                 value={formData.whatsappNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, whatsappNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
@@ -435,7 +625,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="parentsNo"
                 value={formData.parentsNo}
                 onChange={(e) => setFormData(prev => ({ ...prev, parentsNo: e.target.value.replace(/[^\d]/g, "").slice(0, 10) }))}
-                className="w-full bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 placeholder="10 digit number"
                 required
               />
@@ -450,7 +640,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full bg-slate-955 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               placeholder="e.g. email@example.com"
             />
           </div>
@@ -469,7 +659,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="addressLine1"
                 value={formData.addressLine1}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
                 required
               />
             </div>
@@ -481,7 +671,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="addressLine2"
                 value={formData.addressLine2}
                 onChange={handleInputChange}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium"
               />
             </div>
             <div className="space-y-1.5">
@@ -492,7 +682,7 @@ export default function InquiryView({ userProfile, onTakeAdmission }: InquiryVie
                 name="pincode"
                 value={formData.pincode}
                 onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value.replace(/[^\d]/g, "").slice(0, 6) }))}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-widest"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 transition-colors font-medium tracking-widest"
                 placeholder="6 digits"
                 required
               />

@@ -479,7 +479,7 @@ export default function AdmissionView({
                       setEmail("");
                     }
                   }}
-                  className="flex-1 bg-slate-950/80 border border-slate-850 rounded-xl px-4 py-2 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 cursor-pointer"
+                  className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 cursor-pointer"
                 >
                   <option value="">-- Start New Admission from Scratch --</option>
                   {inquiriesList.map(inq => (
@@ -531,7 +531,7 @@ export default function AdmissionView({
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
                   readOnly={!!inquiryData}
                   required
                 />
@@ -542,7 +542,7 @@ export default function AdmissionView({
                   type="text"
                   value={middleName}
                   onChange={(e) => setMiddleName(e.target.value)}
-                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
                   readOnly={!!inquiryData}
                 />
               </div>
@@ -552,7 +552,7 @@ export default function AdmissionView({
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
                   readOnly={!!inquiryData}
                   required
                 />
@@ -563,7 +563,7 @@ export default function AdmissionView({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
                   readOnly={!!inquiryData}
                   placeholder="student@example.com"
                 />
@@ -624,7 +624,7 @@ export default function AdmissionView({
                   id="course_select"
                   value={course}
                   onChange={(e) => setCourse(e.target.value)}
-                  className={`w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer ${inquiryData ? 'bg-slate-900 text-slate-400 cursor-not-allowed' : ''}`}
                   disabled={!!inquiryData}
                   required
                 >
@@ -660,7 +660,7 @@ export default function AdmissionView({
                       type="number"
                       value={editableFees || ""}
                       onChange={(e) => setEditableFees(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full bg-slate-950/80 border border-slate-855 rounded-xl pl-8 pr-4 py-2.5 text-sm text-teal-400 focus:outline-none focus:border-teal-500/50 font-bold"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-8 pr-4 py-2.5 text-sm text-teal-400 focus:outline-none focus:border-teal-500/50 font-bold"
                       required
                     />
                   </div>
@@ -674,7 +674,7 @@ export default function AdmissionView({
                       type="number"
                       value={editableAdmissionFee || ""}
                       onChange={(e) => setEditableAdmissionFee(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full bg-slate-950/80 border border-slate-855 rounded-xl pl-8 pr-4 py-2.5 text-sm text-indigo-400 focus:outline-none focus:border-indigo-500/50 font-bold"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-8 pr-4 py-2.5 text-sm text-indigo-400 focus:outline-none focus:border-indigo-500/50 font-bold"
                       required
                     />
                   </div>
@@ -701,7 +701,7 @@ export default function AdmissionView({
                 id="payment_mode"
                 value={paymentMode}
                 onChange={(e) => setPaymentMode(e.target.value)}
-                className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-350 focus:outline-none focus:border-teal-500/50 font-medium cursor-pointer"
                 required
               >
                 <option value="">Select Mode</option>
@@ -724,7 +724,7 @@ export default function AdmissionView({
                   id="guardian_relation"
                   value={guardianRelation}
                   onChange={(e) => setGuardianRelation(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
                   placeholder="e.g. Father, Mother, Spouse"
                 />
               </div>
@@ -735,7 +735,7 @@ export default function AdmissionView({
                   id="guardian_name"
                   value={guardianName}
                   onChange={(e) => setGuardianName(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-855 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-teal-500/50 font-medium"
                   placeholder="Enter full name"
                 />
               </div>

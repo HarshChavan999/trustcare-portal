@@ -10,7 +10,7 @@ import {
   loginWithGoogle
 } from "../lib/services/authService";
 import { InquiryData } from "../lib/services/inquiryService";
-import { Lock, User, Loader2, LogOut, Menu, X, ReceiptIndianRupee, FileText, UserPlus, GraduationCap, TrendingUp, BarChart3, Clock, Award } from "lucide-react";
+import { Lock, User, Loader2, LogOut, Menu, X, ReceiptIndianRupee, FileText, UserPlus, GraduationCap, TrendingUp, BarChart3, Clock, Award, Settings } from "lucide-react";
 import { CircleIndianRupee } from "../components/CircleIndianRupee";
 
 // UI Components
@@ -242,21 +242,19 @@ export default function Home() {
   // Sidebar elements definition for mobile fallback renderer
   const navItems = [
     { id: "inquiry", label: "New Inquiry", icon: FileText },
-    { id: "admission", label: "New Admission", icon: UserPlus },
-    { id: "payment", label: "Course Payment", icon: CircleIndianRupee },
     { id: "exam-receipt", label: "Exam Receipt", icon: ReceiptIndianRupee }
   ];
 
-  const adminItems = [
-    { id: "course-management", label: "Course Management", icon: "fa-graduation-cap" },
-    { id: "profile-settings", label: "Profile Settings", icon: "fa-cog" }
+  const analyticsItems = [
+    { id: "inquiry-analytics", label: "Inquiry", icon: BarChart3 },
+    { id: "admission-analytics", label: "Admission", icon: TrendingUp },
+    { id: "fee-structure", label: "Fees", icon: GraduationCap },
+    { id: "due-fees", label: "Due Fees", icon: Clock }
   ];
 
-  const analyticsItems = [
-    { id: "fee-structure", label: "Fees Structure", icon: GraduationCap },
-    { id: "admission-analytics", label: "Admission Structure", icon: TrendingUp },
-    { id: "inquiry-analytics", label: "Inquiry Structure", icon: BarChart3 },
-    { id: "due-fees", label: "Due Fees", icon: Clock }
+  const adminItems = [
+    { id: "course-management", label: "Course Management", icon: GraduationCap },
+    { id: "profile-settings", label: "Profile Settings", icon: Settings }
   ];
 
   // Auth Loading Screen
@@ -281,6 +279,20 @@ export default function Home() {
           setActiveTab={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }}
           onLogout={handleLogout}
           onSearchStudentId={handleSearchStudentId}
+          onSelectInquiry={handleTakeAdmission}
+          onSelectAdmission={(admission) => {
+            handleCoursePaymentRedirect(
+              admission.enrollmentId,
+              admission.studentName || `${admission.firstName || ""} ${admission.lastName || ""}`.trim(),
+              admission.courseName,
+              admission.totalCourseFees || 0,
+              admission.branch || "main",
+              admission.receiptNumber || "",
+              admission.courseDuration || "",
+              admission.guardianName || "",
+              admission.guardianRelation || ""
+            );
+          }}
         />
 
         {/* Dashboard Main Workspace */}
@@ -335,6 +347,23 @@ export default function Home() {
                 <>
                   <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
                   {analyticsItems.map(item => {
+                    const MobileIcon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
+                          ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                          : "text-slate-400 hover:bg-slate-900/50"
+                          }`}
+                      >
+                        <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin</div>
+                  {adminItems.map(item => {
                     const MobileIcon = item.icon;
                     return (
                       <button

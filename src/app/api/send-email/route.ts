@@ -1142,17 +1142,19 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
       const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept.", "Oct.", "Nov.", "Dec."];
       for (let mi = 0; mi < 12; mi++) {
         const inst = grid[mi];
-        const targetYear = startYear + y + (mi < startMonth ? 1 : 0);
-        const day = inst ? inst.day : defaultDay;
-        const validDay = getValidDayForMonth(targetYear, mi, day);
-        const dateLabel = `${validDay}${getDaySuffix(validDay)} ${monthLabels[mi]}`;
-
         const cellX = 35 + mi * colWidth;
 
-        // Draw date text centered in header cell
-        const dateTextWidth = getSuperscriptTextWidth(dateLabel, 7.2, boldFont);
-        const drawX = cellX + (colWidth - dateTextWidth) / 2;
-        drawSuperscriptText(page, dateLabel, drawX, currentTblY + 5, 7.2, boldFont, blackColor);
+        if (inst) {
+          const targetYear = startYear + y + (mi < startMonth ? 1 : 0);
+          const day = inst.day;
+          const validDay = getValidDayForMonth(targetYear, mi, day);
+          const dateLabel = `${validDay}${getDaySuffix(validDay)} ${monthLabels[mi]}`;
+
+          // Draw date text centered in header cell
+          const dateTextWidth = getSuperscriptTextWidth(dateLabel, 7.2, boldFont);
+          const drawX = cellX + (colWidth - dateTextWidth) / 2;
+          drawSuperscriptText(page, dateLabel, drawX, currentTblY + 5, 7.2, boldFont, blackColor);
+        }
 
         // Draw vertical column line for header
         if (mi > 0) {
