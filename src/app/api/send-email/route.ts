@@ -1547,7 +1547,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email service is not configured on the server." }, { status: 500 });
     }
 
-    const fromEmail = process.env.EMAIL_FROM || "admin@trustcareinstituteofhealthscience.in";
+    const fromEmail = process.env.EMAIL_FROM || "trustcareinstitute03@gmail.com";
     let subject = `Trustcare Institute Of Health Science Receipt - ${data.receiptNo || 'Transaction Alert'}`;
     if (type === 'admission') {
       subject = `Admission Confirmed! Congratulations ${data.studentName || ''} - Trustcare Institute Of Health Science`;
