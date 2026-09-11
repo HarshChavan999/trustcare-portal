@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 // @ts-ignore
 import * as fontkit from 'fontkit';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
+import nodemailer from 'nodemailer';
 
 // Force Node.js runtime so pdf-lib (which uses Buffer/Uint8Array) works correctly
 export const runtime = 'nodejs';
@@ -1537,13 +1539,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid or missing receipt type" }, { status: 400 });
     }
 
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) {
-      console.warn("SENDGRID_API_KEY is not configured in environment variables.");
-      return NextResponse.json({ error: "SendGrid API key is not configured on the server." }, { status: 500 });
+    const hasAwsSes = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+    const hasSendGrid = Boolean(process.env.SENDGRID_API_KEY);
+
+    if (!hasAwsSes && !hasSendGrid) {
+      console.warn("Neither AWS SES nor SendGrid is configured in environment variables.");
+      return NextResponse.json({ error: "Email service is not configured on the server." }, { status: 500 });
     }
 
-    const fromEmail = process.env.EMAIL_FROM || "trustcareinstitute03@gmail.com";
+    const fromEmail = process.env.EMAIL_FROM || "admin@trustcareinstituteofhealthscience.in";
     let subject = `Trustcare Institute Of Health Science Receipt - ${data.receiptNo || 'Transaction Alert'}`;
     if (type === 'admission') {
       subject = `Admission Confirmed! Congratulations ${data.studentName || ''} - Trustcare Institute Of Health Science`;
@@ -1551,11 +1555,12 @@ export async function POST(req: Request) {
       subject = `Official Admission Form - ${data.studentName || ''} (${data.enrollmentId || ''}) - Trustcare Institute Of Health Science`;
     }
     
+    let logoBuffer: Buffer | null = null;
     let logoBase64 = "";
     try {
       const logoPath = path.join(process.cwd(), 'public', 'TrustCareLogo.png');
       if (fs.existsSync(logoPath)) {
-        const logoBuffer = fs.readFileSync(logoPath);
+        logoBuffer = fs.readFileSync(logoPath);
         logoBase64 = logoBuffer.toString('base64');
       }
     } catch (e) {
@@ -1565,40 +1570,101 @@ export async function POST(req: Request) {
     const htmlContent = generateEmailTemplate(type, data, logoBase64);
 
     // Generate PDF copy of the receipt
-    let attachments: any[] = [];
+    let pdfBuffer: Buffer | null = null;
+    let pdfFilename = type === 'admission_form'
+      ? `admission_form_${(data.enrollmentId || 'details').replace(/\//g, '-')}.pdf`
+      : `receipt_${(data.receiptNo || 'details').replace(/\//g, '-')}.pdf`;
+
+    if (data.studentName) {
+      const sanitizedStudentName = data.studentName
+        .replace(/[^a-zA-Z0-9\s-_]/g, '')
+        .trim()
+        .replace(/\s+/g, '_');
+      if (type === 'admission_form') {
+        pdfFilename = `${sanitizedStudentName}_Admission_Form_${(data.enrollmentId || 'details').replace(/[\/\\]/g, '-')}.pdf`;
+      } else {
+        const sanitizedReceiptNo = (data.receiptNo || 'details').replace(/[\/\\]/g, '-');
+        pdfFilename = `${sanitizedStudentName}_${sanitizedReceiptNo}.pdf`;
+      }
+    }
+
     try {
-      let pdfBuffer: Buffer;
       if (type === 'admission_form') {
         pdfBuffer = await generatePdfAdmissionFormBuffer(data);
       } else {
         pdfBuffer = await generatePdfReceiptBuffer(type, data);
       }
-      const base64Content = pdfBuffer.toString('base64');
+      console.log(`[send-email] PDF generated: ${pdfFilename} (${pdfBuffer.length} bytes)`);
+    } catch (pdfErr) {
+      console.error("[send-email] Error generating receipt PDF attachment:", pdfErr);
+    }
 
-      let filename = type === 'admission_form'
-        ? `admission_form_${(data.enrollmentId || 'details').replace(/\//g, '-')}.pdf`
-        : `receipt_${(data.receiptNo || 'details').replace(/\//g, '-')}.pdf`;
-      if (data.studentName) {
-        const sanitizedStudentName = data.studentName
-          .replace(/[^a-zA-Z0-9\s-_]/g, '')
-          .trim()
-          .replace(/\s+/g, '_');
-        if (type === 'admission_form') {
-          filename = `${sanitizedStudentName}_Admission_Form_${(data.enrollmentId || 'details').replace(/[\/\\]/g, '-')}.pdf`;
-        } else {
-          const sanitizedReceiptNo = (data.receiptNo || 'details').replace(/[\/\\]/g, '-');
-          filename = `${sanitizedStudentName}_${sanitizedReceiptNo}.pdf`;
+    // 1. Try sending via Amazon SES if configured
+    if (hasAwsSes) {
+      try {
+        console.log(`[send-email] Dispatching email via Amazon SES (${process.env.AWS_REGION || "ap-south-1"})...`);
+        const sesClient = new SESv2Client({
+          region: process.env.AWS_REGION || "ap-south-1",
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+          },
+        });
+
+        const transporter = nodemailer.createTransport({
+          SES: { sesClient, SendEmailCommand },
+        });
+
+        const mailAttachments: any[] = [];
+        if (pdfBuffer) {
+          mailAttachments.push({
+            filename: pdfFilename,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          });
         }
-      }
+        if (logoBuffer) {
+          mailAttachments.push({
+            filename: 'TrustCareLogo.png',
+            content: logoBuffer,
+            cid: 'trustcare_logo',
+          });
+        }
 
-      // SendGrid requires `content` (base64 encoded), `filename`, `type`, and `disposition`
-      attachments.push({
-        content: base64Content,
-        filename,
-        type: 'application/pdf',
-        disposition: 'attachment',
-      });
-      
+        const mailOptions = {
+          from: `"Trustcare Institute Of Health Science" <${fromEmail}>`,
+          to,
+          subject,
+          html: htmlContent,
+          attachments: mailAttachments,
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log(`[send-email] Successfully sent via Amazon SES:`, result.messageId);
+        return NextResponse.json({ success: true, provider: "aws-ses", messageId: result.messageId });
+      } catch (sesErr: any) {
+        console.error("[send-email] Amazon SES sending failed:", sesErr);
+        // If SendGrid is also available, try fallback; otherwise throw
+        if (!hasSendGrid) {
+          const sesMsg = sesErr.message || "Failed to send email via Amazon SES";
+          return NextResponse.json({ error: sesMsg }, { status: 500 });
+        }
+        console.warn("[send-email] Attempting SendGrid fallback...");
+      }
+    }
+
+    // 2. Fallback: Send via SendGrid
+    if (hasSendGrid) {
+      const apiKey = process.env.SENDGRID_API_KEY!;
+      const attachments: any[] = [];
+      if (pdfBuffer) {
+        attachments.push({
+          content: pdfBuffer.toString('base64'),
+          filename: pdfFilename,
+          type: 'application/pdf',
+          disposition: 'attachment',
+        });
+      }
       if (logoBase64) {
         attachments.push({
           content: logoBase64,
@@ -1609,51 +1675,44 @@ export async function POST(req: Request) {
         });
       }
 
-      console.log(`[send-email] PDF generated: ${filename} (${pdfBuffer.length} bytes)`);
-    } catch (pdfErr) {
-      console.error("[send-email] Error generating receipt PDF attachment:", pdfErr);
-      // Continue sending email even if PDF generation failed — email body still delivers
-    }
-
-    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        personalizations: [
-          {
-            to: [
-              {
-                email: to,
-              }
-            ],
-            subject: subject,
-          }
-        ],
-        from: {
-          email: fromEmail,
-          name: "Trustcare Institute Of Health Science",
+      const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
-        content: [
-          {
-            type: "text/html",
-            value: htmlContent,
-          }
-        ],
-        attachments: attachments.length > 0 ? attachments : undefined,
-      }),
-    });
+        body: JSON.stringify({
+          personalizations: [
+            {
+              to: [{ email: to }],
+              subject,
+            }
+          ],
+          from: {
+            email: fromEmail,
+            name: "Trustcare Institute Of Health Science",
+          },
+          content: [
+            {
+              type: "text/html",
+              value: htmlContent,
+            }
+          ],
+          attachments: attachments.length > 0 ? attachments : undefined,
+        }),
+      });
 
-    if (!response.ok) {
-      const resBody = await response.json().catch(() => ({}));
-      console.error("SendGrid API error response:", resBody);
-      const errorMessage = resBody.errors?.[0]?.message || "Failed to send email via SendGrid";
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      if (!response.ok) {
+        const resBody = await response.json().catch(() => ({}));
+        console.error("SendGrid API error response:", resBody);
+        const errorMessage = resBody.errors?.[0]?.message || "Failed to send email via SendGrid";
+        return NextResponse.json({ error: errorMessage }, { status: response.status });
+      }
+
+      return NextResponse.json({ success: true, provider: "sendgrid" });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: "No email service succeeded." }, { status: 500 });
   } catch (error: any) {
     console.error("Error sending email:", error);
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
