@@ -1,8 +1,10 @@
 import { db, storage } from "../firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { 
   collection, 
   query, 
   getDocs, 
+  getDoc,
   doc, 
   setDoc, 
   addDoc, 
@@ -12,7 +14,6 @@ import {
   updateDoc,
   deleteDoc
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export interface AdmissionData {
   id?: string;
@@ -240,10 +241,150 @@ export async function getAdmissionAnalytics(branchFilter?: string) {
 
 export async function deleteAdmission(admissionId: string) {
   try {
-    await deleteDoc(doc(db, "admissions", admissionId));
-    return { success: true, message: "Admission deleted successfully" };
+    // 1. Fetch admission document to get student details
+    let admissionData: AdmissionData | null = null;
+    const admissionRef = doc(db, "admissions", admissionId);
+    const admissionSnap = await getDoc(admissionRef);
+    
+    if (admissionSnap.exists()) {
+      admissionData = admissionSnap.data() as AdmissionData;
+    } else {
+      // Query by enrollmentId in case doc ID was different
+      const q = query(collection(db, "admissions"), where("enrollmentId", "==", admissionId));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        admissionData = snap.docs[0].data() as AdmissionData;
+      }
+    }
+
+    const enrollmentId = admissionData?.enrollmentId || admissionId;
+    const studentName = admissionData?.studentName || (admissionData ? `${admissionData.firstName || ""} ${admissionData.middleName || ""} ${admissionData.lastName || ""}`.trim() : "");
+    const email = admissionData?.email?.trim();
+    const firstName = admissionData?.firstName?.trim();
+    const lastName = admissionData?.lastName?.trim();
+
+    // 2. Delete admission document
+    await deleteDoc(admissionRef);
+    if (enrollmentId !== admissionId) {
+      try {
+        await deleteDoc(doc(db, "admissions", enrollmentId));
+      } catch (_) {}
+    }
+
+    // 3. Delete Fee Structure (Removes student from Fees and Due Fees lists)
+    try {
+      await deleteDoc(doc(db, "feeStructures", enrollmentId));
+      if (admissionId !== enrollmentId) {
+        await deleteDoc(doc(db, "feeStructures", admissionId));
+      }
+    } catch (feeErr) {
+      console.warn("Could not delete fee structure:", feeErr);
+    }
+
+    // 4. Delete Installment Schedules & Installment Payments
+    try {
+      await deleteDoc(doc(db, "installmentSchedules", enrollmentId));
+      await deleteDoc(doc(db, "installmentPayments", enrollmentId));
+      if (admissionId !== enrollmentId) {
+        await deleteDoc(doc(db, "installmentSchedules", admissionId));
+        await deleteDoc(doc(db, "installmentPayments", admissionId));
+      }
+    } catch (instErr) {
+      console.warn("Could not delete installment data:", instErr);
+    }
+
+    // 5. Delete Exam Receipts for this student
+    try {
+      const examQ = query(collection(db, "examReceipts"), where("enrollmentId", "==", enrollmentId));
+      const examSnap = await getDocs(examQ);
+      for (const exDoc of examSnap.docs) {
+        await deleteDoc(doc(db, "examReceipts", exDoc.id));
+      }
+    } catch (examErr) {
+      console.warn("Could not delete exam receipts:", examErr);
+    }
+
+    // 6. Delete Enrollment document
+    try {
+      await deleteDoc(doc(db, "enrollments", enrollmentId));
+      if (admissionId !== enrollmentId) {
+        await deleteDoc(doc(db, "enrollments", admissionId));
+      }
+    } catch (enrErr) {
+      console.warn("Could not delete enrollment doc:", enrErr);
+    }
+
+    // 7. Delete corresponding Inquiry record(s) for this student
+    try {
+      const inquiriesRef = collection(db, "inquiries");
+      const matchedInquiryDocIds = new Set<string>();
+
+      // Lookup by studentName / fullName
+      if (studentName) {
+        const qName = query(inquiriesRef, where("fullName", "==", studentName));
+        const snapName = await getDocs(qName);
+        snapName.forEach((d) => matchedInquiryDocIds.add(d.id));
+      }
+
+      // Lookup by firstName and lastName
+      if (firstName && lastName) {
+        const qFirstLast = query(inquiriesRef, where("firstName", "==", firstName), where("lastName", "==", lastName));
+        const snapFirstLast = await getDocs(qFirstLast);
+        snapFirstLast.forEach((d) => matchedInquiryDocIds.add(d.id));
+      }
+
+      // Lookup by email if present
+      if (email) {
+        const qEmail = query(inquiriesRef, where("email", "==", email));
+        const snapEmail = await getDocs(qEmail);
+        snapEmail.forEach((d) => matchedInquiryDocIds.add(d.id));
+      }
+
+      // Delete all matched inquiry documents
+      for (const inqId of matchedInquiryDocIds) {
+        await deleteDoc(doc(db, "inquiries", inqId));
+      }
+    } catch (inqErr) {
+      console.warn("Could not delete associated inquiry:", inqErr);
+    }
+
+    // 8. Delete Student Photo from Firebase Storage if exists
+    try {
+      const photoRef = ref(storage, `student_photos/${enrollmentId}.jpg`);
+      await deleteObject(photoRef);
+    } catch (_) {
+      // Ignore if photo doesn't exist
+    }
+
+    // 9. Log Audit Trail
+    try {
+      await addDoc(collection(db, "auditLogs"), {
+        logId: `LOG-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        userId: "Admin",
+        action: "Admission and Associated Records Deleted (Cascaded)",
+        timestamp: Timestamp.now(),
+        details: JSON.stringify({
+          admissionId,
+          enrollmentId,
+          studentName
+        })
+      });
+    } catch (_) {}
+
+    return { success: true, message: "Student admission, inquiry, fees, and due fees records deleted successfully" };
   } catch (error: any) {
-    console.error("Error deleting admission:", error);
+    console.error("Error cascading delete for admission:", error);
     return { success: false, message: error.message };
   }
 }
+
+export async function updateAdmissionEmail(admissionId: string, email: string) {
+  try {
+    await updateDoc(doc(db, "admissions", admissionId), { email: email.trim() });
+    return { success: true, message: "Email updated successfully" };
+  } catch (error: any) {
+    console.error("Error updating admission email:", error);
+    return { success: false, message: error.message || "Failed to update email" };
+  }
+}
+

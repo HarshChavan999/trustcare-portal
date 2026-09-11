@@ -24,7 +24,8 @@ import {
   ArrowRight,
   Info,
   Calendar,
-  X
+  X,
+  Mail
 } from "lucide-react";
 
 interface PaymentViewProps {
@@ -134,6 +135,7 @@ export default function PaymentView({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activePaymentInst, setActivePaymentInst] = useState<Installment | null>(null);
   const [customAmount, setCustomAmount] = useState<number | "">("");
+  const [paymentModalEmail, setPaymentModalEmail] = useState("");
 
   useEffect(() => {
     if (initialEnrollmentId) {
@@ -375,7 +377,7 @@ export default function PaymentView({
     finally { setLoading(false); }
   };
 
-  const handleConfirmCustomPayment = async () => {
+  const handleConfirmCustomPayment = async (sendEmail: boolean = false) => {
     if (!activePaymentInst || customAmount === "" || Number(customAmount) < 0) {
       alert("Please enter a valid amount.");
       return;
@@ -386,8 +388,16 @@ export default function PaymentView({
       return;
     }
 
+    const targetEmail = (paymentModalEmail || studentEmail || "").trim();
+    if (sendEmail && !targetEmail) {
+      alert("Please enter a student email address to send the receipt.");
+      return;
+    }
+
     setShowPaymentModal(false);
-    setProcessingPayment(activePaymentInst.installmentNumber);
+    const instToPay = activePaymentInst;
+    const paidAmount = Number(customAmount);
+    setProcessingPayment(instToPay.installmentNumber);
     setErrorMsg("");
 
     try {
@@ -395,15 +405,62 @@ export default function PaymentView({
         enrollmentId, 
         studentName, 
         courseName, 
-        installmentNumber: activePaymentInst.installmentNumber, 
-        installmentAmount: Number(customAmount), 
+        installmentNumber: instToPay.installmentNumber, 
+        installmentAmount: paidAmount, 
         paymentMethod, 
         paymentDate: new Date().toISOString().split("T")[0], 
         loggedInUser: userProfile?.username || "Admin" 
       });
       
       if (res.success) {
-        setSuccessMsg(`Installment ${activePaymentInst.installmentNumber} recorded successfully! Schedule updated.`);
+        let msg = `Installment ${instToPay.installmentNumber} recorded successfully! Schedule updated.`;
+
+        if (sendEmail && targetEmail) {
+          try {
+            const effectiveSchedule = schedule.length > 0 ? schedule : [];
+            const previousPaid = effectiveSchedule
+              .filter((s) => s.status === "Paid" && s.installmentNumber < instToPay.installmentNumber)
+              .reduce((sum, s) => sum + s.amount, 0);
+            const paidUpToNow = previousPaid + paidAmount;
+            const totalPayable = (paymentType === "full" ? fullTotalPayable : emiTotalPayable) || totalFees;
+            const balanceDue = Math.max(0, totalPayable - paidUpToNow);
+
+            const emailRes = await fetch("/api/send-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: targetEmail,
+                type: "installment",
+                data: {
+                  receiptNo: receiptNo || `IR-${enrollmentId}-${instToPay.installmentNumber}`,
+                  date: new Date().toLocaleDateString("en-GB"),
+                  studentName: studentName,
+                  courseName: courseFullName,
+                  installmentNumber: instToPay.installmentNumber,
+                  amountPaid: paidAmount,
+                  paymentMode: paymentMethod,
+                  receivedBy: userProfile?.username || "Authorized Officer",
+                  branch: branch.toUpperCase(),
+                  totalPaidSoFar: paidUpToNow,
+                  balanceDue: balanceDue,
+                  totalFees: totalPayable,
+                }
+              })
+            });
+
+            if (emailRes.ok) {
+              msg = `Installment ${instToPay.installmentNumber} recorded and receipt emailed to ${targetEmail} successfully!`;
+              setEmailSentState(prev => ({ ...prev, [instToPay.installmentNumber]: true }));
+            } else {
+              const errJson = await emailRes.json();
+              setErrorMsg(`Payment recorded, but failed to send email: ${errJson.error || "Unknown error"}`);
+            }
+          } catch (e: any) {
+            setErrorMsg(`Payment recorded, but failed to send email: ${e.message}`);
+          }
+        }
+
+        setSuccessMsg(msg);
         await checkExistingSchedule(enrollmentId);
       } else {
         setErrorMsg(res.message || "Failed to record payment.");
@@ -887,63 +944,82 @@ export default function PaymentView({
                 <tr><th className="px-5 py-3 text-center">Installment</th><th className="px-5 py-3 text-center">Due Date</th><th className="px-5 py-3 text-center">Amount</th><th className="px-5 py-3 text-center">Status</th><th className="px-5 py-3 text-center">Mark as Paid</th><th className="px-5 py-3 text-center">Receipt</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-900/60">
-                {activeSchedule.map((inst) => (
-                  <tr key={inst.installmentNumber} className="hover:bg-slate-900/20 text-slate-300">
-                    <td className="px-5 py-3 text-center font-medium">
-                      {inst.type ? `${inst.type} (Installment ${inst.installmentNumber})` : `Installment ${inst.installmentNumber}`}
-                    </td>
-                    <td className="px-5 py-3 text-center text-slate-400">{inst.dueDate}</td>
-                    <td className="px-5 py-3 text-center font-bold">₹{inst.amount.toLocaleString()}</td>
-                    <td className="px-5 py-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${inst.status === "Paid"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                        }`}>
-                        {inst.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!confirmed || processingPayment === inst.installmentNumber || inst.status === "Paid") return;
-                          setActivePaymentInst(inst);
-                          setCustomAmount(inst.amount);
-                          setShowPaymentModal(true);
-                        }}
-                        disabled={!confirmed || inst.status === "Paid" || processingPayment === inst.installmentNumber}
-                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${
-                          inst.status === "Paid" 
-                            ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                            : "bg-teal-500 text-white hover:bg-teal-400 shadow-lg shadow-teal-500/20 cursor-pointer"
-                        }`}
-                      >
-                        {inst.status === "Paid" ? "Paid" : "Pay"}
-                      </button>
-                    </td>
-                    <td className="px-5 py-3 text-center">
-                      {inst.status === "Paid" ? (
-                        <div className="flex flex-col sm:flex-row gap-1.5 justify-center">
-                          <button
-                            onClick={() => handlePrintReceipt(inst)}
-                            className="px-2 py-1 text-[9px] font-bold text-white bg-emerald-500 hover:bg-emerald-500/80 transition-colors rounded-lg flex items-center justify-center gap-1 shadow shadow-emerald-500/10 cursor-pointer hover-lift"
-                          >
-                            <Printer className="h-3 w-3 text-white" />Print
-                          </button>
+                {activeSchedule.map((inst) => {
+                  const isNextPayable = Boolean(
+                    confirmed &&
+                    locked &&
+                    activeSchedule.find((s) => s.status === "Pending")?.installmentNumber === inst.installmentNumber
+                  );
+
+                  return (
+                    <tr key={inst.installmentNumber} className="hover:bg-slate-900/20 text-slate-300">
+                      <td className="px-5 py-3 text-center font-medium">
+                        {inst.type ? `${inst.type} (Installment ${inst.installmentNumber})` : `Installment ${inst.installmentNumber}`}
+                      </td>
+                      <td className="px-5 py-3 text-center text-slate-400">{inst.dueDate}</td>
+                      <td className="px-5 py-3 text-center font-bold">₹{inst.amount.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${inst.status === "Paid"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          }`}>
+                          {inst.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        {inst.status === "Paid" ? (
+                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-block">
+                            Paid
+                          </span>
+                        ) : isNextPayable ? (
                           <button
                             type="button"
-                            onClick={() => handleEmailInstallmentReceipt(inst)}
-                            className="px-2 py-1 text-[9px] font-bold text-white bg-teal-500 hover:bg-teal-500/80 transition-colors rounded-lg flex items-center justify-center gap-1 cursor-pointer hover-lift"
+                            onClick={() => {
+                              if (processingPayment === inst.installmentNumber) return;
+                              setActivePaymentInst(inst);
+                              setCustomAmount(inst.amount);
+                              setPaymentModalEmail(studentEmail || "");
+                              setShowPaymentModal(true);
+                            }}
+                            disabled={processingPayment === inst.installmentNumber}
+                            className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-teal-500 text-white hover:bg-teal-400 shadow-lg shadow-teal-500/20 cursor-pointer transition-colors"
                           >
-                            ✉ {emailSentState[inst.installmentNumber] ? "Resend" : "Email"}
+                            {processingPayment === inst.installmentNumber ? (
+                              <span className="flex items-center gap-1">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Processing...
+                              </span>
+                            ) : (
+                              "Pay"
+                            )}
                           </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-650">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        ) : (
+                          <span className="text-slate-650 font-medium">-</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        {inst.status === "Paid" ? (
+                          <div className="flex flex-col sm:flex-row gap-1.5 justify-center">
+                            <button
+                              onClick={() => handlePrintReceipt(inst)}
+                              className="px-2 py-1 text-[9px] font-bold text-white bg-emerald-500 hover:bg-emerald-500/80 transition-colors rounded-lg flex items-center justify-center gap-1 shadow shadow-emerald-500/10 cursor-pointer hover-lift"
+                            >
+                              <Printer className="h-3 w-3 text-white" />Print
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEmailInstallmentReceipt(inst)}
+                              className="px-2 py-1 text-[9px] font-bold text-white bg-teal-500 hover:bg-teal-500/80 transition-colors rounded-lg flex items-center justify-center gap-1 cursor-pointer hover-lift"
+                            >
+                              ✉ {emailSentState[inst.installmentNumber] ? "Resend" : "Email"}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-650">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1242,43 +1318,92 @@ export default function PaymentView({
       )}
       {/* Custom Payment Amount Modal */}
       {showPaymentModal && activePaymentInst && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-800 text-slate-100 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-card-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
+              type="button"
               onClick={() => setShowPaymentModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-950 hover:bg-rose-500/10 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="h-4 w-4" />
             </button>
-            <h2 className="text-lg font-bold text-white mb-1">Record Payment</h2>
-            <p className="text-xs text-slate-400 mb-5">Installment {activePaymentInst.installmentNumber}</p>
+
+            <div className="text-center pb-4 mb-4 border-b border-slate-800">
+              <div className="mx-auto w-12 h-12 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center mb-3">
+                <CircleDollarSign className="h-6 w-6 text-teal-400" />
+              </div>
+              <h2 className="text-lg font-bold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">
+                Record Payment
+              </h2>
+              <p className="text-[11px] text-slate-450 mt-1 font-medium">
+                {activePaymentInst.type ? `${activePaymentInst.type} (Installment ${activePaymentInst.installmentNumber})` : `Installment ${activePaymentInst.installmentNumber}`}
+              </p>
+            </div>
             
             <div className="space-y-4">
-              <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex justify-between items-center">
-                <span className="text-xs text-slate-400 font-medium">Expected Amount</span>
+              <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-850 flex justify-between items-center">
+                <span className="text-xs text-slate-400 font-semibold">Expected Amount</span>
                 <span className="text-sm font-bold text-slate-200">₹{activePaymentInst.amount.toLocaleString()}</span>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Actual Amount Received (₹)</label>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-400">Actual Amount Received (₹)*</label>
                 <input
                   type="number"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-2.5 text-lg text-teal-400 font-extrabold focus:outline-none focus:border-teal-500 focus:bg-slate-950 shadow-inner transition-colors"
+                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-base text-teal-400 font-bold placeholder-slate-700 focus:outline-none focus:border-teal-500/50"
                   placeholder="e.g. 2500"
                   autoFocus
                 />
-                <p className="text-[10px] text-teal-400/70 mt-2 font-medium leading-relaxed">
+                <p className="text-[10px] text-slate-500 mt-1 font-medium leading-relaxed">
                   Note: If you enter an amount higher or lower than expected, future installments will automatically recalculate.
                 </p>
               </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-400">Student Email Address (for Receipt)</label>
+                <input
+                  type="email"
+                  value={paymentModalEmail}
+                  onChange={(e) => setPaymentModalEmail(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-teal-500/50 font-medium"
+                  placeholder="student@example.com"
+                />
+              </div>
               
-              <button
-                onClick={handleConfirmCustomPayment}
-                className="w-full mt-2 py-2.5 bg-teal-500 hover:bg-teal-400 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                <CheckCircle2 className="w-4 h-4" /> Confirm Payment
-              </button>
+              <div className="pt-2 flex flex-col sm:flex-row justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-400 hover:bg-slate-850/50 rounded-xl transition-all cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmCustomPayment(false)}
+                  className="btn-secondary px-4 py-2 text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Confirm Payment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmCustomPayment(true)}
+                  className="btn-primary px-4 py-2 text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Mail className="h-4 w-4" /> Confirm & Send Email
+                </button>
+              </div>
             </div>
           </div>
         </div>

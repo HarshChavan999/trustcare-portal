@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { UserProfile } from "../lib/services/authService";
 import { getFeeStructureData, deleteFeeStructure } from "../lib/services/paymentService";
-import { getAdmissionAnalytics, AdmissionData, deleteAdmission, updateAdmissionPhotoUrl, uploadStudentPhoto } from "../lib/services/admissionService";
+import { getAdmissionAnalytics, AdmissionData, deleteAdmission, updateAdmissionPhotoUrl, uploadStudentPhoto, updateAdmissionEmail } from "../lib/services/admissionService";
 import { getInquiryAnalytics, InquiryData, deleteInquiry } from "../lib/services/inquiryService";
 import { 
   GraduationCap, 
@@ -31,7 +31,10 @@ import {
   User,
   Upload,
   Mail,
-  Printer
+  Printer,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 import { CircleIndianRupee } from "./CircleIndianRupee";
 import { openInstallmentReceipt } from "./CoursePaymentReceiptView";
@@ -68,6 +71,12 @@ export default function AnalyticsView({
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+
+  // Inline Email Editing State for Admissions
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [editingEmailValue, setEditingEmailValue] = useState("");
+  const [savingEmailId, setSavingEmailId] = useState<string | null>(null);
+  const [savedEmailSuccessId, setSavedEmailSuccessId] = useState<string | null>(null);
   
   // Sorting
   const [sortColumn, setSortColumn] = useState("timestamp");
@@ -229,7 +238,8 @@ export default function AnalyticsView({
         filtered = filtered.filter(a => 
           (a.studentName || "").toLowerCase().includes(q) || 
           (a.enrollmentId || "").toLowerCase().includes(q) ||
-          (a.receiptNumber || "").toLowerCase().includes(q)
+          (a.receiptNumber || "").toLowerCase().includes(q) ||
+          (a.email || "").toLowerCase().includes(q)
         );
       }
       if (branchFilter) filtered = filtered.filter(a => a.branch === branchFilter);
@@ -434,7 +444,7 @@ export default function AnalyticsView({
     if (activeTab === "fee-structure" || activeTab === "due-fees") {
       confirmMsg = `Are you sure you want to delete the ${selectedIds.size} selected fee structures? This will also remove their installment schedules and payment histories.`;
     } else if (activeTab === "admission-analytics") {
-      confirmMsg = `Are you sure you want to delete the ${selectedIds.size} selected admission records?`;
+      confirmMsg = `Are you sure you want to delete the ${selectedIds.size} selected admission record(s)? This will also delete their corresponding inquiry, fees, and due fees records.`;
     } else if (activeTab === "inquiry-analytics") {
       confirmMsg = `Are you sure you want to delete the ${selectedIds.size} selected inquiry records?`;
     }
@@ -487,15 +497,13 @@ export default function AnalyticsView({
 
   const handlePhotoUpload = async (row: AdmissionData, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !row.id || !row.enrollmentId) return;
-    
+    if (!file || !row.id) return;
     try {
       setLoading(true);
       const url = await uploadStudentPhoto(row.enrollmentId, file);
       const res = await updateAdmissionPhotoUrl(row.id, url);
       if (res.success) {
         setAdmissions(prev => prev.map(a => a.id === row.id ? { ...a, photoUrl: url } : a));
-        alert("Profile photo updated successfully!");
       } else {
         alert(res.message);
       }
@@ -503,6 +511,29 @@ export default function AnalyticsView({
       alert("Failed to upload photo: " + err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveEmail = async (id: string) => {
+    if (!id) return;
+    setSavingEmailId(id);
+    const newEmail = editingEmailValue.trim();
+    try {
+      const res = await updateAdmissionEmail(id, newEmail);
+      if (res.success) {
+        setAdmissions(prev => prev.map(a => (a.id === id || a.enrollmentId === id) ? { ...a, email: newEmail } : a));
+        setSavedEmailSuccessId(id);
+        setTimeout(() => {
+          setSavedEmailSuccessId(null);
+        }, 2500);
+      } else {
+        alert(res.message || "Failed to update email.");
+      }
+    } catch (e: any) {
+      alert("Error saving email: " + (e.message || "Unknown error"));
+    } finally {
+      setSavingEmailId(null);
+      setEditingEmailId(null);
     }
   };
 
@@ -879,17 +910,18 @@ export default function AnalyticsView({
                 {activeTab === "admission-analytics" && (
                   <>
                     <th className="px-4 py-3">Action</th>
+                    <th className="px-4 py-3">Photo</th>
                     <th onClick={() => handleSort("date")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th onClick={() => handleSort("receiptNumber")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Receipt No <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th onClick={() => handleSort("enrollmentId")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Enrollment ID <ArrowUpDown className="h-3 w-3" /></span></th>
-              <th className="px-4 py-3">Photo</th>
                     <th onClick={() => handleSort("studentName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Student Name <ArrowUpDown className="h-3 w-3" /></span></th>
+                    <th onClick={() => handleSort("email")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none min-w-[200px]"><span className="flex items-center gap-1">Email Address <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th onClick={() => handleSort("courseName")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Course <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th onClick={() => handleSort("totalCourseFees")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none text-right">Course Fee</th>
                     <th className="px-4 py-3">Guardian Name</th>
                     <th onClick={() => handleSort("branch")} className="px-4 py-3 cursor-pointer hover:bg-slate-900/25 select-none"><span className="flex items-center gap-1">Branch <ArrowUpDown className="h-3 w-3" /></span></th>
                     <th className="px-4 py-3">Created By</th>
-                    <th className="px-4 py-3 text-center">Email</th>
+                    <th className="px-4 py-3 text-center">Send Email</th>
                     <th className="px-4 py-3 text-center">Receipt</th>
                   </>
                 )}
@@ -1011,7 +1043,7 @@ export default function AnalyticsView({
                         {userProfile?.role === "admin" && (
                           <button
                             onClick={async () => {
-                              if (window.confirm("Are you sure you want to delete this admission record?")) {
+                              if (window.confirm("Are you sure you want to delete this admission record? This will also remove the student's inquiry, fees, and due fees records.")) {
                                 const res = await deleteAdmission(row.id || "");
                                 if (res.success) {
                                   setAdmissions(prev => prev.filter(a => a.id !== row.id));
@@ -1046,6 +1078,83 @@ export default function AnalyticsView({
                       <td className="px-4 py-3 text-slate-450 font-medium">{row.receiptNumber}</td>
                       <td className="px-4 py-3 font-semibold text-slate-400">{row.enrollmentId}</td>
                       <td className="px-4 py-3 text-slate-100 font-semibold">{row.studentName}</td>
+                      
+                      {/* Email Address (Editable Column) */}
+                      <td className="px-4 py-3">
+                        {editingEmailId === (row.id || row.enrollmentId) ? (
+                          <div className="flex items-center gap-1.5 min-w-[180px]">
+                            <input
+                              type="email"
+                              value={editingEmailValue}
+                              onChange={(e) => setEditingEmailValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEmail(row.id || row.enrollmentId);
+                                if (e.key === "Escape") setEditingEmailId(null);
+                              }}
+                              className="w-full bg-slate-950 border border-teal-500/60 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-teal-500 font-medium"
+                              placeholder="name@example.com"
+                              autoFocus
+                              disabled={savingEmailId === (row.id || row.enrollmentId)}
+                            />
+                            {savingEmailId === (row.id || row.enrollmentId) ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400 shrink-0" />
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEmail(row.id || row.enrollmentId)}
+                                  className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors cursor-pointer"
+                                  title="Save Email"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingEmailId(null)}
+                                  className="p-1 text-slate-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="group flex items-center justify-between gap-2 min-w-[160px]">
+                            <span 
+                              onClick={() => {
+                                setEditingEmailId(row.id || row.enrollmentId);
+                                setEditingEmailValue(row.email || "");
+                              }}
+                              className={`text-xs cursor-pointer hover:underline truncate max-w-[160px] ${
+                                row.email ? "text-slate-200 font-medium" : "text-slate-500 italic text-[11px]"
+                              }`}
+                              title={row.email ? `Click to edit: ${row.email}` : "Click to add email"}
+                            >
+                              {row.email || "+ Add Email"}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {savedEmailSuccessId === (row.id || row.enrollmentId) && (
+                                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5 animate-pulse">
+                                  <CheckCircle2 className="h-3 w-3" /> Saved
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingEmailId(row.id || row.enrollmentId);
+                                  setEditingEmailValue(row.email || "");
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-teal-400 hover:bg-slate-850 rounded transition-all cursor-pointer"
+                                title="Edit Email"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+
                       <td className="px-4 py-3 text-slate-400 capitalize">{String(row.courseName).replace(/_/g, " ")}</td>
                       <td className="px-4 py-3 text-right text-slate-100 font-bold">₹{(row.totalCourseFees || 0).toLocaleString()}</td>
                       <td className="px-4 py-3 text-slate-450">{row.guardianName || "-"}</td>
