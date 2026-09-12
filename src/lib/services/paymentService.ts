@@ -20,6 +20,7 @@ export interface Installment {
   dueDate: string;
   status: "Pending" | "Paid";
   type?: string;
+  paidDate?: string;
 }
 
 export interface PaymentSchedule {
@@ -96,7 +97,9 @@ export async function getStudentDataByEnrollmentId(enrollmentId: string) {
         guardianName: data.guardianName || "",
         guardianRelation: data.guardianRelation || "",
         email: data.email || "",
-        photoUrl: data.photoUrl || ""
+        photoUrl: data.photoUrl || "",
+        date: data.date || "",
+        admissionDate: data.date || ""
       };
     }
 
@@ -328,10 +331,10 @@ export async function saveInstallmentPayment(data: {
       const scheduleData = scheduleDoc.data() as PaymentSchedule;
       let installments = [...(scheduleData.installments || [])];
 
-      // 1. Mark current as Paid and update its actual paid amount
+      // 1. Mark current as Paid and update its actual paid amount and paid date
       installments = installments.map(inst => {
         if (inst.installmentNumber === data.installmentNumber) {
-          return { ...inst, amount: data.installmentAmount, status: "Paid" as const };
+          return { ...inst, amount: data.installmentAmount, status: "Paid" as const, paidDate: data.paymentDate };
         }
         return inst;
       });

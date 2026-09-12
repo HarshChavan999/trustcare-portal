@@ -10,7 +10,8 @@ import {
   getInstallmentPaymentsForStudent,
   saveInstallmentPayment,
   Installment,
-  PaymentSchedule
+  PaymentSchedule,
+  StudentPaymentHistory
 } from "../lib/services/paymentService";
 import { openCoursePaymentReceipt, openInstallmentReceipt } from "./CoursePaymentReceiptView";
 import {
@@ -136,6 +137,18 @@ export default function PaymentView({
   const [activePaymentInst, setActivePaymentInst] = useState<Installment | null>(null);
   const [customAmount, setCustomAmount] = useState<number | "">("");
   const [paymentModalEmail, setPaymentModalEmail] = useState("");
+  const [paymentHistory, setPaymentHistory] = useState<StudentPaymentHistory | null>(null);
+  const [admissionDate, setAdmissionDate] = useState("");
+
+  const getInstallmentPaidDate = (inst: Installment) => {
+    if (inst.paidDate) return inst.paidDate;
+    const match = paymentHistory?.payments?.find(
+      (p) => p.installmentNumber === inst.installmentNumber
+    );
+    if (match?.paymentDate) return match.paymentDate;
+    if (inst.installmentNumber === 1 && admissionDate) return admissionDate;
+    return null;
+  };
 
   useEffect(() => {
     if (initialEnrollmentId) {
@@ -160,8 +173,16 @@ export default function PaymentView({
           if (firstDoc.admissionFee) setDbAdmissionFee(firstDoc.admissionFee);
           if (firstDoc.examFee) setCourseExamFee(firstDoc.examFee);
           if (typeof firstDoc.startingYearFee === "number") setDbStartingYearFee(firstDoc.startingYearFee);
+          if (firstDoc.admissionDate || (firstDoc as any).date) {
+            setAdmissionDate(firstDoc.admissionDate || (firstDoc as any).date);
+          }
           const hist = await getInstallmentPaymentsForStudent(id);
-          if (hist) setPaymentMethod(hist.paymentMethod || "Cash");
+          if (hist) {
+            setPaymentHistory(hist);
+            setPaymentMethod(hist.paymentMethod || "Cash");
+          } else {
+            setPaymentHistory(null);
+          }
         }
         const pType = saved.length === 1 ? "full" : "emi";
         setPaymentType(pType);
@@ -195,6 +216,9 @@ export default function PaymentView({
         setPhotoUrl(res.photoUrl || "");
         setAdmissionEmailSent(false);
         if (res.courseDuration) setDbCourseDuration(res.courseDuration);
+        if (res.admissionDate || (res as any).date) {
+          setAdmissionDate(res.admissionDate || (res as any).date);
+        }
         if (res.totalCourseFees) setDbTotalFees(res.totalCourseFees);
         if (res.admissionFee) setDbAdmissionFee(res.admissionFee);
         if (res.examFee) setCourseExamFee(res.examFee);
@@ -654,7 +678,7 @@ export default function PaymentView({
 
     openInstallmentReceipt({
       receiptNo: receiptNo || `IR-${enrollmentId}-${inst.installmentNumber}`,
-      date: new Date().toLocaleDateString("en-GB"),
+      date: getInstallmentPaidDate(inst) || new Date().toLocaleDateString("en-GB"),
       studentName: studentName,
       courseName: courseFullName,
       installmentNumber: inst.installmentNumber,
@@ -941,7 +965,7 @@ export default function PaymentView({
           <div className="overflow-x-auto bg-slate-950/20 border border-slate-900 rounded-2xl">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-950/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-900">
-                <tr><th className="px-5 py-3 text-center">Installment</th><th className="px-5 py-3 text-center">Due Date</th><th className="px-5 py-3 text-center">Amount</th><th className="px-5 py-3 text-center">Status</th><th className="px-5 py-3 text-center">Mark as Paid</th><th className="px-5 py-3 text-center">Receipt</th></tr>
+                <tr><th className="px-5 py-3 text-center">Installment</th><th className="px-5 py-3 text-center">Due / Paid Date</th><th className="px-5 py-3 text-center">Amount</th><th className="px-5 py-3 text-center">Status</th><th className="px-5 py-3 text-center">Mark as Paid</th><th className="px-5 py-3 text-center">Receipt</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-900/60">
                 {activeSchedule.map((inst) => {
@@ -950,13 +974,27 @@ export default function PaymentView({
                     locked &&
                     activeSchedule.find((s) => s.status === "Pending")?.installmentNumber === inst.installmentNumber
                   );
+                  const paidDate = getInstallmentPaidDate(inst);
 
                   return (
                     <tr key={inst.installmentNumber} className="hover:bg-slate-900/20 text-slate-300">
                       <td className="px-5 py-3 text-center font-medium">
                         {inst.type ? `${inst.type} (Installment ${inst.installmentNumber})` : `Installment ${inst.installmentNumber}`}
                       </td>
-                      <td className="px-5 py-3 text-center text-slate-400">{inst.dueDate}</td>
+                      <td className="px-5 py-3 text-center">
+                        {inst.status === "Paid" ? (
+                          <div className="flex flex-col items-center justify-center">
+                            <span className="font-bold text-emerald-400">
+                              {paidDate || inst.dueDate}
+                            </span>
+                            <span className="text-[9px] font-bold text-emerald-500/80 uppercase tracking-wider">
+                              Paid Date
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 font-medium">{inst.dueDate}</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-center font-bold">₹{inst.amount.toLocaleString()}</td>
                       <td className="px-5 py-3 text-center">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${inst.status === "Paid"
