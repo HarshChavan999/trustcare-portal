@@ -9,13 +9,15 @@ runConfig:
   concurrency: 80
 
 env:
+  - variable: SMTP_PASSWORD
+    secret: SMTP_PASSWORD
+  - variable: EMAIL_FROM
+    value: trustcareinstitute03@gmail.com
   - variable: AWS_ACCESS_KEY_ID
     value: AKIA5MQOCPO3T3VF7QFL
   - variable: AWS_SECRET_ACCESS_KEY
     secret: AWS_SECRET_ACCESS_KEY
   - variable: AWS_REGION
     value: ap-south-1
-  - variable: EMAIL_FROM
-    value: trustcareinstitute03@gmail.com
   - variable: SENDGRID_API_KEY
     secret: SENDGRID_API_KEY
