@@ -246,10 +246,10 @@ export default function Home() {
   ];
 
   const analyticsItems = [
-    { id: "inquiry-analytics", label: "Inquiry", icon: BarChart3 },
-    { id: "admission-analytics", label: "Admission", icon: TrendingUp },
-    { id: "fee-structure", label: "Fees", icon: GraduationCap },
-    { id: "due-fees", label: "Due Fees", icon: Clock }
+    { id: "inquiry-analytics", label: "Inquiry", icon: BarChart3, roles: ["admin", "staff"] },
+    { id: "admission-analytics", label: "Admission", icon: TrendingUp, roles: ["admin", "staff"] },
+    { id: "fee-structure", label: "Fees", icon: GraduationCap, roles: ["admin"] },
+    { id: "due-fees", label: "Due Fees", icon: Clock, roles: ["admin", "staff"] }
   ];
 
   const adminItems = [
@@ -343,25 +343,33 @@ export default function Home() {
                 );
               })}
 
-              {userProfile.role === "admin" && (
+              {/* Analytics Section */}
+              {analyticsItems.filter(item => userProfile.role === "admin" ? true : item.roles.includes("staff")).length > 0 && (
                 <>
                   <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Analytics Dashboard</div>
-                  {analyticsItems.map(item => {
-                    const MobileIcon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
-                          ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                          : "text-slate-400 hover:bg-slate-900/50"
-                          }`}
-                      >
-                        <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
+                  {analyticsItems
+                    .filter(item => userProfile.role === "admin" ? true : item.roles.includes("staff"))
+                    .map(item => {
+                      const MobileIcon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer ${activeTab === item.id
+                            ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                            : "text-slate-400 hover:bg-slate-900/50"
+                            }`}
+                        >
+                          <MobileIcon className="h-4.5 w-4.5 text-teal-400" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {userProfile.role === "admin" && (
+                <>
                   <div className="border-t border-slate-900 my-2 pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin</div>
                   {adminItems.map(item => {
                     const MobileIcon = item.icon;
@@ -458,8 +466,9 @@ export default function Home() {
               />
             )}
 
-            {/* Admin Analytics Tab routers */}
-            {["fee-structure", "admission-analytics", "inquiry-analytics", "due-fees"].includes(activeTab) && (
+            {/* Analytics Tab routers */}
+            {(["admission-analytics", "inquiry-analytics", "due-fees"].includes(activeTab) ||
+              (activeTab === "fee-structure" && userProfile.role === "admin")) && (
               <AnalyticsView
                 userProfile={userProfile}
                 activeTab={activeTab}

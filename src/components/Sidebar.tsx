@@ -278,11 +278,15 @@ export default function Sidebar({
   ];
 
   const analyticsItems = [
-    { id: "inquiry-analytics", label: "Inquiry", icon: BarChart3 },
-    { id: "admission-analytics", label: "Admission", icon: TrendingUp },
-    { id: "fee-structure", label: "Fees", icon: GraduationCap },
-    { id: "due-fees", label: "Due Fees", icon: Clock }
+    { id: "inquiry-analytics", label: "Inquiry", icon: BarChart3, roles: ["admin", "staff"] },
+    { id: "admission-analytics", label: "Admission", icon: TrendingUp, roles: ["admin", "staff"] },
+    { id: "fee-structure", label: "Fees", icon: GraduationCap, roles: ["admin"] },
+    { id: "due-fees", label: "Due Fees", icon: Clock, roles: ["admin", "staff"] }
   ];
+
+  const visibleAnalyticsItems = analyticsItems.filter((item) =>
+    userProfile?.role === "admin" ? true : item.roles.includes("staff")
+  );
 
   const adminItems = [
     { id: "course-management", label: "Course Management", icon: GraduationCap },
@@ -452,10 +456,10 @@ export default function Sidebar({
         </div>
 
         {/* Analytics Section */}
-        {userProfile?.role === "admin" && (
+        {visibleAnalyticsItems.length > 0 && (
           <div className="space-y-1">
-            <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">ANALYTICS (ADMIN)</p>
-            {analyticsItems.map((item) => {
+            <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">ANALYTICS</p>
+            {visibleAnalyticsItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button
