@@ -1539,11 +1539,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid or missing receipt type" }, { status: 400 });
     }
 
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD;
+    const hasSmtp = Boolean(smtpPassword);
     const hasAwsSes = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
     const hasSendGrid = Boolean(process.env.SENDGRID_API_KEY);
 
-    if (!hasAwsSes && !hasSendGrid) {
-      console.warn("Neither AWS SES nor SendGrid is configured in environment variables.");
+    if (!hasSmtp && !hasAwsSes && !hasSendGrid) {
+      console.warn("No email service configured in environment variables.");
       return NextResponse.json({ error: "Email service is not configured on the server." }, { status: 500 });
     }
 
@@ -1599,7 +1601,55 @@ export async function POST(req: Request) {
       console.error("[send-email] Error generating receipt PDF attachment:", pdfErr);
     }
 
-    // 1. Try sending via Amazon SES if configured
+    // 1. Try sending via Gmail / SMTP if configured (Zero recipient verification required!)
+    if (hasSmtp) {
+      try {
+        console.log(`[send-email] Dispatching email via Gmail SMTP (${fromEmail})...`);
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: fromEmail,
+            pass: smtpPassword,
+          },
+        });
+
+        const mailAttachments: any[] = [];
+        if (pdfBuffer) {
+          mailAttachments.push({
+            filename: pdfFilename,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          });
+        }
+        if (logoBuffer) {
+          mailAttachments.push({
+            filename: 'TrustCareLogo.png',
+            content: logoBuffer,
+            cid: 'trustcare_logo',
+          });
+        }
+
+        const mailOptions = {
+          from: `"Trustcare Institute Of Health Science" <${fromEmail}>`,
+          to,
+          subject,
+          html: htmlContent,
+          attachments: mailAttachments,
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log(`[send-email] Successfully sent via Gmail SMTP:`, result.messageId);
+        return NextResponse.json({ success: true, provider: "gmail-smtp", messageId: result.messageId });
+      } catch (smtpErr: any) {
+        console.error("[send-email] Gmail SMTP sending failed:", smtpErr);
+        if (!hasAwsSes && !hasSendGrid) {
+          return NextResponse.json({ error: smtpErr.message || "Failed to send email via SMTP" }, { status: 500 });
+        }
+        console.warn("[send-email] Attempting fallback service...");
+      }
+    }
+
+    // 2. Try sending via Amazon SES if configured
     if (hasAwsSes) {
       try {
         console.log(`[send-email] Dispatching email via Amazon SES (${process.env.AWS_REGION || "ap-south-1"})...`);
