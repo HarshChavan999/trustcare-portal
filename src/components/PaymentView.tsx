@@ -386,12 +386,16 @@ export default function PaymentView({
       });
 
       // 2. Save Installment Schedule
+      // IMPORTANT: totalFee must always be the FULL course fee — not emiTotalPayable.
+      // The re-amortization logic uses totalFee as the reference total to determine
+      // remaining balance after each payment. Using emiTotalPayable here would
+      // cause annual year fee rows to get incorrectly overwritten.
       const scheduleDoc: PaymentSchedule = {
         enrollmentId,
         studentName,
         courseName,
         paymentType,
-        totalFee: activePayFees,
+        totalFee: totalFees,
         installments: calculatedSchedule,
         loggedInUser: userProfile?.username || "Admin"
       };

@@ -340,35 +340,52 @@ export async function saveInstallmentPayment(data: {
       });
 
       // 2. Recalculation logic (Re-amortization)
+      // Only re-amortize REGULAR installments — Annual Year Fee rows are fixed amounts
+      // and must never be recalculated.
       const totalPayable = scheduleData.totalFee; // Original total course fee
       const totalPaid = installments
         .filter(inst => inst.status === "Paid")
         .reduce((sum, inst) => sum + inst.amount, 0);
 
       const remainingBalance = Math.max(0, totalPayable - totalPaid);
-      
+
+      // Separate pending installments: fixed annual fees vs regular EMI months
       const pendingInstallments = installments.filter(inst => inst.status === "Pending");
-      const pendingCount = pendingInstallments.length;
+      const pendingRegular = pendingInstallments.filter(
+        inst => !(inst.type || "").toLowerCase().includes("annual year fee")
+      );
+      const pendingCount = pendingRegular.length;
+
+      // Deduct already-scheduled annual fees from the pool before splitting
+      const pendingAnnualTotal = pendingInstallments
+        .filter(inst => (inst.type || "").toLowerCase().includes("annual year fee"))
+        .reduce((sum, inst) => sum + inst.amount, 0);
+      const regularPool = Math.max(0, remainingBalance - pendingAnnualTotal);
 
       if (pendingCount > 0) {
-        const baseNewAmount = Math.floor(remainingBalance / pendingCount);
-        const remainder = remainingBalance % pendingCount;
+        const baseNewAmount = Math.floor(regularPool / pendingCount);
+        const remainder = regularPool % pendingCount;
 
         let currentPendingIndex = 0;
         installments = installments.map(inst => {
+          // Annual Year Fee rows: never touch their amount
+          if ((inst.type || "").toLowerCase().includes("annual year fee")) {
+            return inst;
+          }
+
           if (inst.status === "Pending") {
             let amountForThis = baseNewAmount;
-            // Add remainder to the last pending installment to ensure total is exact
+            // Add remainder to the last regular pending installment
             if (currentPendingIndex === pendingCount - 1) {
               amountForThis += remainder;
             }
             currentPendingIndex++;
-            
-            // If balance is 0 or less, auto-mark remaining as Paid (with 0 amount)
-            if (remainingBalance <= 0) {
+
+            // If remaining pool is 0, auto-mark remaining regular EMIs as Paid (₹0)
+            if (regularPool <= 0) {
               return { ...inst, amount: 0, status: "Paid" as const };
             }
-            
+
             return { ...inst, amount: amountForThis };
           }
           return inst;
