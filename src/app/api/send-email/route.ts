@@ -1269,7 +1269,8 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
     "100% नोकरीची हमी",
     "75% उपस्थिती अनिवार्य आहे.",
     "दिलेल्या वेळापकानुसार परिक्षा द्यावी उशीर केल्यास परिक्षेचे फी वाढेल याला राहणार TCIHS नाही",
-    "जर तुम्ही व तुमचे पालक दिलेल्या अटी विरोधात वाद घातला तर कायदेशीर रित्या कारवाई केली जाईल. वर्गात नेहमी वेळेवर येणार अनिवार्य आहे. अन्यथा वर्गात प्रवेश दिला जाणार नाही."
+    "जर तुम्ही व तुमचे पालक दिलेल्या अटी विरोधात वाद घातला तर कायदेशीर रित्या कारवाई केली जाईल. वर्गात नेहमी वेळेवर येणार अनिवार्य आहे. अन्यथा वर्गात प्रवेश दिला जाणार नाही.",
+    "कोर्स पूर्ण झाल्यावर संस्थेकडे जमा केलेली सर्व मूळ कागदपत्रे परत घेण्याची जबाबदारी विद्यार्थ्याची राहील. कोर्स पूर्ण झाल्यानंतर अशा कागदपत्रांचे कोणतेही नुकसान, गहाळ किंवा खराब झाल्यास संस्था जबाबदार राहणार नाही. विद्यार्थ्यांनी कोर्स पूर्ण झाल्यानंतर आपली मूळ कागदपत्रे त्वरित परत घेऊन जावीत."
   ];
 
   for (let i = 0; i < mrPoints.length; i++) {
@@ -1328,7 +1329,8 @@ export async function generatePdfAdmissionFormBuffer(data: any): Promise<Buffer>
     "75% Attendance Should Be Compulsory.",
     "Give Exam In Given Schedule. If You Delay Then TCIHS Will Not Responsible, Exam Fees Will Increase.",
     "If You And Your Guardian Argue Against The Terms And Conditions, Legal Action Will Be Taken.",
-    "It Is compulsory To Come on Time Otherwise You Are Not Permitted To Sit In Lecture."
+    "It Is compulsory To Come on Time Otherwise You Are Not Permitted To Sit In Lecture.",
+    "The student is responsible for collecting all original documents submitted to the institute upon completion of the course. The institute shall not be liable for any loss, damage, or deterioration of such documents after the completion of the course. Students are advised to collect their original documents promptly upon completion of their course."
   ];
 
   for (let i = 0; i < enPoints.length; i++) {
